@@ -1,5 +1,54 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #24 - 2026-02-20
+
+### Feature #24: Move item to a different tote - PASSED
+
+**What was accomplished:**
+- Created POST /api/items/:id/move API endpoint that:
+  - Validates item exists and target tote exists
+  - Prevents moving to the same tote (400 error)
+  - Uses a SQLite transaction to atomically update item's tote_id and record movement history
+  - Returns updated item data with new tote info
+- Added "Move" button to item detail page header (between Edit and Delete)
+- Created Move Item modal with:
+  - Item name and current tote displayed
+  - Dropdown listing all other totes (current tote filtered out)
+  - Each tote option shows name and location
+  - Cancel and Move Item buttons
+  - Loading state while fetching totes
+  - Empty state if no other totes exist
+  - Error handling for failed moves
+- After successful move, redirects to item page in new tote URL
+- Added Movement History section to item detail page:
+  - Timeline showing all moves with source/destination tote names
+  - Clickable links to source and destination totes
+  - Timestamps for each move
+  - Empty state when no moves recorded
+- Added CSS for movement history timeline (dot indicators, styling)
+- Added CSS for form select elements
+
+**Verification (all 9 feature steps):**
+1. Created 2 totes: "Source Tote F24" (TwbT9N) and "Destination Tote F24" (GJW1Yi)
+2. Added item "Movable Item F24" to Source Tote
+3. Navigated to item detail page - saw Move button and empty Movement History
+4. Clicked Move button - modal opened with tote picker dropdown
+5. Selected "Destination Tote F24 (Shelf B)" from dropdown
+6. Clicked "Move Item" - success toast shown
+7. Verified URL changed to /totes/GJW1Yi/items/36 (destination tote)
+8. Verified item no longer in Source Tote (Items: 0, "No items in this tote yet")
+9. Verified movement history shows "Moved from Source Tote F24 to Destination Tote F24" with timestamp
+
+**Quality checks:**
+- Zero console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 persistence test: created RESTART_TEST_ITEM_F24, moved it, killed server (kill -9), restarted, verified item still in destination tote and movement history persisted
+- All test data cleaned up after verification
+
+**Current status:** 21/88 features passing (23.9%)
+
+---
+
 ## Session - Feature #22 - 2026-02-20
 
 ### Feature #22: Edit item metadata (name, description, quantity) - PASSED
