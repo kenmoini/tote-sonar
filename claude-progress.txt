@@ -1,5 +1,45 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #22 - 2026-02-20
+
+### Feature #22: Edit item metadata (name, description, quantity) - PASSED
+
+**What was accomplished:**
+- Added PUT /api/items/:id endpoint to route.ts with:
+  - Name validation (required, non-empty)
+  - Quantity validation (positive integer)
+  - Description update (optional, nullable)
+  - updated_at timestamp update
+  - Returns updated item data with tote info
+- Added "Edit Item" button (with Pencil icon) to item detail page header
+- Created Edit Item modal with pre-populated form:
+  - Name field (required, with validation)
+  - Description textarea (optional)
+  - Quantity number input (min 1)
+  - Cancel and "Save Changes" buttons
+- Success toast notification "Item updated successfully!" after saving
+- Page data refreshes automatically after edit
+- Breadcrumb updates to reflect new item name
+
+**Verification (all 9 feature steps):**
+1. Created test tote "EDIT_TEST_F22" and item "Original Item F22" (desc: "Original description for testing", qty: 3)
+2. Navigated to item detail page - all metadata displayed correctly
+3. Clicked "Edit Item" button - modal appeared with pre-populated values
+4. Changed name to "Updated Item Name"
+5. Changed description to "Updated description"
+6. Changed quantity to 10
+7. Clicked "Save Changes" - saved successfully
+8. Toast showed "Item updated successfully!" - modal closed, page refreshed with updated values
+9. Full page refresh (navigation) - "Updated Item Name", "Updated description", quantity "10" all persisted
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence test: killed server, restarted, edited item data persisted correctly
+- All test data cleaned up after verification
+
+**Current status:** 19/88 features passing (21.6%)
+
 ## Session - Feature #35 - 2026-02-20
 
 ### Feature #35: QR code generated and displayed on tote detail page - PASSED
