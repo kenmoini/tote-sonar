@@ -1,5 +1,35 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #16 - 2026-02-20
+
+### Feature #16: View list of all totes with metadata summary - PASSED
+
+**What was accomplished:**
+- Verified tote list page (/totes) displays all totes with their metadata and item counts
+- Created 3 test totes with varying metadata combinations:
+  - F16_Tote_Alpha: all optional metadata (size=Large, color=Blue, owner=Alice) + 2 items
+  - F16_Tote_Beta: partial metadata (size=Medium, owner=Bob, no color) + 1 item
+  - F16_Tote_Gamma: no optional metadata + 0 items
+- All existing functionality already working correctly from feature #14 implementation
+
+**Verification:**
+- All 3 totes displayed in card grid layout on /totes page
+- Each tote shows name, location (with MapPin icon), and item count
+- Optional metadata displayed correctly:
+  - Owner shown with User icon where set (Alice, Bob)
+  - Size and color shown as tags where set (Large, Blue, Medium)
+  - No optional metadata shown when not set (Gamma tote)
+- Sort controls present (Name, Location, Owner, Date)
+- Each tote card links to correct detail page (/totes/{id})
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns in src/
+- Data from real SQLite database (infrastructure features #1-5 verified)
+- All test data cleaned up after verification
+
+**Current status:** 12/88 features passing (13.6%)
+
+---
+
 ## Session - Feature #14 - 2026-02-20
 
 ### Feature #14: Create a new tote with required fields - PASSED
