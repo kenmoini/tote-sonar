@@ -1,5 +1,33 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #61 - 2026-02-20
+
+### Feature #61: Direct URL access to tote and item detail pages - PASSED
+
+**What was accomplished:**
+- Created `/items/[id]/page.tsx` that looks up item via GET /api/items/:id, extracts tote_id, and redirects to `/totes/:toteId/items/:itemId`
+- For invalid item IDs, the /items/[id] page displays a user-friendly "Item not found" error with AlertTriangle icon and "Back to Dashboard" link
+- Enhanced error states on tote detail page (/totes/[id]) with AlertTriangle icon, h2 heading, and descriptive text
+- Enhanced error states on item detail page (/totes/[id]/items/[itemId]) with same improved error presentation
+- Updated CSS for `.error-state` to support `.error-icon`, `h2`, and improved text styling
+
+**Verification (all 5 feature steps):**
+1. Created test tote "DIRECT_URL_TEST_F61" (ID: YoFkDS) and item "DIRECT_URL_ITEM_F61" (ID: 49) via API
+2. Navigated directly to /totes/YoFkDS → tote detail loaded correctly with name, ID, location, items, QR code
+3. Navigated directly to /items/49 → redirected to /totes/YoFkDS/items/49, item detail loaded with name, description, quantity, breadcrumb
+4. Navigated to /totes/INVALID_ID → "Tote not found" error page with warning icon, description, and "Back to Totes" link
+5. Navigated to /items/999999 → "Item not found" error page with warning icon, description, and "Back to Dashboard" link
+- Also verified /totes/YoFkDS/items/999999 → "Item not found" with "Back to Tote" link pointing to /totes/YoFkDS
+
+**Quality checks:**
+- Console: only standard HMR WebSocket error (dev mode) and expected 404 network responses for invalid IDs
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- All test data cleaned up after verification
+
+**Current status:** 27/88 features passing (30.7%)
+
+---
+
 ## Session - Feature #10 - 2026-02-20
 
 ### Feature #10: 404 page for invalid routes - PASSED
