@@ -1,5 +1,43 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #35 - 2026-02-20
+
+### Feature #35: QR code generated and displayed on tote detail page - PASSED
+
+**What was accomplished:**
+- Created GET /api/totes/:id/qr API endpoint that:
+  - Verifies tote exists (returns 404 if not)
+  - Reads server_hostname from settings table for QR URL generation
+  - Generates QR code encoding `{server_hostname}/totes/{tote_id}` URL
+  - Returns PNG image by default (200x200, error correction level M)
+  - Supports `?format=dataurl` query param for JSON response with base64 data URL
+  - Includes proper Content-Type, Content-Length, and Cache-Control headers
+- Added QR Code section to tote detail page between metadata grid and items:
+  - QR Code section header with QrCode icon
+  - QR code image displayed in white container with shadow
+  - 6-character tote ID displayed below in monospace bold font with letter spacing
+  - "Scan to open this tote's page" hint text
+- Added CSS styles for QR code display (.qr-code-section, .qr-code-display, .qr-code-image-container, .qr-code-image, .qr-code-tote-id, .qr-code-url-hint)
+
+**Verification (all 6 feature steps):**
+1. Created test tote "QR_TEST_TOTE_F35" with ID O5H9kC
+2. Navigated to tote detail page at /totes/O5H9kC
+3. QR code image displayed on the page (verified via snapshot and screenshot)
+4. 6-character tote ID "O5H9kC" printed below QR code in monospace font
+5. QR code encodes URL "http://localhost:3000/totes/O5H9kC" (verified via dataurl format)
+6. GET /api/totes/O5H9kC/qr returned HTTP 200, Content-Type: image/png, 2065 bytes
+
+**Quality checks:**
+- Zero JS console errors (only HMR WebSocket noise from dev mode)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence test: killed server (kill -9), restarted, tote data persisted, QR code API returned same valid PNG (2065 bytes) with correct encoded URL
+- Non-existent tote returns 404 with error message
+- All test data cleaned up after verification
+
+**Current status:** 21/88 features passing (23.9%)
+
+---
+
 ## Session - Feature #28 - 2026-02-20
 
 ### Feature #28: Add dynamic metadata key-value pairs to items - PASSED
