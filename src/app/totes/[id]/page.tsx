@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Box, MapPin, User, ArrowLeft, Package, Calendar, Plus, X, Check } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Box, MapPin, User, ArrowLeft, Package, Calendar, Plus, X, Check, Trash2, AlertTriangle } from 'lucide-react';
 import { Tote, Item } from '@/types';
 import Breadcrumb from '@/components/Breadcrumb';
 
@@ -14,10 +15,15 @@ interface ToteDetail extends Tote {
 
 export default function ToteDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const toteId = params.id as string;
   const [tote, setTote] = useState<ToteDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Delete confirmation state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Add Item form state
   const [showAddItemForm, setShowAddItemForm] = useState(false);
@@ -107,6 +113,32 @@ export default function ToteDetailPage() {
     }
   };
 
+  const handleDeleteTote = async () => {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/totes/${toteId}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to delete tote');
+      }
+
+      const json = await res.json();
+      showToast(json.message || 'Tote deleted successfully', 'success');
+      setShowDeleteConfirm(false);
+
+      // Navigate back to totes list after a brief delay so toast is visible
+      setTimeout(() => {
+        router.push('/totes');
+      }, 500);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to delete tote', 'error');
+      setDeleting(false);
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr + 'Z');
     return date.toLocaleDateString('en-US', {
@@ -158,6 +190,62 @@ export default function ToteDetailPage() {
         </div>
       )}
 
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div className="modal-overlay" onClick={() => { if (!deleting) setShowDeleteConfirm(false); }}>
+          <div className="modal modal-confirm" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header modal-header-danger">
+              <div className="modal-header-icon-title">
+                <div className="confirm-icon-danger">
+                  <AlertTriangle size={24} />
+                </div>
+                <h2>Delete Tote</h2>
+              </div>
+              <button
+                className="modal-close"
+                onClick={() => { if (!deleting) setShowDeleteConfirm(false); }}
+                aria-label="Close"
+                disabled={deleting}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="confirm-body">
+              <p>
+                Are you sure you want to delete <strong>&ldquo;{tote.name}&rdquo;</strong>?
+              </p>
+              {tote.item_count > 0 && (
+                <div className="confirm-warning">
+                  <AlertTriangle size={16} />
+                  <span>
+                    This tote contains <strong>{tote.item_count} item{tote.item_count !== 1 ? 's' : ''}</strong> that will also be permanently deleted.
+                  </span>
+                </div>
+              )}
+              <p className="confirm-text-muted">This action cannot be undone.</p>
+            </div>
+            <div className="form-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={handleDeleteTote}
+                disabled={deleting}
+              >
+                {deleting ? 'Deleting...' : 'Delete Tote'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Breadcrumb */}
       <Breadcrumb items={[
         { label: 'Dashboard', href: '/' },
@@ -176,6 +264,14 @@ export default function ToteDetailPage() {
             <span className="tote-detail-id">ID: {tote.id}</span>
           </div>
         </div>
+        <button
+          className="btn btn-danger"
+          onClick={() => setShowDeleteConfirm(true)}
+          title="Delete tote"
+        >
+          <Trash2 size={16} />
+          <span>Delete Tote</span>
+        </button>
       </div>
 
       {/* Tote metadata */}

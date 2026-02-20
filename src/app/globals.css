@@ -381,6 +381,115 @@ a {
   background: var(--nav-link-hover);
 }
 
+.btn-danger {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+/* ============================================
+   Confirmation Dialog
+   ============================================ */
+
+.modal-confirm {
+  max-width: 440px;
+}
+
+.modal-header-danger {
+  border-bottom: 1px solid var(--card-border);
+  padding-bottom: 0.75rem;
+}
+
+.modal-header-icon-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.confirm-icon-danger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #fef2f2;
+  color: #dc2626;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+[data-theme='dark'] .confirm-icon-danger {
+  background: rgba(220, 38, 38, 0.15);
+  color: #f87171;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .confirm-icon-danger {
+    background: rgba(220, 38, 38, 0.15);
+    color: #f87171;
+  }
+}
+
+.confirm-body {
+  padding: 1rem 0;
+}
+
+.confirm-body p {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+}
+
+.confirm-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
+}
+
+.confirm-warning svg {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+  color: #d97706;
+}
+
+[data-theme='dark'] .confirm-warning {
+  background: rgba(217, 119, 6, 0.1);
+  border-color: rgba(217, 119, 6, 0.3);
+  color: #fcd34d;
+}
+
+[data-theme='dark'] .confirm-warning svg {
+  color: #fbbf24;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .confirm-warning {
+    background: rgba(217, 119, 6, 0.1);
+    border-color: rgba(217, 119, 6, 0.3);
+    color: #fcd34d;
+  }
+  :root:not([data-theme='light']) .confirm-warning svg {
+    color: #fbbf24;
+  }
+}
+
+.confirm-text-muted {
+  color: var(--muted);
+  font-size: 0.8125rem !important;
+}
+
 /* ============================================
    Page Header
    ============================================ */
@@ -1477,5 +1586,225 @@ a {
 @media (max-width: 480px) {
   .item-detail-meta-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================
+   Search Page
+   ============================================ */
+
+.search-form {
+  display: flex;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.search-input-icon {
+  position: absolute;
+  left: 0.875rem;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.75rem;
+  border: 1px solid var(--search-border);
+  border-radius: 0.5rem;
+  background: var(--search-bg);
+  color: var(--foreground);
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.search-input::placeholder {
+  color: var(--muted);
+}
+
+.search-input:focus {
+  border-color: var(--search-focus-border);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.search-results-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.search-results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.search-results-count {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.search-results-query {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.search-results-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--card-border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.search-result-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--card-border);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s ease;
+  cursor: pointer;
+}
+
+.search-result-card:last-child {
+  border-bottom: none;
+}
+
+.search-result-card:hover {
+  background: var(--nav-link-hover);
+}
+
+.search-result-card:hover .search-result-name {
+  color: var(--primary);
+}
+
+.search-result-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.search-result-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border-radius: 0.5rem;
+  flex-shrink: 0;
+}
+
+.search-result-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.search-result-name {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--foreground);
+  transition: color 0.15s ease;
+}
+
+.search-result-desc {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.search-result-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.search-result-tote {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.search-result-tote-name {
+  font-weight: 600;
+}
+
+.search-result-tote-id {
+  font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.search-result-location {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.search-result-qty {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.search-result-arrow {
+  color: var(--muted);
+  flex-shrink: 0;
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+
+.search-result-card:hover .search-result-arrow {
+  opacity: 1;
+  color: var(--primary);
+}
+
+.search-highlight {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--primary);
+  border-radius: 0.125rem;
+  padding: 0 0.125rem;
+}
+
+@media (max-width: 768px) {
+  .search-form {
+    flex-direction: column;
+  }
+
+  .search-result-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
   }
 }
