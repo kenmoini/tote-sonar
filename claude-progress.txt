@@ -1,5 +1,36 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #17 - 2026-02-20
+
+### Feature #17: Tote list supports sorting - PASSED
+
+**What was accomplished:**
+- Verified existing sorting implementation works correctly through the UI
+- Sorting is implemented via API query params (?sort=field&order=asc/desc) and UI sort buttons
+- API uses whitelist validation for sort columns (SQL injection prevention)
+- Sort handler toggles direction when clicking same field, resets to ASC when clicking different field
+- Active sort button visually highlighted with sort icon that rotates based on direction
+
+**Verification (all 7 feature steps):**
+1. Created 4 test totes with distinct names (Alpha, Bravo, Charlie, Delta), locations (Garage, Attic, Basement, Closet), owners (Mike, Alex, Zara, Diana), and staggered creation times
+2. Navigated to tote list page (/totes)
+3. Sort by name ASC: Alpha Tote, Bravo Tote, Charlie Tote, Delta Tote - correct alphabetical order
+4. Sort by location ASC: Attic(Bravo), Basement(Charlie), Closet(Delta), Garage(Alpha) - correct
+5. Sort by owner ASC: Alex(Bravo), Diana(Delta), Mike(Alpha), Zara(Charlie) - correct (nulls first)
+6. Sort by date ASC: Charlie(oldest) -> Alpha -> Bravo -> Delta(newest) - correct chronological
+7. Toggle sort direction: Clicked Date twice (ASC then DESC) - order reversed correctly. Clicked Name twice (ASC then DESC) - F40_Tote_B, F40_Tote_A, F21_TEST_TOTE, Delta, Charlie, Bravo, Alpha - reverse alphabetical confirmed
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings, only dev mode info)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Sort button UI shows active state with icon rotation for sort direction
+- API verified separately via curl for all 4 sort fields in both directions
+- All test data cleaned up after verification
+
+**Current status:** 23/88 features passing (26.1%)
+
+---
+
 ## Session - Feature #44 - 2026-02-20
 
 ### Feature #44: Export all data to ZIP file - PASSED
