@@ -1,5 +1,43 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #28 - 2026-02-20
+
+### Feature #28: Add dynamic metadata key-value pairs to items - PASSED
+
+**What was accomplished:**
+- Created POST/GET /api/items/:id/metadata API endpoint for adding and listing metadata
+- Created PUT/DELETE /api/items/:id/metadata/:metadataId API endpoint for updating and deleting metadata
+- Created GET /api/metadata-keys API endpoint for autocomplete suggestions
+- Added Metadata Tags section to item detail page with:
+  - "Add Metadata" button that opens inline form with Key and Value fields
+  - Metadata tags displayed as styled pills showing key:value with X remove button
+  - Empty state with helpful message when no metadata exists
+  - Success toast notifications on add/delete
+  - Form validation (both key and value required)
+  - Cancel button to dismiss form
+- Added comprehensive CSS for metadata tags, form, and empty state
+- Metadata keys automatically registered in metadata_keys table for future autocomplete
+
+**Verification (all 8 feature steps):**
+1. Created test tote (META_TEST_TOTE_F28) and item (META_TEST_ITEM_F28)
+2. Navigated to item detail page - saw Metadata Tags section with empty state
+3. Clicked "Add Metadata" button - form appeared with Key and Value inputs
+4. Entered key: 'Brand' and value: 'Acme'
+5. Clicked Save - toast appeared: 'Metadata "Brand" added successfully!'
+6. Verified Brand:Acme tag appeared on the item detail page
+7. Added another metadata pair: key 'Color', value 'Red' via UI
+8. Verified both metadata tags (Color:Red and Brand:Acme) displayed
+
+**Quality checks:**
+- Zero console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 persistence test: created RESTART_TEST/F28_PERSIST_CHECK metadata, killed server, restarted, verified all 3 metadata entries persisted
+- All test data cleaned up after verification
+
+**Current status:** 17/88 features passing (19.3%)
+
+---
+
 ## Session - Feature #23 - 2026-02-20
 
 ### Feature #23: Delete item with confirmation - PASSED
