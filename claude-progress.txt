@@ -1,5 +1,46 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #31 - 2026-02-20
+
+### Feature #31: Upload photo to an item with thumbnail generation - PASSED
+
+**What was accomplished:**
+- Verified all photo management code was already fully implemented:
+  - POST /api/items/:id/photos - uploads photo with multipart form data, validates type (JPEG/PNG/WebP) and size, generates unique filename, uses sharp to create 200x200 thumbnail, stores in SQLite item_photos table
+  - GET /api/photos/:id - serves full-size photo from filesystem
+  - GET /api/photos/:id/thumbnail - serves thumbnail from filesystem
+  - DELETE /api/photos/:id - deletes photo files and database record
+- Item detail page (src/app/totes/[id]/items/[itemId]/page.tsx) has complete photo UI:
+  - Upload Photo button with hidden file input (accepts image/jpeg,png,webp)
+  - Photo gallery with thumbnail cards
+  - Click thumbnail opens lightbox showing full-size image
+  - Delete button on each photo
+  - "Add Photo" placeholder when under 3 photo limit
+  - Empty state with "No photos yet" and "Click to upload a photo"
+  - Upload error display
+  - Success toast notification on upload
+- All photo gallery CSS styles in globals.css (photo-gallery, photo-thumbnail, photo-lightbox, etc.)
+
+**Verification (all 8 feature steps):**
+1. Created test tote "PHOTO_TEST_F31" and item "PHOTO_ITEM_F31"
+2. Navigated to item detail page - shows Photos (0/3) with empty state
+3. Upload Photo button and clickable empty state present
+4. Uploaded valid JPEG image (982 bytes, generated via sharp) via API
+5. Upload success confirmed - API returned photo record with ID 4
+6. Thumbnail generated and displayed in gallery (523 bytes, 200x200 resize)
+7. Clicked thumbnail → lightbox opened showing full-size image correctly
+8. Photo data verified in database (item_photos table): id=4, item_id=28, mime_type=image/jpeg, file_size=982
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence test: uploaded photo, killed server, restarted, photo data + files persisted, thumbnail displayed correctly
+- All test data cleaned up after verification
+
+**Current status:** 17/88 features passing (19.3%)
+
+---
+
 ## Session - Feature #19 - 2026-02-20
 
 ### Feature #19: Delete tote with confirmation dialog - PASSED
