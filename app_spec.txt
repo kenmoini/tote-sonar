@@ -1,0 +1,511 @@
+<project_specification>
+  <project_name>Tote Sonar</project_name>
+
+  <overview>
+    Tote Sonar is an open-source, self-hosted application for tracking items stored in physical containers such as tote bins. It provides an intuitive interface for managing totes and their contents, generating QR code labels for easy physical identification, and searching across all stored items. Designed for personal or household use, it runs as a single Docker container with no authentication required.
+  </overview>
+
+  <technology_stack>
+    <frontend>
+      <framework>Next.js (App Router)</framework>
+      <styling>Park UI component library</styling>
+      <responsive>Fully responsive design for desktop, tablet, and mobile</responsive>
+      <theme>Light and dark mode support (user-configurable)</theme>
+    </frontend>
+    <backend>
+      <runtime>Node.js (via Next.js API routes)</runtime>
+      <database>SQLite</database>
+      <file_storage>Local filesystem (Docker volume-mountable) for uploaded images and thumbnails</file_storage>
+      <image_processing>sharp (for automatic thumbnail generation)</image_processing>
+      <qr_generation>qrcode library (server-side QR code generation)</qr_generation>
+    </backend>
+    <communication>
+      <api>REST API via Next.js API routes</api>
+    </communication>
+    <deployment>
+      <containerization>Single Docker container</containerization>
+      <packaging>Dockerfile with all dependencies bundled</packaging>
+    </deployment>
+  </technology_stack>
+
+  <prerequisites>
+    <environment_setup>
+      - Node.js 20+ (for local development)
+      - Docker (for containerized deployment)
+      - npm or yarn package manager
+      - SQLite3 (bundled via better-sqlite3 or similar)
+    </environment_setup>
+  </prerequisites>
+
+  <feature_count>88</feature_count>
+
+  <security_and_access_control>
+    <user_roles>
+      <role name="anonymous_user">
+        <permissions>
+          - Full access to all features
+          - No authentication required
+          - Single-user self-hosted application
+        </permissions>
+        <protected_routes>
+          - None (all routes publicly accessible on the local instance)
+        </protected_routes>
+      </role>
+    </user_roles>
+    <authentication>
+      <method>none - self-hosted single-user application</method>
+      <session_timeout>none</session_timeout>
+      <password_requirements>not applicable</password_requirements>
+    </authentication>
+    <sensitive_operations>
+      - Delete tote requires confirmation dialog (warns about item deletion if tote contains items)
+      - Delete item requires confirmation
+      - Import operation warns about potential data overwrite
+    </sensitive_operations>
+  </security_and_access_control>
+
+  <core_features>
+    <infrastructure>
+      - Database connection established and verified
+      - Database schema applied correctly with all required tables
+      - Data persists across server restart
+      - No mock data patterns in codebase
+      - Backend API queries real database
+    </infrastructure>
+
+    <dashboard_and_welcome>
+      - Welcome screen displayed when no totes exist, describing Tote Sonar purpose with a "Create First Tote" button
+      - Dashboard displays total number of totes
+      - Dashboard displays total number of items across all totes
+      - Dashboard displays recently added items with links to their totes
+      - Dashboard provides quick navigation to tote list and search
+      - Empty state transitions seamlessly to populated dashboard when first tote is created
+    </dashboard_and_welcome>
+
+    <tote_management>
+      - Create a new tote with required fields: name and location
+      - Optional tote metadata: size, color, and owner
+      - Auto-generated 6-character alphanumeric unique ID on tote creation
+      - View list of all totes with metadata summary
+      - View individual tote detail page showing all metadata and contained items
+      - Edit tote metadata (name, location, size, color, owner)
+      - Delete tote with confirmation dialog
+      - Delete confirmation warns user if tote contains items that will also be deleted
+      - Cascade delete: all items within a deleted tote are also removed
+      - Duplicate tote names are allowed
+      - Tote list supports sorting by name, location, owner, date created
+      - Tote detail page shows item count
+    </tote_management>
+
+    <qr_code_and_printing>
+      - QR code generated for each tote using server hostname + tote ID
+      - QR code displayed on tote detail page
+      - QR code includes the 6-character tote ID printed below it
+      - QR code links directly to the tote's page when scanned
+      - Print button on individual tote for single QR label printing
+      - Adjustable QR label size options for printing (small, medium, large)
+      - Bulk print: select multiple totes and print all QR labels at once
+      - Print layout formatted for clean label output
+    </qr_code_and_printing>
+
+    <item_management>
+      - Add a new item to a tote with name (required) and description (optional)
+      - Item quantity field (numeric, defaults to 1)
+      - View all items within a tote
+      - Edit item metadata (name, description, quantity)
+      - Delete item from tote with confirmation
+      - Move item to a different tote via tote selection
+      - Item movement history tracked (source tote, destination tote, timestamp)
+      - View movement history for an item
+      - Duplicate item within the same tote
+      - Copy item to a different tote
+      - Dynamic metadata key-value pairs on items
+      - When adding a metadata tag, existing keys appear as autocomplete suggestions
+      - Metadata keys are shared/standardized across all items
+      - Edit and delete individual metadata tags on items
+      - Item list within tote supports sorting by name, date added, quantity
+      - Items display thumbnail previews in list view
+    </item_management>
+
+    <photo_management>
+      - Upload up to 3 photos per item
+      - Configurable maximum file size limit (default 5MB, set in Settings)
+      - File size validation on upload with user-friendly error message
+      - Automatic thumbnail generation on upload for fast list viewing
+      - Click thumbnail to view full-size image
+      - Delete individual photos from an item
+      - Placeholder icon displayed when item has no photos
+      - Placeholder icon provides quick access to upload a photo
+      - Photos stored on local filesystem (Docker volume-mountable path)
+      - Supported formats: JPEG, PNG, WebP
+    </photo_management>
+
+    <search_and_filtering>
+      - Global search bar accessible from all pages
+      - Search items by name
+      - Search items by description
+      - Search items by metadata tag values
+      - Search results display which tote (name and ID) each item belongs to
+      - Filter search results by tote location
+      - Filter search results by tote owner
+      - Filter search results by item metadata keys
+    </search_and_filtering>
+
+    <settings>
+      - Settings page accessible from navigation
+      - Configure server hostname/base URL used for QR code generation
+      - Configure maximum image upload file size
+      - Configure default tote metadata fields (pre-populated when creating new totes)
+      - Configure default item metadata keys (suggested when adding metadata to items)
+      - Light/dark mode theme toggle
+      - Settings persist in SQLite database
+      - Settings applied immediately across the application
+    </settings>
+
+    <import_export>
+      - Export all totes, items, and settings to JSON
+      - Export bundles JSON + uploaded images into a ZIP file
+      - Download ZIP export file
+      - Import from ZIP file containing JSON data and images
+      - Import validates JSON structure before applying
+      - Import restores totes, items, metadata, and settings
+      - Import progress indicator during processing
+    </import_export>
+
+    <responsive_ui_and_navigation>
+      - Responsive layout adapts to desktop, tablet, and mobile viewports
+      - Main navigation with links to Dashboard, Totes, Search, and Settings
+      - Mobile-friendly navigation (hamburger menu or bottom nav)
+      - Breadcrumb navigation on detail pages (e.g., Dashboard > Totes > Tote Name > Item Name)
+      - Loading states/spinners during data fetching
+      - Error states with user-friendly messages
+      - Consistent Park UI component styling throughout
+      - Smooth transitions between pages
+    </responsive_ui_and_navigation>
+  </core_features>
+
+  <database_schema>
+    <tables>
+      <totes>
+        - id (TEXT, PRIMARY KEY, 6-character alphanumeric)
+        - name (TEXT, NOT NULL)
+        - location (TEXT, NOT NULL)
+        - size (TEXT, nullable)
+        - color (TEXT, nullable)
+        - owner (TEXT, nullable)
+        - created_at (DATETIME, default current timestamp)
+        - updated_at (DATETIME, default current timestamp)
+      </totes>
+
+      <items>
+        - id (INTEGER, PRIMARY KEY, autoincrement)
+        - tote_id (TEXT, FOREIGN KEY references totes.id, ON DELETE CASCADE)
+        - name (TEXT, NOT NULL)
+        - description (TEXT, nullable)
+        - quantity (INTEGER, default 1)
+        - created_at (DATETIME, default current timestamp)
+        - updated_at (DATETIME, default current timestamp)
+      </items>
+
+      <item_photos>
+        - id (INTEGER, PRIMARY KEY, autoincrement)
+        - item_id (INTEGER, FOREIGN KEY references items.id, ON DELETE CASCADE)
+        - filename (TEXT, NOT NULL)
+        - original_path (TEXT, NOT NULL)
+        - thumbnail_path (TEXT, NOT NULL)
+        - file_size (INTEGER, NOT NULL)
+        - mime_type (TEXT, NOT NULL)
+        - created_at (DATETIME, default current timestamp)
+      </item_photos>
+
+      <item_metadata>
+        - id (INTEGER, PRIMARY KEY, autoincrement)
+        - item_id (INTEGER, FOREIGN KEY references items.id, ON DELETE CASCADE)
+        - key (TEXT, NOT NULL)
+        - value (TEXT, NOT NULL)
+        - created_at (DATETIME, default current timestamp)
+        - updated_at (DATETIME, default current timestamp)
+      </item_metadata>
+
+      <metadata_keys>
+        - id (INTEGER, PRIMARY KEY, autoincrement)
+        - key_name (TEXT, UNIQUE, NOT NULL)
+        - created_at (DATETIME, default current timestamp)
+      </metadata_keys>
+
+      <item_movement_history>
+        - id (INTEGER, PRIMARY KEY, autoincrement)
+        - item_id (INTEGER, FOREIGN KEY references items.id, ON DELETE CASCADE)
+        - from_tote_id (TEXT, FOREIGN KEY references totes.id, nullable)
+        - to_tote_id (TEXT, FOREIGN KEY references totes.id, NOT NULL)
+        - moved_at (DATETIME, default current timestamp)
+      </item_movement_history>
+
+      <settings>
+        - id (INTEGER, PRIMARY KEY, autoincrement)
+        - key (TEXT, UNIQUE, NOT NULL)
+        - value (TEXT, NOT NULL)
+        - updated_at (DATETIME, default current timestamp)
+      </settings>
+    </tables>
+  </database_schema>
+
+  <api_endpoints_summary>
+    <health>
+      - GET /api/health (returns server and database status)
+    </health>
+
+    <dashboard>
+      - GET /api/dashboard (returns tote count, item count, recent items)
+    </dashboard>
+
+    <totes>
+      - GET /api/totes (list all totes, supports sorting query params)
+      - POST /api/totes (create a new tote, auto-generates 6-char ID)
+      - GET /api/totes/:id (get tote details with items)
+      - PUT /api/totes/:id (update tote metadata)
+      - DELETE /api/totes/:id (delete tote and cascade delete items)
+    </totes>
+
+    <items>
+      - GET /api/totes/:toteId/items (list items in a tote)
+      - POST /api/totes/:toteId/items (add item to a tote)
+      - GET /api/items/:id (get item details with metadata, photos, and history)
+      - PUT /api/items/:id (update item metadata)
+      - DELETE /api/items/:id (delete item and associated photos/metadata)
+      - POST /api/items/:id/move (move item to a different tote)
+      - POST /api/items/:id/duplicate (duplicate item within same or different tote)
+    </items>
+
+    <item_metadata>
+      - GET /api/items/:id/metadata (get metadata for an item)
+      - POST /api/items/:id/metadata (add metadata key-value pair to item)
+      - PUT /api/items/:id/metadata/:metadataId (update a metadata entry)
+      - DELETE /api/items/:id/metadata/:metadataId (delete a metadata entry)
+      - GET /api/metadata-keys (list all existing metadata keys for autocomplete)
+    </item_metadata>
+
+    <photos>
+      - POST /api/items/:id/photos (upload photo, max 3 per item)
+      - GET /api/photos/:id (get full-size photo)
+      - GET /api/photos/:id/thumbnail (get thumbnail)
+      - DELETE /api/photos/:id (delete a photo)
+    </photos>
+
+    <qr_codes>
+      - GET /api/totes/:id/qr (generate QR code image for a tote)
+      - POST /api/totes/qr/bulk (generate multiple QR codes for printing)
+    </qr_codes>
+
+    <search>
+      - GET /api/search (search items by name, description, metadata; supports filters for location, owner, metadata keys)
+    </search>
+
+    <settings>
+      - GET /api/settings (get all settings)
+      - PUT /api/settings (update settings)
+    </settings>
+
+    <import_export>
+      - GET /api/export (generate and download ZIP export)
+      - POST /api/import (upload and process ZIP import)
+    </import_export>
+  </api_endpoints_summary>
+
+  <ui_layout>
+    <main_structure>
+      Top navigation bar with app logo/name ("Tote Sonar"), global search bar, theme toggle, and settings link.
+      Side/top navigation with links to Dashboard, Totes, Search, and Settings.
+      On mobile, navigation collapses to a hamburger menu or bottom navigation bar.
+      Main content area takes up the remaining space with responsive padding.
+    </main_structure>
+
+    <pages>
+      <welcome_page>
+        Displayed when no totes exist. Shows Tote Sonar logo, brief description of the app purpose, and a prominent "Create Your First Tote" button.
+      </welcome_page>
+
+      <dashboard>
+        Metric cards showing total totes, total items. Recently added items list with item name, tote name, and timestamp. Quick action buttons for creating a new tote.
+      </dashboard>
+
+      <tote_list>
+        Card or table layout showing all totes with name, location, item count, and optional metadata. Sorting controls. "Add Tote" button.
+      </tote_list>
+
+      <tote_detail>
+        Tote metadata section (name, location, size, color, owner) with edit capability. QR code display with print button and size options. Items list/grid within the tote with thumbnails. "Add Item" button. Bulk QR print selection.
+      </tote_detail>
+
+      <item_detail>
+        Item metadata (name, description, quantity). Photo gallery (up to 3 photos with thumbnail/full-size toggle). Dynamic metadata tags section with add/edit/delete. Movement history timeline. Move/duplicate/delete action buttons.
+      </item_detail>
+
+      <search_page>
+        Search input field with real-time results. Filter sidebar/panel for location, owner, and metadata key filters. Results displayed as cards showing item name, tote name/ID, thumbnail, and matching metadata.
+      </search_page>
+
+      <settings_page>
+        Form-based settings page with sections for: Server hostname, image upload size limit, default tote metadata fields, default item metadata keys, and theme selection (light/dark).
+      </settings_page>
+
+      <import_export_page>
+        Export button to download ZIP. Import dropzone/file input for uploading ZIP. Progress indicator during import. Validation status display.
+      </import_export_page>
+    </pages>
+  </ui_layout>
+
+  <design_system>
+    <color_palette>
+      Use Park UI default color palette with support for light and dark modes. Primary accent color for action buttons and interactive elements. Neutral grays for backgrounds and borders. Success/warning/error colors for feedback states.
+    </color_palette>
+    <typography>
+      Park UI default typography stack. Clear hierarchy with distinct heading sizes for page titles, section headers, and content text. Monospace font for tote IDs and technical values.
+    </typography>
+    <components>
+      Park UI components throughout: buttons, inputs, cards, dialogs, toasts, tables, badges, and navigation elements. Consistent spacing and border radius. Smooth hover and focus states.
+    </components>
+  </design_system>
+
+  <implementation_steps>
+    <step number="1">
+      <title>Infrastructure & Project Setup</title>
+      <tasks>
+        - Initialize Next.js project with App Router
+        - Install and configure Park UI
+        - Set up SQLite database with better-sqlite3
+        - Create database schema and migration
+        - Create Dockerfile for single-container deployment
+        - Implement /api/health endpoint
+        - Create init.sh script
+      </tasks>
+    </step>
+
+    <step number="2">
+      <title>Core Tote Management</title>
+      <tasks>
+        - Implement tote CRUD API endpoints
+        - Build 6-character alphanumeric ID generator
+        - Create tote list page with sorting
+        - Create tote detail page
+        - Create tote creation/edit forms
+        - Implement tote deletion with cascade and confirmation
+      </tasks>
+    </step>
+
+    <step number="3">
+      <title>Item Management</title>
+      <tasks>
+        - Implement item CRUD API endpoints
+        - Create item list within tote detail page
+        - Create item detail page
+        - Create item creation/edit forms with quantity field
+        - Implement item move functionality with history tracking
+        - Implement item duplication (same tote and cross-tote)
+      </tasks>
+    </step>
+
+    <step number="4">
+      <title>Photo Management</title>
+      <tasks>
+        - Set up file upload API with configurable size limit
+        - Implement sharp-based thumbnail generation
+        - Create photo gallery component on item detail
+        - Implement photo upload (max 3 per item)
+        - Create placeholder icon with upload action
+        - Display thumbnails in item lists
+      </tasks>
+    </step>
+
+    <step number="5">
+      <title>Dynamic Metadata</title>
+      <tasks>
+        - Implement metadata CRUD API endpoints
+        - Create metadata key autocomplete/suggestion system
+        - Build metadata tag editor component on item detail
+        - Implement shared metadata keys table
+      </tasks>
+    </step>
+
+    <step number="6">
+      <title>QR Code Generation & Printing</title>
+      <tasks>
+        - Implement server-side QR code generation
+        - Display QR code on tote detail page with ID label
+        - Create print-friendly QR label layout
+        - Add adjustable size options (small, medium, large)
+        - Implement bulk QR code printing
+      </tasks>
+    </step>
+
+    <step number="7">
+      <title>Search & Filtering</title>
+      <tasks>
+        - Implement search API across items (name, description, metadata)
+        - Create search page with real-time results
+        - Add filter controls (location, owner, metadata keys)
+        - Display tote info in search results
+      </tasks>
+    </step>
+
+    <step number="8">
+      <title>Dashboard & Welcome</title>
+      <tasks>
+        - Create welcome page for empty state
+        - Build dashboard with metric cards
+        - Display recently added items
+        - Add quick action navigation
+      </tasks>
+    </step>
+
+    <step number="9">
+      <title>Settings</title>
+      <tasks>
+        - Implement settings API (get/update)
+        - Build settings page with all configurable options
+        - Implement server hostname configuration for QR codes
+        - Add image upload size limit configuration
+        - Add default metadata field configuration
+        - Implement light/dark mode theme toggle
+      </tasks>
+    </step>
+
+    <step number="10">
+      <title>Import/Export</title>
+      <tasks>
+        - Implement JSON export of all data
+        - Bundle JSON + images into ZIP file
+        - Implement ZIP import with validation
+        - Add progress indicator for import operations
+        - Restore all data including images on import
+      </tasks>
+    </step>
+
+    <step number="11">
+      <title>Responsive Design & Polish</title>
+      <tasks>
+        - Ensure responsive layout across all breakpoints
+        - Implement mobile navigation
+        - Add breadcrumb navigation
+        - Add loading states and error handling
+        - Add toast notifications for user feedback
+        - Final UI polish and consistency pass
+      </tasks>
+    </step>
+  </implementation_steps>
+
+  <success_criteria>
+    <functionality>
+      All CRUD operations work for totes, items, metadata, and photos. QR codes generate correctly and link to proper tote pages. Search returns accurate results across all searchable fields. Import/export produces valid backups and restores. Settings changes apply immediately.
+    </functionality>
+    <user_experience>
+      Intuitive workflow from creating a tote to adding items and printing labels. Fast search and filtering. Smooth photo upload with thumbnail preview. Clear feedback for all user actions (success toasts, error messages, loading states). Empty states guide the user.
+    </user_experience>
+    <technical_quality>
+      SQLite database with proper schema and foreign key constraints. Data persists across server restarts. No mock data in codebase. Clean API design with proper error handling. Docker container starts reliably with single command.
+    </technical_quality>
+    <design_polish>
+      Consistent Park UI styling throughout. Responsive layout works on desktop, tablet, and mobile. Light and dark mode both look polished. Print layouts produce clean QR labels. Thumbnails load quickly in list views.
+    </design_polish>
+  </success_criteria>
+</project_specification>

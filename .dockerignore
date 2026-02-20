@@ -1,0 +1,9 @@
+node_modules
+.next
+.git
+.autoforge
+.claude
+.playwright
+.playwright-cli
+data
+*.md
