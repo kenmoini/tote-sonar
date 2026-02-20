@@ -2,14 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { UpdateToteInput, Tote, Item } from '@/types';
 
+type RouteContext = { params: Promise<{ id: string }> | { id: string } };
+
+async function resolveId(params: Promise<{ id: string }> | { id: string }): Promise<string> {
+  const resolved = await Promise.resolve(params);
+  return resolved.id;
+}
+
 // GET /api/totes/:id - Get tote details with items
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteContext
 ) {
   try {
     const db = getDb();
-    const tote = db.prepare('SELECT * FROM totes WHERE id = ?').get(params.id) as Tote | undefined;
+    const id = await resolveId(context.params);
+    const tote = db.prepare('SELECT * FROM totes WHERE id = ?').get(id) as Tote | undefined;
 
     if (!tote) {
       return NextResponse.json(
@@ -21,12 +29,12 @@ export async function GET(
     // Get items in this tote
     const items = db.prepare(
       'SELECT * FROM items WHERE tote_id = ? ORDER BY created_at DESC'
-    ).all(params.id) as Item[];
+    ).all(id) as Item[];
 
     // Get item count
     const countResult = db.prepare(
       'SELECT COUNT(*) as count FROM items WHERE tote_id = ?'
-    ).get(params.id) as { count: number };
+    ).get(id) as { count: number };
 
     return NextResponse.json({
       data: {
@@ -47,14 +55,15 @@ export async function GET(
 // PUT /api/totes/:id - Update tote metadata
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteContext
 ) {
   try {
     const db = getDb();
+    const id = await resolveId(context.params);
     const body: UpdateToteInput = await request.json();
 
     // Check tote exists
-    const existing = db.prepare('SELECT * FROM totes WHERE id = ?').get(params.id) as Tote | undefined;
+    const existing = db.prepare('SELECT * FROM totes WHERE id = ?').get(id) as Tote | undefined;
     if (!existing) {
       return NextResponse.json(
         { error: 'Tote not found' },
@@ -98,9 +107,9 @@ export async function PUT(
 
     db.prepare(
       `UPDATE totes SET ${updates.join(', ')} WHERE id = ?`
-    ).run(...values, params.id);
+    ).run(...values, id);
 
-    const updated = db.prepare('SELECT * FROM totes WHERE id = ?').get(params.id) as Tote;
+    const updated = db.prepare('SELECT * FROM totes WHERE id = ?').get(id) as Tote;
 
     return NextResponse.json({ data: updated });
   } catch (error) {
@@ -115,13 +124,14 @@ export async function PUT(
 // DELETE /api/totes/:id - Delete tote and cascade delete items
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteContext
 ) {
   try {
     const db = getDb();
+    const id = await resolveId(context.params);
 
     // Check tote exists
-    const existing = db.prepare('SELECT * FROM totes WHERE id = ?').get(params.id) as Tote | undefined;
+    const existing = db.prepare('SELECT * FROM totes WHERE id = ?').get(id) as Tote | undefined;
     if (!existing) {
       return NextResponse.json(
         { error: 'Tote not found' },
@@ -132,10 +142,10 @@ export async function DELETE(
     // Get item count for response
     const countResult = db.prepare(
       'SELECT COUNT(*) as count FROM items WHERE tote_id = ?'
-    ).get(params.id) as { count: number };
+    ).get(id) as { count: number };
 
     // Delete the tote (cascade will handle items due to foreign key)
-    db.prepare('DELETE FROM totes WHERE id = ?').run(params.id);
+    db.prepare('DELETE FROM totes WHERE id = ?').run(id);
 
     return NextResponse.json({
       message: `Tote '${existing.name}' deleted successfully`,
