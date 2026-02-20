@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
-import { Box, MapPin, User, ArrowLeft, Package, Calendar, Plus, X, Check, Trash2, AlertTriangle, Pencil } from 'lucide-react';
+import { Box, MapPin, User, ArrowLeft, Package, Calendar, Plus, X, Check, Trash2, AlertTriangle, Pencil, QrCode } from 'lucide-react';
 import { Tote, Item } from '@/types';
 import Breadcrumb from '@/components/Breadcrumb';
 
@@ -488,6 +488,26 @@ export default function ToteDetailPage() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* QR Code Section */}
+      <div className="tote-detail-section qr-code-section">
+        <div className="section-header">
+          <h2><QrCode size={20} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />QR Code</h2>
+        </div>
+        <div className="qr-code-display">
+          <div className="qr-code-image-container">
+            <img
+              src={`/api/totes/${toteId}/qr`}
+              alt={`QR code for tote ${tote.id}`}
+              className="qr-code-image"
+              width={200}
+              height={200}
+            />
+          </div>
+          <p className="qr-code-tote-id">{tote.id}</p>
+          <p className="qr-code-url-hint">Scan to open this tote&rsquo;s page</p>
+        </div>
       </div>
 
       {/* Edit Tote Modal */}
