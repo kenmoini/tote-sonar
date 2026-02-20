@@ -1,5 +1,41 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #14 - 2026-02-20
+
+### Feature #14: Create a new tote with required fields - PASSED
+
+**What was accomplished:**
+- Built complete totes list page (`/totes`) with:
+  - Card grid layout showing tote name, ID, location, owner, item count, date
+  - Sort controls (name, location, owner, date created)
+  - Empty state with "No totes yet" message and "Create First Tote" button
+  - "Add Tote" button in page header
+- Built tote creation modal with:
+  - Name (required) and Location (required) fields with validation
+  - Optional fields: Size, Color, Owner
+  - Cancel and Create Tote buttons
+  - Success toast notification showing tote name and auto-generated ID
+- Built tote detail page (`/totes/[id]`) with:
+  - Breadcrumb navigation (Dashboard > Totes > Tote Name)
+  - Metadata cards showing location, items count, created date, size, color
+  - Items section (empty state when no items)
+  - 6-character alphanumeric ID displayed with monospace font
+- Fixed API route for `/api/totes/[id]` - params were not being awaited (Promise in Next.js 14)
+- Added comprehensive CSS styles for buttons, modals, forms, toasts, cards, breadcrumbs, etc.
+
+**Verification:**
+- Created tote "TEST_TOTE_CREATE_001" via UI, verified toast notification with 6-char ID
+- Verified tote appeared in list with correct metadata
+- Navigated to detail page, verified name, location, and ID are correct
+- Created "PERSIST_VERIFY_F14_99999", restarted server, verified data persisted
+- Cleaned up all test data after verification
+- Mock data grep: no prohibited patterns found in src/
+- Console: zero JS errors (only HMR websocket in headless mode)
+
+**Current status:** 7/88 features passing (Features #1, #2, #3, #4, #5, #12, #14)
+
+---
+
 ## Session - Feature #12 - 2026-02-20
 
 ### Feature #12: Dashboard displays tote and item counts - PASSED
