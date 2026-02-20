@@ -1,5 +1,25 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #5 - 2026-02-20
+
+### Feature #5: Backend API queries real database - PASSED
+
+**What was accomplished:**
+- Verified API endpoints execute real SQL queries against SQLite database
+- POST /api/totes: Creates tote via SQL INSERT, returns exact data submitted (name: REAL_DB_TEST_12345, location: Test Shelf A, etc.)
+- GET /api/totes: Returns data via SQL SELECT with LEFT JOIN for item counts
+- GET /api/totes/:id: Returns single tote with items via real SQL queries
+- DELETE /api/totes/:id: Deletes via SQL DELETE with cascade
+- Code review confirmed: all route.ts files use better-sqlite3 db.prepare() with real SQL statements
+- No mock data patterns found in codebase (Step 5.6 grep checks clean)
+- Server restart persistence test (Step 5.7): Created RESTART_TEST_98765, stopped server, restarted, verified data persisted
+- Browser automation verification: Confirmed JSON responses via Playwright, zero console errors
+- Cleaned up all test data after verification
+
+**Current status:** 4/88 features passing (Features #1, #2, #4, #5)
+
+---
+
 ## Session - Feature #4 - 2026-02-20
 
 ### Feature #4: No mock data patterns in codebase - PASSED
