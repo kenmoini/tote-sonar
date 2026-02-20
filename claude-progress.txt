@@ -1,5 +1,37 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #53 - 2026-02-20
+
+### Feature #53: API error responses for invalid tote operations - PASSED
+
+**What was accomplished:**
+- Fixed POST /api/totes to return 400 (not 500) when request body is empty or invalid JSON
+- Added try/catch around request.json() to handle empty body gracefully
+- Added validation for non-object bodies (null, string, array)
+- All other tote API error responses (GET/PUT/DELETE 404s) were already correctly implemented
+
+**Verification (all 5 feature steps):**
+1. GET /api/totes/NONEXISTENT → 404 with {"error":"Tote not found"} ✓
+2. POST /api/totes with empty body → 400 with {"error":"Invalid or empty request body..."} ✓
+3. POST /api/totes with missing 'name' field ({"location":"Test"}) → 400 with {"error":"Name is required"} ✓
+4. PUT /api/totes/NONEXISTENT → 404 with {"error":"Tote not found"} ✓
+5. DELETE /api/totes/NONEXISTENT → 404 with {"error":"Tote not found"} ✓
+
+**Additional edge cases verified:**
+- POST with null body → 400 "Request body must be a JSON object..."
+- POST with empty object {} → 400 "Name is required"
+- POST with name but no location → 400 "Location is required"
+
+**Quality checks:**
+- Zero JS console errors (only standard React DevTools info message)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Browser automation: verified /totes/NONEXISTENT shows user-friendly "Tote not found" page with warning icon and "Back to Totes" button
+- All API error responses include descriptive error messages
+
+**Current status:** 27/88 features passing (30.7%)
+
+---
+
 ## Session - Feature #40 - 2026-02-20
 
 ### Feature #40: Filter search results by location and owner - PASSED
