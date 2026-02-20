@@ -1,5 +1,32 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #12 - 2026-02-20
+
+### Feature #12: Dashboard displays tote and item counts - PASSED
+
+**What was accomplished:**
+- Created /api/dashboard API endpoint that queries SQLite for total totes, total items, and recent items
+- Created /api/totes/:id/items API endpoint for creating/listing items within a tote
+- Built full dashboard page (src/app/page.tsx) with:
+  - Metric cards showing Total Totes and Total Items counts
+  - Recently added items list with tote names and timestamps
+  - Quick navigation cards (View All Totes, Search Items)
+  - Welcome/empty state when no totes exist
+  - Loading and error states
+- Added dashboard-specific CSS styles (metric cards, quick nav, responsive layout)
+- Verified all feature steps via browser automation:
+  1. Created 2 totes via API → dashboard showed "2" for Total Totes
+  2. Created 3 items across totes → dashboard showed "3" for Total Items
+  3. Created 1 more item → refreshed dashboard showed "4" for Total Items
+- Zero console errors confirmed
+- Mock data grep: no prohibited patterns found in src/
+- Data persistence verified across graceful server restart
+- All test data cleaned up after verification
+
+**Current status:** 7/88 features passing (Features #1-6, #12)
+
+---
+
 ## Session - Feature #41 - 2026-02-20
 
 ### Feature #41: Settings page loads with all configurable options - PASSED
