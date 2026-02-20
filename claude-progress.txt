@@ -1,5 +1,50 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #23 - 2026-02-20
+
+### Feature #23: Delete item with confirmation - PASSED
+
+**What was accomplished:**
+- Added DELETE /api/items/:id API endpoint that:
+  - Checks item exists (returns 404 if not)
+  - Fetches associated photos before deletion for file cleanup
+  - Deletes item from SQLite (cascade removes metadata, photos records, movement history)
+  - Cleans up photo files from disk (original + thumbnail)
+  - Returns success message with item name
+- Added "Delete Item" button (red, danger-styled) to item detail page header
+- Created confirmation dialog on item detail page with:
+  - Warning icon and "Delete Item" heading
+  - Item name displayed in bold
+  - Warning about photos and metadata also being deleted
+  - "This action cannot be undone" message
+  - Cancel and Delete Item buttons
+  - Buttons disabled during deletion with "Deleting..." text
+- Delete flow from item detail: confirms deletion -> DELETE API call -> toast message -> redirect to tote detail page
+- Cancel flow: closes dialog, item remains intact
+- Added inline delete button on tote detail page item list:
+  - Trash icon appears on hover of item row
+  - Click shows same confirmation dialog
+  - After deletion, item list refreshes and item count updates
+  - Page stays on tote detail (no redirect)
+- Added CSS for .btn-icon-danger and .item-row-actions
+
+**Verification:**
+- Created test tote "DELETE_ITEM_TEST_F23" with test items
+- Item detail page: clicked Delete Item -> confirmation dialog appeared with item name
+- Clicked Cancel -> dialog dismissed, item still exists, API returns item data
+- Clicked Delete Item -> confirmed -> item deleted, redirected to tote detail, item count = 0
+- Verified GET /api/items/:id returns 404 ("Item not found") for deleted item
+- Tote detail page: tested inline delete -> confirmation dialog -> delete -> item removed from list
+- Toast message displayed: 'Item "F23_INLINE_DELETE_TEST" deleted successfully'
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns in src/
+- Step 5.7 persistence test: created RESTART_TEST_F23_12345, killed server, restarted, verified persistence, then deleted and cleaned up
+- All test data cleaned up after verification
+
+**Current status:** 17/88 features passing (19.3%)
+
+---
+
 ## Session - Feature #18 - 2026-02-20
 
 ### Feature #18: Edit tote metadata - PASSED
