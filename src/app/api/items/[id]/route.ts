@@ -67,6 +67,80 @@ export async function GET(
   }
 }
 
+// PUT /api/items/:id - Update item name, description, and/or quantity
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const db = getDb();
+    const itemId = Number(id);
+
+    // Check item exists
+    const item = db.prepare('SELECT * FROM items WHERE id = ?').get(itemId) as Record<string, unknown> | undefined;
+    if (!item) {
+      return NextResponse.json(
+        { error: 'Item not found' },
+        { status: 404 }
+      );
+    }
+
+    const body = await request.json();
+    const { name, description, quantity } = body;
+
+    // Validate name is required and non-empty
+    if (name !== undefined && (!name || typeof name !== 'string' || !name.trim())) {
+      return NextResponse.json(
+        { error: 'Item name is required and cannot be empty' },
+        { status: 400 }
+      );
+    }
+
+    // Validate quantity if provided
+    if (quantity !== undefined) {
+      const qty = Number(quantity);
+      if (isNaN(qty) || qty < 1 || !Number.isInteger(qty)) {
+        return NextResponse.json(
+          { error: 'Quantity must be a positive integer' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Build update fields
+    const updatedName = name !== undefined ? name.trim() : item.name;
+    const updatedDescription = description !== undefined ? (description ? description.trim() : null) : item.description;
+    const updatedQuantity = quantity !== undefined ? Number(quantity) : item.quantity;
+    const now = new Date().toISOString().replace('T', ' ').replace('Z', '');
+
+    db.prepare(`
+      UPDATE items
+      SET name = ?, description = ?, quantity = ?, updated_at = ?
+      WHERE id = ?
+    `).run(updatedName, updatedDescription, updatedQuantity, now, itemId);
+
+    // Fetch the updated item to return
+    const updatedItem = db.prepare(`
+      SELECT i.*, t.name as tote_name, t.location as tote_location
+      FROM items i
+      JOIN totes t ON i.tote_id = t.id
+      WHERE i.id = ?
+    `).get(itemId);
+
+    return NextResponse.json({
+      message: 'Item updated successfully',
+      data: updatedItem,
+    });
+  } catch (error) {
+    console.error('Error updating item:', error);
+    return NextResponse.json(
+      { error: 'Failed to update item' },
+      { status: 500 }
+    );
+  }
+}
+
 // DELETE /api/items/:id - Delete an item and its associated photos, metadata, and movement history
 export async function DELETE(
   request: NextRequest,

@@ -4,8 +4,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
-import { Package, ArrowLeft, Hash, Calendar, FileText, Camera, Upload, X, Trash2, ImageIcon, AlertTriangle, Check, Tag, Plus } from 'lucide-react';
-import { Item, ItemPhoto, ItemMetadata } from '@/types';
+import { Package, ArrowLeft, Hash, Calendar, FileText, Camera, Upload, X, Trash2, ImageIcon, AlertTriangle, Check, Tag, Plus, Pencil, ArrowRightLeft, Clock, MapPin } from 'lucide-react';
+import { Item, ItemPhoto, ItemMetadata, MovementHistory, Tote } from '@/types';
 import Breadcrumb from '@/components/Breadcrumb';
 
 interface ItemDetail extends Item {
@@ -27,11 +27,23 @@ export default function ItemDetailPage() {
   const [viewingPhoto, setViewingPhoto] = useState<ItemPhoto | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingItem, setDeletingItem] = useState(false);
+  const [showEditItem, setShowEditItem] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editQuantity, setEditQuantity] = useState(1);
+  const [editingItem, setEditingItem] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
   const [showAddMetadata, setShowAddMetadata] = useState(false);
   const [metadataKey, setMetadataKey] = useState('');
   const [metadataValue, setMetadataValue] = useState('');
   const [addingMetadata, setAddingMetadata] = useState(false);
   const [metadataError, setMetadataError] = useState<string | null>(null);
+  const [showMoveModal, setShowMoveModal] = useState(false);
+  const [allTotes, setAllTotes] = useState<Tote[]>([]);
+  const [selectedToteId, setSelectedToteId] = useState<string>('');
+  const [movingItem, setMovingItem] = useState(false);
+  const [moveError, setMoveError] = useState<string | null>(null);
+  const [loadingTotes, setLoadingTotes] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchItem = useCallback(async () => {
@@ -194,6 +206,57 @@ export default function ItemDetailPage() {
     }
   };
 
+  const openEditModal = () => {
+    if (!item) return;
+    setEditName(item.name);
+    setEditDescription(item.description || '');
+    setEditQuantity(item.quantity);
+    setEditError(null);
+    setShowEditItem(true);
+  };
+
+  const handleEditItem = async () => {
+    if (!editName.trim()) {
+      setEditError('Item name is required');
+      return;
+    }
+
+    const qty = Number(editQuantity);
+    if (isNaN(qty) || qty < 1 || !Number.isInteger(qty)) {
+      setEditError('Quantity must be a positive whole number');
+      return;
+    }
+
+    setEditingItem(true);
+    setEditError(null);
+
+    try {
+      const res = await fetch(`/api/items/${itemId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editName.trim(),
+          description: editDescription.trim() || null,
+          quantity: qty,
+        }),
+      });
+
+      if (!res.ok) {
+        const json = await res.json();
+        setEditError(json.error || 'Failed to update item');
+        return;
+      }
+
+      setToast({ message: 'Item updated successfully!', type: 'success' });
+      setShowEditItem(false);
+      await fetchItem();
+    } catch {
+      setEditError('Failed to update item. Please try again.');
+    } finally {
+      setEditingItem(false);
+    }
+  };
+
   const handleDeleteItem = async () => {
     setDeletingItem(true);
     try {
@@ -217,6 +280,63 @@ export default function ItemDetailPage() {
     } catch (err) {
       setToast({ message: err instanceof Error ? err.message : 'Failed to delete item', type: 'error' });
       setDeletingItem(false);
+    }
+  };
+
+  const openMoveModal = async () => {
+    setMoveError(null);
+    setSelectedToteId('');
+    setLoadingTotes(true);
+    setShowMoveModal(true);
+
+    try {
+      const res = await fetch('/api/totes');
+      if (!res.ok) throw new Error('Failed to load totes');
+      const json = await res.json();
+      // Filter out the current tote so user can only pick a different one
+      const otherTotes = (json.data || []).filter((t: Tote) => t.id !== toteId);
+      setAllTotes(otherTotes);
+    } catch {
+      setMoveError('Failed to load totes. Please try again.');
+    } finally {
+      setLoadingTotes(false);
+    }
+  };
+
+  const handleMoveItem = async () => {
+    if (!selectedToteId) {
+      setMoveError('Please select a destination tote');
+      return;
+    }
+
+    setMovingItem(true);
+    setMoveError(null);
+
+    try {
+      const res = await fetch(`/api/items/${itemId}/move`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target_tote_id: selectedToteId }),
+      });
+
+      if (!res.ok) {
+        const json = await res.json();
+        setMoveError(json.error || 'Failed to move item');
+        return;
+      }
+
+      const json = await res.json();
+      setToast({ message: json.message || 'Item moved successfully!', type: 'success' });
+      setShowMoveModal(false);
+
+      // Redirect to the item in its new tote after a brief delay
+      setTimeout(() => {
+        router.push(`/totes/${selectedToteId}/items/${itemId}`);
+      }, 500);
+    } catch {
+      setMoveError('Failed to move item. Please try again.');
+    } finally {
+      setMovingItem(false);
     }
   };
 
@@ -318,6 +438,163 @@ export default function ItemDetailPage() {
         </div>
       )}
 
+      {/* Edit Item Modal */}
+      {showEditItem && item && (
+        <div className="modal-overlay" onClick={() => { if (!editingItem) setShowEditItem(false); }}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Edit Item</h2>
+              <button
+                className="modal-close"
+                onClick={() => { if (!editingItem) setShowEditItem(false); }}
+                aria-label="Close"
+                disabled={editingItem}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Name <span className="form-required">*</span></label>
+              <input
+                type="text"
+                className={`form-input ${editError && !editName.trim() ? 'form-input-error' : ''}`}
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Item name"
+                disabled={editingItem}
+                autoFocus
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Description</label>
+              <textarea
+                className="form-input form-textarea"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="Item description (optional)"
+                disabled={editingItem}
+                rows={3}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Quantity</label>
+              <input
+                type="number"
+                className="form-input"
+                value={editQuantity}
+                onChange={(e) => setEditQuantity(Number(e.target.value))}
+                min={1}
+                step={1}
+                disabled={editingItem}
+              />
+            </div>
+            {editError && (
+              <div className="form-error-text">{editError}</div>
+            )}
+            <div className="form-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowEditItem(false)}
+                disabled={editingItem}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleEditItem}
+                disabled={editingItem}
+              >
+                {editingItem ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Move Item Modal */}
+      {showMoveModal && item && (
+        <div className="modal-overlay" onClick={() => { if (!movingItem) setShowMoveModal(false); }}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-header-icon-title">
+                <div className="meta-card-icon">
+                  <ArrowRightLeft size={22} />
+                </div>
+                <h2>Move Item</h2>
+              </div>
+              <button
+                className="modal-close"
+                onClick={() => { if (!movingItem) setShowMoveModal(false); }}
+                aria-label="Close"
+                disabled={movingItem}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="confirm-body">
+              <p>
+                Move <strong>&ldquo;{item.name}&rdquo;</strong> from <strong>{item.tote_name}</strong> to:
+              </p>
+              {loadingTotes ? (
+                <div className="loading-state" style={{ padding: '1rem 0' }}>
+                  <div className="spinner" />
+                  <p>Loading totes...</p>
+                </div>
+              ) : allTotes.length === 0 ? (
+                <div className="metadata-empty-state" style={{ padding: '1rem 0' }}>
+                  <Package size={32} />
+                  <p>No other totes available</p>
+                  <span className="metadata-empty-hint">Create another tote first to move this item</span>
+                </div>
+              ) : (
+                <div className="form-group" style={{ marginTop: '0.75rem' }}>
+                  <label className="form-label">Destination Tote <span className="form-required">*</span></label>
+                  <select
+                    className="form-input form-select"
+                    value={selectedToteId}
+                    onChange={(e) => {
+                      setSelectedToteId(e.target.value);
+                      setMoveError(null);
+                    }}
+                    disabled={movingItem}
+                  >
+                    <option value="">Select a tote...</option>
+                    {allTotes.map((t: Tote) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name} ({t.location})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {moveError && (
+                <div className="form-error-text" style={{ marginTop: '0.5rem' }}>{moveError}</div>
+              )}
+            </div>
+            <div className="form-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowMoveModal(false)}
+                disabled={movingItem}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleMoveItem}
+                disabled={movingItem || !selectedToteId || loadingTotes}
+              >
+                {movingItem ? 'Moving...' : 'Move Item'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Full-size photo lightbox */}
       {viewingPhoto && (
         <div className="photo-lightbox" onClick={() => setViewingPhoto(null)}>
@@ -368,14 +645,32 @@ export default function ItemDetailPage() {
             </span>
           </div>
         </div>
-        <button
-          className="btn btn-danger"
-          onClick={() => setShowDeleteConfirm(true)}
-          title="Delete item"
-        >
-          <Trash2 size={16} />
-          <span>Delete Item</span>
-        </button>
+        <div className="tote-detail-actions">
+          <button
+            className="btn btn-secondary"
+            onClick={openEditModal}
+            title="Edit item"
+          >
+            <Pencil size={16} />
+            <span>Edit Item</span>
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={openMoveModal}
+            title="Move item to another tote"
+          >
+            <ArrowRightLeft size={16} />
+            <span>Move</span>
+          </button>
+          <button
+            className="btn btn-danger"
+            onClick={() => setShowDeleteConfirm(true)}
+            title="Delete item"
+          >
+            <Trash2 size={16} />
+            <span>Delete Item</span>
+          </button>
+        </div>
       </div>
 
       {/* Item metadata */}
@@ -608,6 +903,52 @@ export default function ItemDetailPage() {
             <span className="metadata-empty-hint">Add key-value metadata to organize and describe this item</span>
           </div>
         ) : null}
+      </div>
+
+      {/* Movement History Section */}
+      <div className="tote-detail-section">
+        <div className="section-header">
+          <h2>
+            <Clock size={20} />
+            Movement History
+          </h2>
+        </div>
+        {item.movement_history && item.movement_history.length > 0 ? (
+          <div className="movement-history-list">
+            {item.movement_history.map((move: MovementHistory) => (
+              <div key={move.id} className="movement-history-item">
+                <div className="movement-history-icon">
+                  <ArrowRightLeft size={16} />
+                </div>
+                <div className="movement-history-content">
+                  <div className="movement-history-description">
+                    Moved from{' '}
+                    {move.from_tote_name ? (
+                      <Link href={`/totes/${move.from_tote_id}`} className="movement-history-link">
+                        {move.from_tote_name}
+                      </Link>
+                    ) : (
+                      <span className="movement-history-unknown">Unknown</span>
+                    )}
+                    {' '}to{' '}
+                    <Link href={`/totes/${move.to_tote_id}`} className="movement-history-link">
+                      {move.to_tote_name}
+                    </Link>
+                  </div>
+                  <div className="movement-history-time">
+                    {formatDate(move.moved_at)}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="metadata-empty-state">
+            <Clock size={32} />
+            <p>No movement history</p>
+            <span className="metadata-empty-hint">Movement history will appear here when this item is moved between totes</span>
+          </div>
+        )}
       </div>
     </main>
   );
