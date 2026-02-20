@@ -37,7 +37,25 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const db = getDb();
-    const body: CreateToteInput = await request.json();
+
+    // Parse JSON body - handle empty or invalid JSON
+    let body: CreateToteInput;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid or empty request body. JSON with at least "name" and "location" fields is required.' },
+        { status: 400 }
+      );
+    }
+
+    // Handle non-object body (e.g. null, string, number)
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json(
+        { error: 'Request body must be a JSON object with "name" and "location" fields.' },
+        { status: 400 }
+      );
+    }
 
     // Validate required fields
     if (!body.name || !body.name.trim()) {
