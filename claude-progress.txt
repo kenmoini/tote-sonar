@@ -1,5 +1,30 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #3 - 2026-02-20
+
+### Feature #3: Data persists across server restart - PASSED
+
+**What was accomplished:**
+- Identified and fixed a critical data persistence bug in db.ts:
+  - Added `synchronous = NORMAL` pragma for reliable disk writes
+  - Added `wal_checkpoint(TRUNCATE)` on startup to recover any uncommitted WAL data from previous sessions that were killed abruptly
+  - Without this fix, data was lost when the server was force-killed (kill -9) because the WAL file wasn't properly checkpointed back to the main database
+- Successfully verified full persistence test:
+  1. Created test tote "RESTART_TEST_12345" via POST /api/totes
+  2. Verified tote appeared in GET /api/totes
+  3. Stopped server completely (kill -9 to simulate crash)
+  4. Verified port 3000 was free (no server running)
+  5. Restarted the server
+  6. Verified tote "RESTART_TEST_12345" still existed after restart
+  7. Cleaned up test data by deleting the tote
+- Ran mock data detection grep - no mock/fake data patterns found in src/
+- Verified through browser automation (playwright-cli)
+- Cleaned up all test data after verification
+
+**Current status:** 5/88 features passing (Features #1, #2, #3, #4, #5)
+
+---
+
 ## Session - Feature #5 - 2026-02-20
 
 ### Feature #5: Backend API queries real database - PASSED

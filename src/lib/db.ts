@@ -23,6 +23,9 @@ export function getDb(): Database.Database {
     db = new Database(DB_PATH);
     db.pragma('journal_mode = WAL');
     db.pragma('foreign_keys = ON');
+    db.pragma('synchronous = NORMAL');
+    // Checkpoint any existing WAL data from previous sessions
+    db.pragma('wal_checkpoint(TRUNCATE)');
     console.log('Database connected:', DB_PATH);
     initializeSchema();
   }
