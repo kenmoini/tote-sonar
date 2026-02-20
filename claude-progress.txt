@@ -1,5 +1,38 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #20 - 2026-02-20
+
+### Feature #20: Add new item to a tote - PASSED
+
+**What was accomplished:**
+- Added "Add Item" button and modal form to tote detail page (src/app/totes/[id]/page.tsx)
+- Form includes:
+  - Name field (required, with validation)
+  - Description textarea (optional)
+  - Quantity number input (defaults to 1)
+- Success toast notification after item creation ("Item X added successfully!")
+- Item list refreshes automatically after adding a new item
+- Empty state includes "Add First Item" call-to-action button
+- Modal can be dismissed via Cancel button, X close button, or clicking overlay
+- Uses existing POST /api/totes/:id/items API endpoint (already implemented)
+- Verified all 10 feature steps via Playwright browser automation:
+  1. Created tote via API
+  2. Navigated to tote detail page
+  3. Clicked "Add Item" button - modal appeared with all fields
+  4. Entered item name "TEST_ITEM_001"
+  5. Entered description "A test item"
+  6. Set quantity to 5
+  7. Submitted form
+  8. Toast notification appeared: Item "TEST_ITEM_001" added successfully!
+  9. Item appeared in tote's item list
+  10. Item showed correct name, description, and quantity (Qty: 5)
+- Console: 0 JS errors, 0 warnings (only HMR websocket noise from dev mode)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence test: created "RESTART_TEST_ITEM_F20", killed server, restarted, data persisted
+- All test data cleaned up after verification
+
+**Current status:** 13/88 features passing (14.8%)
+
 ## Session - Feature #16 - 2026-02-20
 
 ### Feature #16: View list of all totes with metadata summary - PASSED
