@@ -355,7 +355,9 @@ export default function ItemDetailPage() {
     return (
       <main className="page-container">
         <div className="error-state">
-          <p>{error || 'Item not found'}</p>
+          <AlertTriangle size={48} className="error-icon" />
+          <h2>{error || 'Item not found'}</h2>
+          <p>The item you&rsquo;re looking for doesn&rsquo;t exist or may have been deleted.</p>
           <Link href={`/totes/${toteId}`} className="btn btn-secondary">
             <ArrowLeft size={16} />
             Back to Tote

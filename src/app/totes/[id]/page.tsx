@@ -269,7 +269,9 @@ export default function ToteDetailPage() {
     return (
       <main className="page-container">
         <div className="error-state">
-          <p>{error || 'Tote not found'}</p>
+          <AlertTriangle size={48} className="error-icon" />
+          <h2>{error || 'Tote not found'}</h2>
+          <p>The tote you&rsquo;re looking for doesn&rsquo;t exist or may have been deleted.</p>
           <Link href="/totes" className="btn btn-secondary">
             <ArrowLeft size={16} />
             Back to Totes
