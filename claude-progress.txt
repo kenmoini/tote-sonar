@@ -1,5 +1,33 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #10 - 2026-02-20
+
+### Feature #10: 404 page for invalid routes - PASSED
+
+**What was accomplished:**
+- Created root-level `not-found.tsx` in src/app/ for catching all unmatched routes
+- Page displays large "404" text, "Page Not Found" heading, helpful description, and action buttons (Go to Dashboard, View Totes)
+- Added CSS styles for `.not-found-code` (large 404 display) and `.not-found-actions` (button container)
+- Navigation bar remains fully accessible on all error pages (via root layout)
+- Existing tote detail page already handles invalid tote IDs with "Tote not found" error state
+
+**Verification (all 5 feature steps):**
+1. Navigated to /nonexistent-page -> 404 "Page Not Found" message displayed with large "404" code
+2. Verified proper "Page Not Found" heading and description text
+3. Navigated to /totes/INVALID_ID_999 -> "Tote not found" message displayed with warning icon
+4. Verified appropriate "Tote not found" error with "The tote you're looking for doesn't exist or may have been deleted"
+5. Verified navigation bar (Dashboard, Totes, Search, Import/Export, Settings) is accessible from both error pages - clicked Dashboard and Totes links successfully
+
+**Quality checks:**
+- Zero JS console errors (only expected 404 HTTP responses from API calls, not JS errors)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Navigation links tested from both error pages - all navigate correctly
+- Visual appearance verified via screenshots - clean, consistent styling
+
+**Current status:** 28/88 features passing (31.8%)
+
+---
+
 ## Session - Feature #53 - 2026-02-20
 
 ### Feature #53: API error responses for invalid tote operations - PASSED
