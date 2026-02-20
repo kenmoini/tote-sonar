@@ -12,12 +12,14 @@ import {
   Moon,
   Menu,
   X,
+  FileArchive,
 } from 'lucide-react';
 
 const navLinks = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/totes', label: 'Totes', icon: Box },
   { href: '/search', label: 'Search', icon: Search },
+  { href: '/import-export', label: 'Import/Export', icon: FileArchive },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
