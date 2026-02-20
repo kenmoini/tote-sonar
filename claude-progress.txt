@@ -1,0 +1,34 @@
+# Tote Sonar - Progress Notes
+
+## Session 1 - 2026-02-20
+
+### Feature #1: Database connection established - PASSED
+
+**What was accomplished:**
+- Verified dev server starts correctly on port 3000
+- Confirmed SQLite database (better-sqlite3) initializes on first API call
+- Server logs show: "Database connected: .../data/tote-sonar.db" and "Database schema initialized"
+- GET /api/health returns HTTP 200 with {"status":"ok","database":"connected","timestamp":"..."}
+- Browser verification via Playwright confirmed correct JSON response
+- Database file exists at data/tote-sonar.db (4096 bytes)
+- No mock data patterns found in src/ codebase
+- Real SQLite database using better-sqlite3 singleton pattern with WAL mode
+
+**Project state:**
+- Next.js 14 app with App Router
+- SQLite via better-sqlite3 with full schema (7 tables: totes, items, item_photos, item_metadata, metadata_keys, item_movement_history, settings)
+- Health endpoint at /api/health working
+- Default settings seeded (server_hostname, max_upload_size, theme, etc.)
+- Placeholder home page exists
+- components/ directory is empty
+- No additional API routes or pages built yet (beyond health)
+
+**Current completion: 1/88 features passing**
+
+### Notes for next sessions:
+- Feature #2 (Database schema applied correctly) should verify all 7 tables exist with correct columns
+- Feature #3 (Data persists across restart) needs server restart test
+- Feature #4 (No mock data) needs comprehensive grep check
+- Feature #5 (Backend API queries real database) needs real query verification
+- npm install works fine; @ark-ui/react and all deps installed
+- Server runs on port 3000 via `npx next dev --port 3000`
