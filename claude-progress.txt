@@ -1,5 +1,37 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #9 - 2026-02-20
+
+### Feature #9: Breadcrumb navigation on detail pages - PASSED
+
+**What was accomplished:**
+- Created reusable Breadcrumb component (src/components/Breadcrumb.tsx) with:
+  - ChevronRight separators between items
+  - Links for all items except the last (current page)
+  - aria-label="Breadcrumb" for accessibility
+  - Responsive wrapping
+- Created GET /api/items/:id API endpoint that returns item details with tote name, metadata, photos, and movement history via real SQLite queries
+- Created item detail page at /totes/[id]/items/[itemId] with breadcrumb: Dashboard > Totes > [Tote Name] > [Item Name]
+- Updated tote detail page to use reusable Breadcrumb component: Dashboard > Totes > [Tote Name]
+- Made items in tote detail page clickable links to their detail pages
+- Added CSS for breadcrumb chevrons, item row links, and item detail page layout
+
+**Verification (all 5 steps):**
+1. Created a tote and an item within it via API
+2. Tote detail page breadcrumb shows 'Dashboard > Totes > [Tote Name]' - verified
+3. Item detail page breadcrumb shows 'Dashboard > Totes > [Tote Name] > [Item Name]' - verified
+4. Clicked all breadcrumb links - Dashboard (→ /), Totes (→ /totes), Tote Name (→ /totes/[id]) - all navigate correctly
+5. Breadcrumb updates dynamically when navigating between pages - verified
+
+**Quality checks:**
+- Zero console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Test data cleaned up after verification
+
+**Current status:** 12/88 features passing
+
+---
+
 ## Session - Feature #20 - 2026-02-20
 
 ### Feature #20: Add new item to a tote - PASSED
