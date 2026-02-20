@@ -1,5 +1,43 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #40 - 2026-02-20
+
+### Feature #40: Filter search results by location and owner - PASSED
+
+**What was accomplished:**
+- Created GET /api/search/filters endpoint that returns distinct locations and owners from totes table for populating filter dropdowns
+- Updated search page UI (/search) with:
+  - "Filters" toggle button with active filter count badge
+  - Collapsible filter panel containing Location and Owner dropdown selects
+  - Dropdowns populated from /api/search/filters API
+  - Auto-search triggered on filter change (no need to click Search again)
+  - Active filter tags displayed below dropdowns with individual clear (X) buttons
+  - "Clear all filters" button when any filters are active
+  - URL updated with location and owner query params for bookmarkable filtered searches
+  - Filter-aware messaging: "No results found (filtered)" and "adjust your filters" hint
+  - Search hint in empty state: "Use the Filters button to narrow results by location or owner"
+- Added comprehensive CSS styles for filter toggle, filter panel, filter dropdowns, active filter tags, and responsive layout
+- The existing search API already supported location and owner query parameters - only the UI was missing
+
+**Verification (all 6 feature steps):**
+1. Created tote A (F40_Tote_A, location: 'Garage', owner: 'Alice') with item 'Item A'
+2. Created tote B (F40_Tote_B, location: 'Basement', owner: 'Bob') with item 'Item B'
+3. Searched for 'Item' → verified both results appeared (2 results found)
+4. Applied location filter 'Garage' → verified only Item A appeared (1 result found, filtered)
+5. Cleared location filter → applied owner filter 'Bob' → verified only Item B appeared (1 result found, filtered)
+6. Applied both filters (Garage + Bob) → 0 results (correct, no item in Garage AND owned by Bob)
+   Changed owner to Alice → 1 result (Item A, in Garage AND owned by Alice)
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence test: killed server, restarted, all search data and filter results persisted correctly
+- All test data cleaned up after verification
+
+**Current status:** 25/88 features passing (28.4%)
+
+---
+
 ## Session - Feature #17 - 2026-02-20
 
 ### Feature #17: Tote list supports sorting - PASSED
