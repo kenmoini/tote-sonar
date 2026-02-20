@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
-import { Box, MapPin, User, ArrowLeft, Package, Calendar, Plus, X, Check, Trash2, AlertTriangle } from 'lucide-react';
+import { Box, MapPin, User, ArrowLeft, Package, Calendar, Plus, X, Check, Trash2, AlertTriangle, Pencil } from 'lucide-react';
 import { Tote, Item } from '@/types';
 import Breadcrumb from '@/components/Breadcrumb';
 
@@ -34,6 +34,22 @@ export default function ToteDetailPage() {
   const [itemFormErrors, setItemFormErrors] = useState<{ name?: string }>({});
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
+  // Edit Tote form state
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editLocation, setEditLocation] = useState('');
+  const [editSize, setEditSize] = useState('');
+  const [editColor, setEditColor] = useState('');
+  const [editOwner, setEditOwner] = useState('');
+  const [editingTote, setEditingTote] = useState(false);
+  const [editFormErrors, setEditFormErrors] = useState<{ name?: string; location?: string }>({});
+
+  // Delete Item confirmation state
+  const [showDeleteItemConfirm, setShowDeleteItemConfirm] = useState(false);
+  const [deletingItemId, setDeletingItemId] = useState<number | null>(null);
+  const [deletingItemName, setDeletingItemName] = useState('');
+  const [deletingItemLoading, setDeletingItemLoading] = useState(false);
+
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
@@ -44,6 +60,60 @@ export default function ToteDetailPage() {
     setItemDescription('');
     setItemQuantity('1');
     setItemFormErrors({});
+  };
+
+  const openEditForm = () => {
+    if (tote) {
+      setEditName(tote.name);
+      setEditLocation(tote.location);
+      setEditSize(tote.size || '');
+      setEditColor(tote.color || '');
+      setEditOwner(tote.owner || '');
+      setEditFormErrors({});
+      setShowEditForm(true);
+    }
+  };
+
+  const handleEditTote = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const errors: { name?: string; location?: string } = {};
+    if (!editName.trim()) errors.name = 'Tote name is required';
+    if (!editLocation.trim()) errors.location = 'Location is required';
+    if (Object.keys(errors).length > 0) {
+      setEditFormErrors(errors);
+      return;
+    }
+
+    setEditingTote(true);
+    setEditFormErrors({});
+
+    try {
+      const res = await fetch(`/api/totes/${toteId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editName.trim(),
+          location: editLocation.trim(),
+          size: editSize.trim() || null,
+          color: editColor.trim() || null,
+          owner: editOwner.trim() || null,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to update tote');
+      }
+
+      showToast('Tote updated successfully!', 'success');
+      setShowEditForm(false);
+      await fetchTote();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to update tote', 'error');
+    } finally {
+      setEditingTote(false);
+    }
   };
 
   const fetchTote = useCallback(async () => {
@@ -136,6 +206,40 @@ export default function ToteDetailPage() {
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to delete tote', 'error');
       setDeleting(false);
+    }
+  };
+
+  const promptDeleteItem = (e: React.MouseEvent, itemId: number, itemName: string) => {
+    e.preventDefault(); // Prevent navigating to item detail page
+    e.stopPropagation();
+    setDeletingItemId(itemId);
+    setDeletingItemName(itemName);
+    setShowDeleteItemConfirm(true);
+  };
+
+  const handleDeleteItem = async () => {
+    if (!deletingItemId) return;
+    setDeletingItemLoading(true);
+    try {
+      const res = await fetch(`/api/items/${deletingItemId}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to delete item');
+      }
+
+      const json = await res.json();
+      showToast(json.message || 'Item deleted successfully', 'success');
+      setShowDeleteItemConfirm(false);
+      setDeletingItemId(null);
+      setDeletingItemName('');
+      await fetchTote();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to delete item', 'error');
+    } finally {
+      setDeletingItemLoading(false);
     }
   };
 
@@ -246,6 +350,54 @@ export default function ToteDetailPage() {
         </div>
       )}
 
+      {/* Delete Item Confirmation Dialog */}
+      {showDeleteItemConfirm && (
+        <div className="modal-overlay" onClick={() => { if (!deletingItemLoading) { setShowDeleteItemConfirm(false); setDeletingItemId(null); setDeletingItemName(''); } }}>
+          <div className="modal modal-confirm" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header modal-header-danger">
+              <div className="modal-header-icon-title">
+                <div className="confirm-icon-danger">
+                  <AlertTriangle size={24} />
+                </div>
+                <h2>Delete Item</h2>
+              </div>
+              <button
+                className="modal-close"
+                onClick={() => { if (!deletingItemLoading) { setShowDeleteItemConfirm(false); setDeletingItemId(null); setDeletingItemName(''); } }}
+                aria-label="Close"
+                disabled={deletingItemLoading}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="confirm-body">
+              <p>
+                Are you sure you want to delete <strong>&ldquo;{deletingItemName}&rdquo;</strong>?
+              </p>
+              <p className="confirm-text-muted">This will also remove all photos and metadata associated with this item. This action cannot be undone.</p>
+            </div>
+            <div className="form-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => { setShowDeleteItemConfirm(false); setDeletingItemId(null); setDeletingItemName(''); }}
+                disabled={deletingItemLoading}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={handleDeleteItem}
+                disabled={deletingItemLoading}
+              >
+                {deletingItemLoading ? 'Deleting...' : 'Delete Item'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Breadcrumb */}
       <Breadcrumb items={[
         { label: 'Dashboard', href: '/' },
@@ -264,14 +416,24 @@ export default function ToteDetailPage() {
             <span className="tote-detail-id">ID: {tote.id}</span>
           </div>
         </div>
-        <button
-          className="btn btn-danger"
-          onClick={() => setShowDeleteConfirm(true)}
-          title="Delete tote"
-        >
-          <Trash2 size={16} />
-          <span>Delete Tote</span>
-        </button>
+        <div className="tote-detail-actions">
+          <button
+            className="btn btn-secondary"
+            onClick={openEditForm}
+            title="Edit tote"
+          >
+            <Pencil size={16} />
+            <span>Edit Tote</span>
+          </button>
+          <button
+            className="btn btn-danger"
+            onClick={() => setShowDeleteConfirm(true)}
+            title="Delete tote"
+          >
+            <Trash2 size={16} />
+            <span>Delete Tote</span>
+          </button>
+        </div>
       </div>
 
       {/* Tote metadata */}
@@ -327,6 +489,117 @@ export default function ToteDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Edit Tote Modal */}
+      {showEditForm && (
+        <div className="modal-overlay" onClick={() => { if (!editingTote) { setShowEditForm(false); } }}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Edit Tote</h2>
+              <button
+                className="modal-close"
+                onClick={() => { if (!editingTote) setShowEditForm(false); }}
+                aria-label="Close"
+                disabled={editingTote}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleEditTote} className="tote-form">
+              <div className="form-group">
+                <label htmlFor="edit-tote-name" className="form-label">
+                  Name <span className="form-required">*</span>
+                </label>
+                <input
+                  id="edit-tote-name"
+                  type="text"
+                  className={`form-input ${editFormErrors.name ? 'form-input-error' : ''}`}
+                  placeholder="e.g., Holiday Decorations"
+                  value={editName}
+                  onChange={(e) => { setEditName(e.target.value); setEditFormErrors(prev => ({ ...prev, name: undefined })); }}
+                  autoFocus
+                />
+                {editFormErrors.name && <span className="form-error-text">{editFormErrors.name}</span>}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="edit-tote-location" className="form-label">
+                  Location <span className="form-required">*</span>
+                </label>
+                <input
+                  id="edit-tote-location"
+                  type="text"
+                  className={`form-input ${editFormErrors.location ? 'form-input-error' : ''}`}
+                  placeholder="e.g., Garage Shelf A"
+                  value={editLocation}
+                  onChange={(e) => { setEditLocation(e.target.value); setEditFormErrors(prev => ({ ...prev, location: undefined })); }}
+                />
+                {editFormErrors.location && <span className="form-error-text">{editFormErrors.location}</span>}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="edit-tote-size" className="form-label">
+                  Size
+                </label>
+                <input
+                  id="edit-tote-size"
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g., Large, 50L"
+                  value={editSize}
+                  onChange={(e) => setEditSize(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="edit-tote-color" className="form-label">
+                  Color
+                </label>
+                <input
+                  id="edit-tote-color"
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g., Blue, Red"
+                  value={editColor}
+                  onChange={(e) => setEditColor(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="edit-tote-owner" className="form-label">
+                  Owner
+                </label>
+                <input
+                  id="edit-tote-owner"
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g., John, Family"
+                  value={editOwner}
+                  onChange={(e) => setEditOwner(e.target.value)}
+                />
+              </div>
+
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowEditForm(false)}
+                  disabled={editingTote}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={editingTote}
+                >
+                  {editingTote ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Add Item Modal */}
       {showAddItemForm && (
@@ -441,7 +714,16 @@ export default function ToteDetailPage() {
                   <span className="item-name">{item.name}</span>
                   {item.description && <span className="item-desc">{item.description}</span>}
                 </div>
-                <span className="item-qty">Qty: {item.quantity}</span>
+                <div className="item-row-actions">
+                  <span className="item-qty">Qty: {item.quantity}</span>
+                  <button
+                    className="btn-icon-danger"
+                    onClick={(e) => promptDeleteItem(e, item.id, item.name)}
+                    title="Delete item"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </Link>
             ))}
           </div>
