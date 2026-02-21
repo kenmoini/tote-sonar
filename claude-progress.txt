@@ -1,5 +1,38 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #12 - 2026-02-21
+
+### Feature #12: Edit tote metadata - PASSED
+
+**What was accomplished:**
+- Verified existing edit tote functionality works correctly end-to-end
+- All code was already implemented: Edit Tote button, modal form with 5 fields (name, location, size, color, owner), PUT /api/totes/:id endpoint
+
+**Verification (all 13 feature steps):**
+1. Created tote via API with name "Edit Test", location "Room 1", size "Small", color "Blue", owner "OrigOwner" (ID: ayrRHA)
+2. Navigated to tote detail page - all metadata displayed correctly
+3. Clicked "Edit Tote" button - modal appeared with all 5 fields pre-populated
+4. Changed name to "Edited Tote Name"
+5. Changed location to "Room 2"
+6. Changed size to "Medium"
+7. Changed color to "Red"
+8. Changed owner to "NewOwner"
+9. Clicked "Save Changes"
+10. Toast showed "Tote updated successfully!" - modal closed, page refreshed with new values
+11. Full page refresh - all 5 changed values persisted (name, location, size, color, owner)
+12. GET /api/totes/ayrRHA confirmed all fields updated in API response
+13. Cleaned up: deleted test tote
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence test: killed server, restarted, all edited values persisted
+- All test data cleaned up after verification
+
+**Current status:** 26/90 features passing (28.9%)
+
+---
+
 ## Session - Feature #21 - 2026-02-21
 
 ### Feature #21: Move item to a different tote - PASSED
