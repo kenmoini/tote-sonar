@@ -1,5 +1,40 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #51 - 2026-02-21
+
+### Feature #51: Configure server hostname for QR code generation - PASSED
+
+**What was accomplished:**
+- Verified the full end-to-end flow for configuring server hostname:
+  - Settings page loads with hostname field showing current value (http://localhost:3000)
+  - Changed hostname to "http://myserver.local:3000" via the Settings UI
+  - Save Settings button works with success toast "Settings saved successfully!"
+  - QR code API encodes the updated hostname in the QR URL
+  - GET /api/settings confirms hostname value persisted in SQLite database
+  - Reverted setting back to http://localhost:3000
+- No code changes needed - all functionality was already implemented:
+  - Settings page hostname field (settings/page.tsx lines 234-263)
+  - QR code API reads server_hostname from settings table (totes/[id]/qr/route.ts lines 20-21)
+  - Settings API GET/PUT endpoints with SQLite persistence (api/settings/route.ts)
+
+**Verification (all 8 feature steps):**
+1. Navigated to Settings page - hostname field displayed with "http://localhost:3000"
+2. Changed server hostname to "http://myserver.local:3000"
+3. Clicked Save Settings button
+4. Toast notification "Settings saved successfully!" appeared
+5. Navigated to tote detail page - QR code displayed correctly
+6. Verified QR code encodes "http://myserver.local:3000/totes/xc4kSc" via API (format=dataurl)
+7. GET /api/settings returned server_hostname: "http://myserver.local:3000" (persisted)
+8. Reverted setting back to "http://localhost:3000" and verified QR code reverted
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence test: changed hostname to myserver.local:3000, killed server (kill -9), restarted, verified hostname still set to myserver.local:3000 and QR code still encoded new hostname
+- All test data cleaned up after verification
+
+**Current status:** 53/90 features passing (58.9%)
+
 ## Session - Feature #49 - 2026-02-21
 
 ### Feature #49: Dashboard shows recently added items with tote links - PASSED
