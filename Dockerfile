@@ -26,8 +26,8 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Create non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN addgroup --system --gid 1001 tote-sonar
+RUN adduser --system --uid 1001 tote-sonar
 
 # Copy standalone build output
 COPY --from=base /app/.next/standalone ./
@@ -35,12 +35,12 @@ COPY --from=base /app/.next/static ./.next/static
 
 # Create data directories
 RUN mkdir -p /app/data/uploads /app/data/thumbnails && \
-    chown -R nextjs:nodejs /app/data
+    chown -R tote-sonar:tote-sonar /app/data
 
 # Volume for persistent data
 VOLUME ["/app/data"]
 
-USER nextjs
+USER tote-sonar
 
 EXPOSE 3000
 
