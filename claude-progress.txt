@@ -1,5 +1,37 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #44 - 2026-02-21
+
+### Feature #44: Filter search results by owner and metadata keys - PASSED
+
+**What was accomplished:**
+- Verified existing owner and metadata key filter functionality on the search page
+- The search page already had Location, Owner, and Metadata Key filter dropdowns (added by feature #43 agent)
+- The search API already supported owner and metadata_key query parameters
+- The filters API already returned metadata keys from the metadata_keys table
+- All 8 verification steps completed successfully via Playwright browser automation
+
+**Verification (all 8 steps):**
+1. Created tote "F44_Alice_Tote" with owner "Alice", added item with metadata key "Brand"=Acme via API
+2. Created tote "F44_Bob_Tote" with owner "Bob", added item without metadata via API
+3. Navigated to search page, searched for "F44" - both items appeared (2 results)
+4. Opened filter panel, selected "Alice" in Owner filter dropdown
+5. Verified only Alice's item appeared (1 result for "F44" filtered) - Bob's item hidden
+6. Cleared owner filter, selected "Brand" in Metadata Key filter dropdown
+7. Verified only Alice's item (with Brand metadata) appeared (1 result filtered) - Bob's item hidden
+8. Cleaned up: deleted both test totes (cascade deleted items and metadata)
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence: created RESTART_TEST_F44_12345 with Brand metadata, killed server (kill -9), restarted, verified search with Brand filter returned item, cleaned up
+- Screenshot verified clean UI: filter panel with 3 dropdowns, active filter tags, proper badge count
+- All test data cleaned up after verification
+
+**Current status:** 48/90 features passing (53.3%)
+
+---
+
 ## Session - Feature #46 - 2026-02-21
 
 ### Feature #46: Welcome screen Create First Tote button works - PASSED
