@@ -1,5 +1,31 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #34 - 2026-02-21
+
+### Feature #34: QR code generated and displayed on tote detail - PASSED
+
+**What was accomplished:**
+- Verified QR code generation and display on tote detail page
+- No code changes needed - QR code feature was already fully implemented
+
+**Verification (all 6 feature steps):**
+1. Created test tote "F34_QR_TEST_TOTE" (ID: TcY8KA) via POST /api/totes
+2. Navigated to tote detail page /totes/TcY8KA in browser
+3. Verified QR code image is displayed in dedicated "QR Code" section with QR icon heading
+4. Verified 6-character tote ID "TcY8KA" is printed below the QR code in monospace font, with "Scan to open this tote's page" helper text
+5. Verified GET /api/totes/TcY8KA/qr returns HTTP 200 with Content-Type: image/png (2032 bytes valid PNG). Also verified data URL format returns base64 PNG encoding URL "http://localhost:3000/totes/TcY8KA". Also verified 404 returned for nonexistent tote QR codes.
+6. Cleaned up: DELETE /api/totes/TcY8KA returned success, confirmed 404 on re-fetch
+
+**Quality checks:**
+- Console: only HMR WebSocket error (standard dev mode, not a real JS error)
+- Step 5.6 mock data grep: no prohibited patterns (globalThis, devStore, mockDb, MOCK, etc.) found in src/
+- Visual screenshot verified clean QR code section with properly rendered scannable QR code, monospace tote ID label, and helper text
+- All test data cleaned up after verification
+
+**Current status:** 13/90 features passing (14.4%)
+
+---
+
 ## Session - Feature #11 - 2026-02-21
 
 ### Feature #11: View tote detail page with all metadata fields - PASSED
