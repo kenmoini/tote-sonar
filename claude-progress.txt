@@ -1,5 +1,42 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #64 - 2026-02-21
+
+### Feature #64: User-friendly error message on network failure - PASSED
+
+**What was accomplished:**
+- Created reusable ErrorDisplay component (src/components/ErrorDisplay.tsx) with:
+  - Network error detection (matches patterns like "Failed to fetch", "net::ERR_", etc.)
+  - WifiOff icon for network errors, AlertTriangle icon for other errors
+  - User-friendly titles: "Unable to Connect", "Server Error", "Something Went Wrong"
+  - Descriptive messages explaining what happened
+  - Suggestion text with styled border-left (italic, background) suggesting what to do
+  - Retry button with RefreshCw icon
+- Updated 6 pages to use ErrorDisplay component:
+  - Dashboard (src/app/page.tsx)
+  - Totes list (src/app/totes/page.tsx)
+  - Tote detail (src/app/totes/[id]/page.tsx) - differentiates network error vs "not found"
+  - Item detail (src/app/totes/[id]/items/[itemId]/page.tsx) - differentiates network error vs "not found"
+  - Settings (src/app/settings/page.tsx)
+  - Item redirect (src/app/items/[id]/page.tsx)
+- Added CSS for .error-suggestion style in globals.css
+
+**Verification (all 5 feature steps):**
+1. Stopped the backend server (kill -9 on the Next.js process)
+2. While page was loaded client-side, triggered re-fetch by clicking sort button → API call to /api/totes failed with network error
+3. Verified user-friendly error message displayed: WifiOff icon, "Unable to Connect" heading, descriptive message about server being down or network interrupted
+4. Verified error suggests what to do: "Check that the server is running and try again." shown in styled suggestion box
+5. Restarted server, clicked Retry button → page recovered showing totes list again; also verified full page refresh recovery
+
+**Quality checks:**
+- Zero JS console errors on fresh page load (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- All verification done through browser automation (playwright-cli)
+
+**Current status:** 64/90 features passing (71.1%)
+
+---
+
 ## Session - Feature #62 - 2026-02-21
 
 ### Feature #62: Navigating to deleted tote shows appropriate error - PASSED
