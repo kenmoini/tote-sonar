@@ -1,5 +1,45 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #36 - 2026-02-21
+
+### Feature #36: Print single QR label for a tote - PASSED
+
+**What was accomplished:**
+- Added "Print Label" button with Printer icon to QR Code section header on tote detail page
+- Added `handlePrintLabel()` function that calls `window.print()` to trigger native print dialog
+- Created hidden `.print-label-container` div (hidden on screen with `display: none`, shown in print via `@media print`)
+- Print label layout includes:
+  - QR code image at selected size (Small/Medium/Large via QR_SIZES constants)
+  - Tote ID in monospace font (1.5rem, bold, letter-spacing 0.2em)
+  - Tote name (1.1rem, bold)
+  - Tote location (0.9rem)
+- Added comprehensive `@media print` CSS rules:
+  - Hides navigation, toasts, modals
+  - Hides all page-container children except `.print-label-container` via `:not()` selector
+  - Shows print label container centered, full viewport, white background
+  - Resets margins/padding on body, .main-content, .page-container
+- Print label adapts to selected QR size (print sizes: Small=150px, Medium=250px, Large=350px)
+
+**Verification (all 6 feature steps):**
+1. Created test tote "PRINT_TEST_F36" via API (ID: kvssIK)
+2. Navigated to tote detail page (/totes/kvssIK) - all content displayed correctly
+3. Clicked "Print Label" button - `window.print()` called successfully, no errors
+4. Verified print-friendly layout is generated via @media print CSS rules and hidden print-label-container
+5. Verified QR code image and tote ID "kvssIK" are visible in print layout (DOM elements confirmed)
+6. Cleaned up: deleted test tote via DELETE API
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- QR code API returns valid PNG image (200 OK, 2045 bytes) for test tote
+- QR code data URL format also works correctly
+- Size selector buttons (Small/Medium/Large) work correctly and resize QR display
+- All test data cleaned up after verification
+
+**Current status:** 42/90 features passing (46.7%)
+
+---
+
 ## Session - Feature #37 - 2026-02-21
 
 ### Feature #37: QR label size options available - PASSED
