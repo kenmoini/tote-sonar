@@ -1,5 +1,39 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #31 - 2026-02-21
+
+### Feature #31: Click thumbnail opens full-size image - PASSED
+
+**What was accomplished:**
+- Verified existing lightbox implementation works correctly end-to-end
+- No code changes needed - photo lightbox was already fully implemented:
+  - Clicking thumbnail sets `viewingPhoto` state to open lightbox modal
+  - Lightbox displays full-size image via `/api/photos/:id` endpoint
+  - Header shows filename with delete and close buttons
+  - Close button (X) dismisses the lightbox
+  - Clicking outside the lightbox content also dismisses it
+  - Full-size image loads from real API endpoint (not broken)
+  - CSS styles: fixed overlay, centered content, responsive sizing
+
+**Verification (all 7 feature steps):**
+1. Created test tote "LIGHTBOX_TEST_F31" and item "PHOTO_LIGHTBOX_ITEM_F31" via API
+2. Uploaded test JPEG photo (400x300, 981 bytes) via POST /api/items/95/photos
+3. Navigated to item detail page - "Photos (1/3)" section with thumbnail visible
+4. Clicked thumbnail ("Click to view full size") - lightbox modal opened
+5. Full-size image displayed correctly (blue test image loaded, not broken) - verified via screenshot
+6. Clicked Close button (X) - lightbox dismissed, returned to normal item detail view
+7. Cleaned up: deleted test tote (cascade deleted item and photo)
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence test: killed server, restarted, photo data and files persisted, lightbox still worked after restart
+- All test data cleaned up after verification
+
+**Current status:** 38/90 features passing (42.2%)
+
+---
+
 ## Session - Feature #30 - 2026-02-21
 
 ### Feature #30: Uploaded photo thumbnail displays in item list - PASSED
