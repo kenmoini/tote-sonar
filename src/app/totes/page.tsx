@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, Box, MapPin, User, ArrowUpDown, X, Check, Printer, CheckSquare, Square } from 'lucide-react';
+import { Plus, Box, MapPin, User, ArrowUpDown, X, Check, Printer, CheckSquare, Square, Loader2 } from 'lucide-react';
 import { Tote } from '@/types';
 import ErrorDisplay from '@/components/ErrorDisplay';
 
@@ -420,7 +420,7 @@ export default function TotesPage() {
                   className="btn btn-primary"
                   disabled={creating}
                 >
-                  {creating ? 'Creating...' : 'Create Tote'}
+                  {creating ? <><Loader2 size={16} className="spinner-icon" /> Creating...</> : 'Create Tote'}
                 </button>
               </div>
             </form>

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
-import { Box, MapPin, User, ArrowLeft, Package, Calendar, Plus, X, Check, Trash2, AlertTriangle, Pencil, QrCode, ArrowUpDown, ImageIcon, Printer } from 'lucide-react';
+import { Box, MapPin, User, ArrowLeft, Package, Calendar, Plus, X, Check, Trash2, AlertTriangle, Pencil, QrCode, ArrowUpDown, ImageIcon, Printer, Loader2 } from 'lucide-react';
 import { Tote, Item, ItemPhoto } from '@/types';
 import Breadcrumb from '@/components/Breadcrumb';
 import ErrorDisplay from '@/components/ErrorDisplay';
@@ -731,7 +731,7 @@ export default function ToteDetailPage() {
                   className="btn btn-primary"
                   disabled={editingTote}
                 >
-                  {editingTote ? 'Saving...' : 'Save Changes'}
+                  {editingTote ? <><Loader2 size={16} className="spinner-icon" /> Saving...</> : 'Save Changes'}
                 </button>
               </div>
             </form>
@@ -813,7 +813,7 @@ export default function ToteDetailPage() {
                   className="btn btn-primary"
                   disabled={addingItem}
                 >
-                  {addingItem ? 'Adding...' : 'Add Item'}
+                  {addingItem ? <><Loader2 size={16} className="spinner-icon" /> Adding...</> : 'Add Item'}
                 </button>
               </div>
             </form>
