@@ -3478,3 +3478,60 @@
 - All navigation links route to correct pages with proper content loading
 
 **Current status:** 60/90 features passing (66.7%)
+
+---
+
+## Session - Feature #80 - 2026-02-21
+
+### Feature #80: API rejects malformed request bodies - PASSED
+
+**What was accomplished:**
+- Added robust input validation to 4 API route handlers to prevent 500 errors on malformed input:
+
+1. **POST /api/totes (route.ts):**
+   - Already handled empty/invalid JSON (pre-existing)
+   - Added type checking: name and location must be strings (was crashing on `.trim()` for numbers)
+   - Added optional field type validation (size, color, owner must be strings if provided)
+
+2. **POST /api/totes/:id/items (items/route.ts):**
+   - Added JSON parse error handling with try/catch (was letting errors fall through to 500)
+   - Added non-object body validation (null, arrays, primitives)
+   - Added name type validation (must be string)
+
+3. **PUT /api/totes/:id (route.ts):**
+   - Added JSON parse error handling with try/catch (was returning 500 on empty body)
+   - Added non-object body validation
+   - Added field type validation for all string fields before `.trim()` calls
+   - Added empty-string validation for name and location updates
+
+4. **PUT /api/items/:id (route.ts):**
+   - Added JSON parse error handling with try/catch (was returning 500 on empty body)
+   - Added non-object body validation
+
+**Verification (all 6 feature steps):**
+1. POST /api/totes with empty body → 400 "Invalid or empty request body" ✓
+2. POST /api/totes with wrong field types {name:123, location:true} → 400 "Name is required and must be a string" ✓
+3. POST /api/totes/:id/items with empty body → 400 "Invalid or empty request body" ✓
+   POST /api/totes/:id/items with malformed JSON "not json" → 400 ✓
+   POST /api/totes/:id/items with wrong type {name:123} → 400 "Name is required and must be a string" ✓
+4. PUT /api/items/:id with quantity "abc" → 400 "Quantity must be a positive integer" ✓
+   PUT /api/items/:id with quantity -1 → 400 ✓
+   PUT /api/items/:id with quantity 1.5 → 400 ✓
+5. No 500 errors on any malformed request (all tested scenarios return 400) ✓
+6. Server continues operating after malformed requests - health check returns ok, totes list returns data ✓
+
+**Additional tests verified:**
+- POST /api/totes with non-JSON text → 400
+- POST /api/totes with null body → 400
+- POST /api/totes with array body → 400
+- PUT /api/totes/:id with empty body → 400
+- PUT /api/totes/:id with wrong type {name:123} → 400 "Name must be a string"
+- PUT /api/items/:id with empty body → 400
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- App loads and navigates correctly after all malformed request tests
+- All test data cleaned up after verification
+
+**Current status:** 79/90 features passing (87.8%)
