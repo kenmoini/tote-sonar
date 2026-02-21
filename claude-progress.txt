@@ -1,5 +1,48 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #67 - 2026-02-21
+
+### Feature #67: Tote creation requires name and location - PASSED
+
+**What was accomplished:**
+- Verified existing form validation for tote creation works correctly
+- No code changes needed - validation was already fully implemented in both frontend and backend
+
+**Frontend validation (src/app/totes/page.tsx):**
+- handleCreateTote validates formName.trim() and formLocation.trim() before submission
+- Error messages displayed via form-error-text class below each field
+- Input fields get red border (form-input-error class) when validation fails
+- Error clears when user starts typing in the field
+
+**Backend validation (src/app/api/totes/route.ts):**
+- POST handler validates name and location are present and non-empty after trim
+- Returns 400 status with appropriate error messages
+- Also handles invalid JSON body, non-object body, and whitespace-only values
+
+**Verification (all 11 feature steps):**
+1. Navigated to tote creation form (/totes, clicked "Add Tote")
+2. Left name empty, filled location with "Test Location F67"
+3. Clicked "Create Tote" - form was NOT submitted
+4. Verified "Name is required" error text appeared below name field (red text, red border)
+5. Filled name with "Test Name F67", cleared location field
+6. Clicked "Create Tote" - form was NOT submitted
+7. Verified "Location is required" error text appeared below location field
+8. Filled both name ("VALID_TOTE_F67") and location ("Test Location F67"), submitted
+9. Tote created successfully - toast: 'Tote "VALID_TOTE_F67" created successfully! (ID: Fg3zKK)'
+10. POST /api/totes with empty name → 400 {"error":"Name is required"}
+11. POST /api/totes with empty location → 400 {"error":"Location is required"}
+- Also tested whitespace-only name → correctly returns 400
+- Cleaned up test tote Fg3zKK after verification
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- All test data cleaned up after verification
+
+**Current status:** 66/90 features passing (73.3%)
+
+---
+
 ## Session - Feature #65 - 2026-02-21
 
 ### Feature #65: Loading spinners displayed during data fetch - PASSED
