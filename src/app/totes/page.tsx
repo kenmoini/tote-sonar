@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, Box, MapPin, User, ArrowUpDown, X, Check } from 'lucide-react';
 import { Tote } from '@/types';
@@ -13,6 +14,7 @@ type SortField = 'name' | 'location' | 'owner' | 'created_at';
 type SortOrder = 'asc' | 'desc';
 
 export default function TotesPage() {
+  const searchParams = useSearchParams();
   const [totes, setTotes] = useState<ToteWithCount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,6 +22,13 @@ export default function TotesPage() {
   const [sortBy, setSortBy] = useState<SortField>('created_at');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // Auto-open create form when ?create=true is in the URL (from welcome screen)
+  useEffect(() => {
+    if (searchParams.get('create') === 'true') {
+      setShowCreateForm(true);
+    }
+  }, [searchParams]);
 
   // Create form state
   const [formName, setFormName] = useState('');

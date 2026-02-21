@@ -77,7 +77,7 @@ export default function DashboardPage() {
           <h2>Welcome to Tote Sonar</h2>
           <p>Track items stored in physical containers with QR code labels.</p>
           <p>Get started by creating your first tote to organize your items.</p>
-          <Link href="/totes" className="btn btn-primary" style={{ marginTop: '0.5rem' }}>
+          <Link href="/totes?create=true" className="btn btn-primary" style={{ marginTop: '0.5rem' }}>
             <Plus size={18} />
             Create Your First Tote
           </Link>

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
-import { Box, MapPin, User, ArrowLeft, Package, Calendar, Plus, X, Check, Trash2, AlertTriangle, Pencil, QrCode } from 'lucide-react';
+import { Box, MapPin, User, ArrowLeft, Package, Calendar, Plus, X, Check, Trash2, AlertTriangle, Pencil, QrCode, ArrowUpDown } from 'lucide-react';
 import { Tote, Item } from '@/types';
 import Breadcrumb from '@/components/Breadcrumb';
 
@@ -12,6 +12,9 @@ interface ToteDetail extends Tote {
   items: Item[];
   item_count: number;
 }
+
+type ItemSortField = 'name' | 'created_at' | 'quantity';
+type ItemSortOrder = 'asc' | 'desc';
 
 export default function ToteDetailPage() {
   const params = useParams();
@@ -49,6 +52,37 @@ export default function ToteDetailPage() {
   const [deletingItemId, setDeletingItemId] = useState<number | null>(null);
   const [deletingItemName, setDeletingItemName] = useState('');
   const [deletingItemLoading, setDeletingItemLoading] = useState(false);
+
+  // Item sort state
+  const [itemSortBy, setItemSortBy] = useState<ItemSortField>('name');
+  const [itemSortOrder, setItemSortOrder] = useState<ItemSortOrder>('asc');
+
+  const handleItemSort = (field: ItemSortField) => {
+    if (itemSortBy === field) {
+      setItemSortOrder(itemSortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setItemSortBy(field);
+      setItemSortOrder('asc');
+    }
+  };
+
+  const getSortedItems = (items: Item[]): Item[] => {
+    return [...items].sort((a, b) => {
+      let comparison = 0;
+      switch (itemSortBy) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'quantity':
+          comparison = a.quantity - b.quantity;
+          break;
+        case 'created_at':
+          comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          break;
+      }
+      return itemSortOrder === 'asc' ? comparison : -comparison;
+    });
+  };
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
@@ -715,6 +749,27 @@ export default function ToteDetailPage() {
             <span>Add Item</span>
           </button>
         </div>
+        {tote.items.length > 1 && (
+          <div className="sort-controls">
+            <span className="sort-label">Sort by:</span>
+            {([
+              { field: 'name' as ItemSortField, label: 'Name' },
+              { field: 'quantity' as ItemSortField, label: 'Quantity' },
+              { field: 'created_at' as ItemSortField, label: 'Date Added' },
+            ]).map(({ field, label }) => (
+              <button
+                key={field}
+                className={`sort-btn ${itemSortBy === field ? 'sort-btn-active' : ''}`}
+                onClick={() => handleItemSort(field)}
+              >
+                {label}
+                {itemSortBy === field && (
+                  <ArrowUpDown size={14} className={itemSortOrder === 'desc' ? 'sort-icon-desc' : 'sort-icon-asc'} />
+                )}
+              </button>
+            ))}
+          </div>
+        )}
         {tote.items.length === 0 ? (
           <div className="empty-state-small">
             <Package size={32} className="empty-icon" />
@@ -730,7 +785,7 @@ export default function ToteDetailPage() {
           </div>
         ) : (
           <div className="items-list">
-            {tote.items.map((item) => (
+            {getSortedItems(tote.items).map((item) => (
               <Link key={item.id} href={`/totes/${toteId}/items/${item.id}`} className="item-row item-row-link">
                 <div className="item-row-info">
                   <span className="item-name">{item.name}</span>
