@@ -1,5 +1,31 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #76 - 2026-02-21
+
+### Feature #76: Layout correct at mobile viewport 375px - PASSED
+
+**What was accomplished:**
+- Verified app layout works correctly on mobile phone screens (375x812 viewport)
+- No code changes needed - existing responsive design already handles 375px viewport properly
+
+**Verification (all 6 feature steps):**
+1. Set viewport to 375x812 using playwright-cli resize
+2. Dashboard: single-column layout verified - Total Totes and Total Items cards stack vertically, Recently Added Items in single column, quick nav links stacked
+3. Tote list: cards stack vertically in single column with all metadata (name, location, owner, item count, size, color) visible and properly formatted
+4. Tote detail: all content fits within viewport without overflow - breadcrumbs, metadata cards, QR code, items list, and action buttons all render properly at 375px width
+5. Hamburger menu: "Toggle navigation menu" button present in top-right, desktop nav links hidden (only visible through hamburger toggle)
+6. No horizontal scrollbar: overflow-x: hidden set on html/body in globals.css, all content contained within viewport width, no visible horizontal scroll in any screenshot
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Created test data (MOBILE_TEST_TOTE1, MOBILE_TEST_TOTE2, MOBILE_TEST_ITEM1), verified layout with data, cleaned up after testing
+- All test data deleted after verification
+
+**Current status:** 75/90 features passing (83.3%)
+
+---
+
 ## Session - Feature #75 - 2026-02-21
 
 ### Feature #75: Layout correct at tablet viewport 768px - PASSED
