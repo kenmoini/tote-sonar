@@ -1,5 +1,37 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #58 - 2026-02-21
+
+### Feature #58: Round-trip export then import preserves all data - PASSED
+
+**What was accomplished:**
+- Verified full round-trip export/import workflow end-to-end
+- Created comprehensive test data:
+  - Tote "RT_TOTE_ALPHA_58" (ID: FFNwPn): location=Garage Shelf A, size=Large, color=Blue, owner=TestUser1, 2 items
+  - Tote "RT_TOTE_BETA_58" (ID: mDuwcE): location=Basement Bin, size=Small, color=Red, owner=TestUser2, 1 item
+  - Item 116: RT_ITEM_A1_58, qty=3, metadata brand=RT_BrandX_58 & color=RT_Green_58, 1 photo (red JPEG)
+  - Item 117: RT_ITEM_A2_58, qty=7, metadata material=RT_Plastic_58
+  - Item 118: RT_ITEM_B1_58, qty=1, metadata weight=RT_2kg_58, 1 photo (green JPEG)
+  - Settings: server_hostname=http://rt-test-host:9999, max_upload_size=10485760, theme=dark
+- Exported all data via GET /api/export (8310 byte ZIP with JSON + uploads + thumbnails)
+- Deleted all totes (clearing database)
+- Imported ZIP via POST /api/import
+- Verified all data matches after import:
+  - All 3 tote IDs (FFNwPn, mDuwcE, M4QcP6) match original
+  - All item names, descriptions, quantities match
+  - All metadata key-value pairs match (4 metadata entries)
+  - Both photos accessible (HTTP 200) with correct file sizes
+  - Settings restored with non-default values (hostname, upload size, theme)
+- Browser verification via Playwright:
+  - Totes page shows all 3 totes with correct metadata tags
+  - Item detail page shows name, description, quantity, photo, metadata tags
+  - Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns in src/
+- Step 5.7 persistence test: imported data persists across server kill and restart
+- All test data cleaned up, settings restored to defaults
+
+**Current status:** 57/90 features passing (63.3%)
+
 ## Session - Feature #54 - 2026-02-21
 
 ### Feature #54: Default item metadata keys configurable in settings - PASSED
