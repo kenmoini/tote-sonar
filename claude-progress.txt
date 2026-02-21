@@ -1,5 +1,33 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #85 - 2026-02-21
+
+### Feature #85: Malformed tote ID in URL shows error page - PASSED
+
+**What was accomplished:**
+- Updated tote detail page (`src/app/totes/[id]/page.tsx`) to treat HTTP 400 responses the same as 404
+- Previously, `/totes/!!!invalid!!!` showed generic "Something Went Wrong" error because the API returned 400 (Invalid tote ID format) but the page only handled 404 as "not found"
+- Now both 400 and 404 show the user-friendly "Tote Not Found" page with "Back to Totes" link
+- `/items/99999999` already correctly showed "Item Not Found" (no changes needed)
+
+**Verification (all 5 feature steps):**
+1. Navigated to `/totes/!!!invalid!!!` → shows "Tote Not Found" with descriptive message ✓
+2. Error page displayed with warning icon, "Tote Not Found" heading, helpful description, and "Back to Totes" link ✓
+3. No server crash - navigated to homepage after error pages, server continued working normally ✓
+4. Navigated to `/items/99999999` → shows "Item Not Found" with "Back to Dashboard" link ✓
+5. Appropriate error messages on both pages - tote shows "doesn't exist or may have been deleted", item shows same ✓
+
+**Quality checks:**
+- Console errors are only HTTP 400/404 resource load errors (expected, not JS runtime errors)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- "Back to Totes" link works correctly, navigating to /totes
+- "Back to Dashboard" link works correctly, navigating to /
+- Server remains healthy after all malformed URL tests
+
+**Current status:** 84/90 features passing (93.3%)
+
+---
+
 ## Session - Feature #84 - 2026-02-21
 
 ### Feature #84: Direct URL access to item detail page - PASSED
