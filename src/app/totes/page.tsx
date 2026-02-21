@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, Box, MapPin, User, ArrowUpDown, X, Check, Printer, CheckSquare, Square, Loader2 } from 'lucide-react';
@@ -22,7 +22,7 @@ interface BulkQrLabel {
 type SortField = 'name' | 'location' | 'owner' | 'created_at';
 type SortOrder = 'asc' | 'desc';
 
-export default function TotesPage() {
+function TotesPageContent() {
   const searchParams = useSearchParams();
   const [totes, setTotes] = useState<ToteWithCount[]>([]);
   const [loading, setLoading] = useState(true);
@@ -619,5 +619,13 @@ export default function TotesPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function TotesPage() {
+  return (
+    <Suspense>
+      <TotesPageContent />
+    </Suspense>
   );
 }

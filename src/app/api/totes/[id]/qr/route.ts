@@ -58,7 +58,7 @@ export async function GET(
       errorCorrectionLevel: 'M',
     });
 
-    return new NextResponse(qrBuffer, {
+    return new NextResponse(new Uint8Array(qrBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'image/png',

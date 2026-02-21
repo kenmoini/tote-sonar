@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/search - Search items by name, description, and metadata
 export async function GET(request: NextRequest) {
   try {
     const db = getDb();
-    const { searchParams } = new URL(request.url);
-    const query = searchParams.get('q') || '';
-    const location = searchParams.get('location') || '';
-    const owner = searchParams.get('owner') || '';
-    const metadataKey = searchParams.get('metadata_key') || '';
+    const query = request.nextUrl.searchParams.get('q') || '';
+    const location = request.nextUrl.searchParams.get('location') || '';
+    const owner = request.nextUrl.searchParams.get('owner') || '';
+    const metadataKey = request.nextUrl.searchParams.get('metadata_key') || '';
 
     if (!query.trim() && !location.trim() && !owner.trim() && !metadataKey.trim()) {
       return NextResponse.json({ data: { items: [], total: 0 } });
