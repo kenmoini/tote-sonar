@@ -1,5 +1,34 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #71 - 2026-02-21
+
+### Feature #71: Maximum 3 photos per item enforced with message - PASSED
+
+**What was accomplished:**
+- Verified the 3-photo-per-item limit is enforced at both backend and frontend levels
+- Backend: POST /api/items/:id/photos checks photo count in DB, returns HTTP 400 with "Maximum 3 photos per item reached" if count >= 3
+- Frontend: Upload button hidden when photos.length >= 3, section header shows "Photos (3/3)"
+- No code changes needed - feature was already fully implemented
+
+**Verification (all 8 feature steps):**
+1. Created test tote "PHOTO_LIMIT_TEST_F71" (ID: 9yJGA6) and item "PHOTO_ITEM_F71" (ID: 126) via API
+2. Uploaded photo 1 - success (ID: 15, 568 bytes, thumbnail generated)
+3. Uploaded photo 2 - success (ID: 16, 576 bytes, thumbnail generated)
+4. Uploaded photo 3 - success (ID: 17, 608 bytes, thumbnail generated)
+5. Attempted photo 4 upload - HTTP 400 returned with error "Maximum 3 photos per item reached"
+6. UI verified via Playwright: "Photos (3/3)" heading displayed, Upload button hidden, 3 thumbnail cards shown
+7. API GET /api/items/126 confirmed exactly 3 photos in data (no 4th photo stored)
+8. Cleaned up: deleted test tote (cascade deleted item and photos)
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- All test data cleaned up after verification
+
+**Current status:** 70/90 features passing (77.8%)
+
+---
+
 ## Session - Feature #70 - 2026-02-21
 
 ### Feature #70: Photo upload enforces file size limit from settings - PASSED
