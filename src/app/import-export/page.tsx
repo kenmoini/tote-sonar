@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   Download,
   Upload,
@@ -15,11 +15,20 @@ import Breadcrumb from '@/components/Breadcrumb';
 export default function ImportExportPage() {
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState<string | null>(null);
+  const [importResult, setImportResult] = useState<{
+    success: boolean;
+    message: string;
+    summary?: { totes: number; items: number; photos: number; metadata: number; settings: number };
+  } | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
+    setTimeout(() => setToast(null), 5000);
   };
 
   const handleExport = async () => {
@@ -72,6 +81,95 @@ export default function ImportExportPage() {
       );
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setImportResult(null);
+    }
+  };
+
+  const handleDropzoneClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.name.endsWith('.zip')) {
+      setSelectedFile(file);
+      setImportResult(null);
+    } else {
+      showToast('Please drop a .zip file', 'error');
+    }
+  };
+
+  const handleImport = async () => {
+    if (!selectedFile) return;
+
+    setImporting(true);
+    setImportProgress('Uploading ZIP file...');
+    setImportResult(null);
+
+    try {
+      setImportProgress('Validating and importing data...');
+
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const response = await fetch('/api/import', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setImportResult({
+          success: false,
+          message: result.error || 'Import failed',
+        });
+        showToast(result.error || 'Import failed', 'error');
+      } else {
+        setImportResult({
+          success: true,
+          message: result.message,
+          summary: result.summary,
+        });
+        showToast('Import completed successfully!', 'success');
+        setSelectedFile(null);
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Import failed';
+      setImportResult({
+        success: false,
+        message: msg,
+      });
+      showToast(msg, 'error');
+    } finally {
+      setImporting(false);
+      setImportProgress(null);
+    }
+  };
+
+  const handleClearFile = () => {
+    setSelectedFile(null);
+    setImportResult(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -162,7 +260,7 @@ export default function ImportExportPage() {
           </div>
         </div>
 
-        {/* Import Section (placeholder for now - feature #45+) */}
+        {/* Import Section */}
         <div className="import-export-section" data-testid="import-section">
           <div className="import-export-section-header">
             <div className="import-export-section-icon import-icon">
@@ -179,21 +277,129 @@ export default function ImportExportPage() {
           <div className="import-export-section-body">
             <div className="import-warning">
               <AlertTriangle size={16} />
-              <span>Importing data may overwrite existing records. Make sure to export your current data first.</span>
+              <span>Importing data will overwrite all existing records. Make sure to export your current data first.</span>
             </div>
-            <div className="import-dropzone" data-testid="import-dropzone">
-              <Upload size={32} className="import-dropzone-icon" />
-              <p className="import-dropzone-text">Drop a ZIP file here or click to select</p>
-              <p className="import-dropzone-hint">Accepts .zip files exported from Tote Sonar</p>
+
+            {/* Dropzone / File selection */}
+            <div
+              className={`import-dropzone ${selectedFile ? 'import-dropzone-active' : ''} ${importing ? 'import-dropzone-disabled' : ''}`}
+              onClick={!importing ? handleDropzoneClick : undefined}
+              onDragOver={handleDragOver}
+              onDrop={!importing ? handleDrop : undefined}
+              data-testid="import-dropzone"
+            >
+              {selectedFile ? (
+                <>
+                  <FileArchive size={32} className="import-dropzone-icon import-dropzone-icon-selected" />
+                  <p className="import-dropzone-text">{selectedFile.name}</p>
+                  <p className="import-dropzone-hint">
+                    {(selectedFile.size / 1024).toFixed(1)} KB
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Upload size={32} className="import-dropzone-icon" />
+                  <p className="import-dropzone-text">Drop a ZIP file here or click to select</p>
+                  <p className="import-dropzone-hint">Accepts .zip files exported from Tote Sonar</p>
+                </>
+              )}
               <input
+                ref={fileInputRef}
                 type="file"
                 accept=".zip"
                 className="import-file-input"
-                disabled
+                onChange={handleFileSelect}
+                disabled={importing}
                 aria-label="Select ZIP file to import"
+                data-testid="import-file-input"
               />
             </div>
-            <p className="import-coming-soon">Full import functionality coming soon.</p>
+
+            {/* Import progress indicator */}
+            {importProgress && (
+              <div className="import-progress" data-testid="import-progress">
+                <Loader2 size={18} className="spin-icon" />
+                <span>{importProgress}</span>
+              </div>
+            )}
+
+            {/* Import result */}
+            {importResult && (
+              <div
+                className={`import-result ${importResult.success ? 'import-result-success' : 'import-result-error'}`}
+                data-testid="import-result"
+              >
+                {importResult.success ? (
+                  <>
+                    <div className="import-result-header">
+                      <Check size={18} />
+                      <span>{importResult.message}</span>
+                    </div>
+                    {importResult.summary && (
+                      <div className="import-result-summary">
+                        <div className="import-result-stat">
+                          <span className="import-result-stat-value">{importResult.summary.totes}</span>
+                          <span className="import-result-stat-label">Totes</span>
+                        </div>
+                        <div className="import-result-stat">
+                          <span className="import-result-stat-value">{importResult.summary.items}</span>
+                          <span className="import-result-stat-label">Items</span>
+                        </div>
+                        <div className="import-result-stat">
+                          <span className="import-result-stat-value">{importResult.summary.photos}</span>
+                          <span className="import-result-stat-label">Photos</span>
+                        </div>
+                        <div className="import-result-stat">
+                          <span className="import-result-stat-value">{importResult.summary.metadata}</span>
+                          <span className="import-result-stat-label">Metadata</span>
+                        </div>
+                        <div className="import-result-stat">
+                          <span className="import-result-stat-value">{importResult.summary.settings}</span>
+                          <span className="import-result-stat-label">Settings</span>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="import-result-header">
+                    <X size={18} />
+                    <span>{importResult.message}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="import-actions">
+              {selectedFile && !importing && (
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleClearFile}
+                  data-testid="import-clear-button"
+                >
+                  <X size={16} />
+                  <span>Clear</span>
+                </button>
+              )}
+              <button
+                className="btn btn-primary btn-lg"
+                onClick={handleImport}
+                disabled={!selectedFile || importing}
+                data-testid="import-button"
+              >
+                {importing ? (
+                  <>
+                    <Loader2 size={18} className="spin-icon" />
+                    <span>Importing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload size={18} />
+                    <span>Import Data</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>

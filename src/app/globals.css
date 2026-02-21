@@ -2752,12 +2752,33 @@ a {
   transition: border-color 0.2s, background-color 0.2s;
   text-align: center;
   margin-bottom: 0.75rem;
+  opacity: 1;
+}
+
+.import-dropzone:hover {
+  border-color: var(--primary);
+  background: rgba(59, 130, 246, 0.04);
+}
+
+.import-dropzone-active {
+  border-color: var(--primary);
+  border-style: solid;
+  background: rgba(59, 130, 246, 0.06);
+}
+
+.import-dropzone-disabled {
   opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .import-dropzone-icon {
   color: var(--muted);
   margin-bottom: 0.75rem;
+}
+
+.import-dropzone-icon-selected {
+  color: var(--primary);
 }
 
 .import-dropzone-text {
@@ -2780,9 +2801,97 @@ a {
   cursor: pointer;
 }
 
-.import-coming-soon {
-  font-size: 0.8rem;
-  color: var(--muted);
-  text-align: center;
-  font-style: italic;
+.import-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: var(--primary);
+}
+
+[data-theme='dark'] .import-progress {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.import-result {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.import-result-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+[data-theme='dark'] .import-result-success {
+  background: #0a2e14;
+  border-color: #166534;
+  color: #86efac;
+}
+
+.import-result-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+[data-theme='dark'] .import-result-error {
+  background: #2e0a0a;
+  border-color: #991b1b;
+  color: #fca5a5;
+}
+
+.import-result-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.import-result-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid currentColor;
+  opacity: 0.7;
+}
+
+.import-result-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 3.5rem;
+}
+
+.import-result-stat-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.import-result-stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
+}
+
+.import-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.import-actions .btn-secondary {
+  flex-shrink: 0;
 }
