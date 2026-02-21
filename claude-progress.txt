@@ -1,5 +1,40 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #23 - 2026-02-21
+
+### Feature #23: Duplicate item within same tote - PASSED
+
+**What was accomplished:**
+- Verified existing implementation of POST /api/items/:id/duplicate endpoint:
+  - Accepts optional target_tote_id (defaults to same tote)
+  - Creates copy with "(Copy)" suffix in name
+  - Duplicates description, quantity, and metadata tags in a transaction
+  - Returns new item data with 201 status
+- Verified existing Duplicate button on item detail page:
+  - Copy icon with "Duplicate" label in action bar
+  - Calls POST /api/items/:id/duplicate with empty body (same tote)
+  - Shows "Duplicating..." while in progress
+  - Toast notification on success
+  - Navigates to the duplicated item page
+
+**Verification (all 8 feature steps):**
+1. Created test tote "DUP_TEST_TOTE_F23" (ID: nkh0oB) and item "Original Widget" (ID: 81) with description and quantity=3
+2. Navigated to item detail page at /totes/nkh0oB/items/81
+3. Clicked Duplicate button
+4. New item created in same tote - page navigated to /totes/nkh0oB/items/82
+5. New item name: "Original Widget (Copy)", description: "A test widget for duplication", quantity: 3 - matches original
+6. New item ID: 82 (different from original ID: 81) - unique ID confirmed
+7. GET /api/totes/nkh0oB/items returned both items (ID 81 and ID 82) in same tote
+8. Cleaned up: deleted test tote (cascade deleted all 4 items)
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence test: duplicated item (ID 84, "RESTART_DUP_TEST_F23 (Copy)"), killed server (kill -9), restarted, verified data persisted in database
+- All test data cleaned up after verification
+
+**Current status:** 33/90 features passing (36.7%)
+
 ## Session - Feature #22 - 2026-02-21
 
 ### Feature #22: Item movement history recorded correctly - PASSED
