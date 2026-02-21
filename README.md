@@ -121,4 +121,4 @@ Settings can be configured through the Settings page in the UI:
 
 ## License
 
-Open Source
+GNU GENERAL PUBLIC LICENSE Version 3
