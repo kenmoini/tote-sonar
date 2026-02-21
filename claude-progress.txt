@@ -1,5 +1,32 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #74 - 2026-02-21
+
+### Feature #74: Layout correct at desktop viewport 1920px - PASSED
+
+**What was accomplished:**
+- Verified app layout is properly structured at 1920x1080 desktop resolution
+- No code changes required - existing layout is correct
+
+**Verification (all 6 feature steps):**
+1. Set viewport to 1920x1080 via Playwright
+2. Dashboard: Navigation spans full width, metric cards side by side, recently added items well-spaced, quick nav cards present, content constrained at 1280px max-width
+3. Tote list: 4-column card grid fills width appropriately, sort controls visible, each card shows all metadata
+4. Tote detail: Breadcrumb navigation, metadata cards in responsive grid (5 across), QR code centered, items list properly formatted, Edit/Delete buttons correctly positioned
+5. No horizontal scrollbar: CSS has overflow-x: hidden on root + max-width: 1280px on content areas
+6. Text readable and properly spaced: All pages verified - headings, descriptions, card content, table data all well-spaced
+
+**Also verified:** Search page and Settings page layouts correct at 1920x1080
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- All test data (LAYOUT_TEST_Tote_Alpha, LAYOUT_TEST_Tote_Beta) cleaned up after verification
+
+**Current status:** 73/90 features passing (81.1%)
+
+---
+
 ## Session - Feature #73 - 2026-02-21
 
 ### Feature #73: Submit buttons disabled during API request - PASSED
