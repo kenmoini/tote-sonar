@@ -1,5 +1,37 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #22 - 2026-02-21
+
+### Feature #22: Item movement history recorded correctly - PASSED
+
+**What was accomplished:**
+- Verified all existing implementation for movement history tracking:
+  - POST /api/items/:id/move uses SQLite transaction to update item's tote_id AND insert into item_movement_history (from_tote_id, to_tote_id, moved_at)
+  - GET /api/items/:id returns movement_history array with tote names via LEFT JOIN on totes table
+  - Item detail page renders Movement History section with ArrowRightLeft icon, tote name links, and formatted timestamps
+  - Empty state displays "No movement history" with helpful hint text
+
+**Verification (all 9 feature steps):**
+1. Created Tote A (TaoTTZ, "MOVE_HIST_TOTE_A_F22") and Tote B (1AwnS4, "MOVE_HIST_TOTE_B_F22") via API
+2. Created item 79 ("MOVE_TEST_ITEM_F22") in Tote A via API
+3. POST /api/items/79/move with {"target_tote_id":"1AwnS4"} - moved successfully
+4. GET /api/items/79 returned movement_history with from_tote_id = "TaoTTZ" (Tote A)
+5. Verified to_tote_id = "1AwnS4" (Tote B)
+6. Verified moved_at = "2026-02-21 05:54:26.626" (valid timestamp)
+7. Navigated to /totes/1AwnS4/items/79 in browser - page loaded correctly
+8. Movement History section displayed: "Moved from MOVE_HIST_TOTE_A_F22 to MOVE_HIST_TOTE_B_F22" with timestamp "Feb 21, 2026, 12:54 AM". Tote names are clickable links to correct tote detail pages.
+9. Cleaned up: deleted both totes (cascade removed item and movement history)
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence test: killed server, restarted, movement history data persisted and displayed correctly in UI
+- All test data cleaned up after verification
+
+**Current status:** 31/90 features passing (34.4%)
+
+---
+
 ## Session - Feature #20 - 2026-02-21
 
 ### Feature #20: Delete item with confirmation - PASSED
