@@ -38,6 +38,11 @@ export default function ItemDetailPage() {
   const [metadataValue, setMetadataValue] = useState('');
   const [addingMetadata, setAddingMetadata] = useState(false);
   const [metadataError, setMetadataError] = useState<string | null>(null);
+  const [suggestedKeys, setSuggestedKeys] = useState<string[]>([]);
+  const [showKeySuggestions, setShowKeySuggestions] = useState(false);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+  const keyInputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [allTotes, setAllTotes] = useState<Tote[]>([]);
   const [selectedToteId, setSelectedToteId] = useState<string>('');
@@ -109,6 +114,57 @@ export default function ItemDetailPage() {
       return () => clearTimeout(timer);
     }
   }, [toast]);
+
+  // Fetch metadata keys for autocomplete when add form opens
+  const fetchMetadataKeys = useCallback(async () => {
+    try {
+      const res = await fetch('/api/metadata-keys');
+      if (res.ok) {
+        const json = await res.json();
+        const keys = (json.data || []).map((k: { key_name: string }) => k.key_name);
+        setSuggestedKeys(keys);
+      }
+    } catch {
+      // Silently fail - autocomplete is optional
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showAddMetadata) {
+      fetchMetadataKeys();
+    }
+  }, [showAddMetadata, fetchMetadataKeys]);
+
+  // Close suggestions dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node) &&
+        keyInputRef.current && !keyInputRef.current.contains(e.target as Node)
+      ) {
+        setShowKeySuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Filter suggested keys based on current input
+  const filteredSuggestions = metadataKey.trim().length > 0
+    ? suggestedKeys.filter((key) => key.toLowerCase().includes(metadataKey.toLowerCase().trim()))
+    : [];
+
+  const handleKeyInputChange = (value: string) => {
+    setMetadataKey(value);
+    setShowKeySuggestions(true);
+    setSelectedSuggestionIndex(-1);
+  };
+
+  const handleSelectSuggestion = (key: string) => {
+    setMetadataKey(key);
+    setShowKeySuggestions(false);
+    setSelectedSuggestionIndex(-1);
+  };
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr + 'Z');
@@ -1063,23 +1119,67 @@ export default function ItemDetailPage() {
         {showAddMetadata && (
           <div className="metadata-add-form">
             <div className="metadata-add-fields">
-              <div className="form-group">
+              <div className="form-group" style={{ position: 'relative' }}>
                 <label className="form-label">Key <span className="form-required">*</span></label>
                 <input
+                  ref={keyInputRef}
                   type="text"
                   className={`form-input ${metadataError ? 'form-input-error' : ''}`}
                   placeholder="e.g., Brand, Color, Size"
                   value={metadataKey}
-                  onChange={(e) => setMetadataKey(e.target.value)}
+                  onChange={(e) => handleKeyInputChange(e.target.value)}
+                  onFocus={() => {
+                    if (metadataKey.trim().length > 0) {
+                      setShowKeySuggestions(true);
+                    }
+                  }}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (showKeySuggestions && filteredSuggestions.length > 0) {
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        setSelectedSuggestionIndex((prev) =>
+                          prev < filteredSuggestions.length - 1 ? prev + 1 : 0
+                        );
+                      } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        setSelectedSuggestionIndex((prev) =>
+                          prev > 0 ? prev - 1 : filteredSuggestions.length - 1
+                        );
+                      } else if (e.key === 'Enter' && selectedSuggestionIndex >= 0) {
+                        e.preventDefault();
+                        handleSelectSuggestion(filteredSuggestions[selectedSuggestionIndex]);
+                      } else if (e.key === 'Escape') {
+                        setShowKeySuggestions(false);
+                      } else if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddMetadata();
+                      }
+                    } else if (e.key === 'Enter') {
                       e.preventDefault();
                       handleAddMetadata();
                     }
                   }}
                   disabled={addingMetadata}
                   autoFocus
+                  autoComplete="off"
                 />
+                {showKeySuggestions && filteredSuggestions.length > 0 && (
+                  <div className="autocomplete-dropdown" ref={suggestionsRef}>
+                    {filteredSuggestions.map((key, index) => (
+                      <div
+                        key={key}
+                        className={`autocomplete-item ${index === selectedSuggestionIndex ? 'autocomplete-item-active' : ''}`}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          handleSelectSuggestion(key);
+                        }}
+                        onMouseEnter={() => setSelectedSuggestionIndex(index)}
+                      >
+                        {key}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="form-group">
                 <label className="form-label">Value <span className="form-required">*</span></label>
