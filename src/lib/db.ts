@@ -22,10 +22,15 @@ export function getDb(): Database.Database {
   if (!db) {
     db = new Database(DB_PATH);
     db.pragma('journal_mode = WAL');
+    // Force checkpoint of any pending WAL data from previous unclean shutdowns (kill -9).
+    // Without this, WAL data written before a crash may not be recovered properly.
+    try {
+      db.pragma('wal_checkpoint(TRUNCATE)');
+    } catch {
+      // Checkpoint may fail if another process holds a lock; safe to ignore
+    }
     db.pragma('foreign_keys = ON');
-    db.pragma('synchronous = NORMAL');
-    // Checkpoint any existing WAL data from previous sessions
-    db.pragma('wal_checkpoint(TRUNCATE)');
+    db.pragma('synchronous = FULL');
     console.log('Database connected:', DB_PATH);
     initializeSchema();
   }
