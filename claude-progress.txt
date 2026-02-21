@@ -1,5 +1,38 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #24 - 2026-02-21
+
+### Feature #24: Copy item to different tote - PASSED
+
+**What was accomplished:**
+- Modified the item detail page to change the "Duplicate" button to a "Copy" button that opens a destination tote selection modal
+- Added new state variables for the copy modal (showCopyModal, copyTargetToteId, copyError, copyTotes, loadingCopyTotes)
+- Created `openCopyModal` function that fetches all totes and displays them in a dropdown (current tote marked as "- Current")
+- Created `handleCopyItem` function that sends `target_tote_id` to the existing POST /api/items/:id/duplicate endpoint
+- Copy modal follows the same pattern as the existing Move modal for UI consistency
+- The existing API already supported cross-tote duplication via `target_tote_id` - only the UI needed updating
+
+**Verification (all 8 feature steps):**
+1. Created Tote A (2r7V7R, "COPY_TEST_TOTE_A") and Tote B (DEXWk1, "COPY_TEST_TOTE_B") via API
+2. Created item 85 ("COPY_TEST_ITEM_F24") in Tote A with quantity=5, description, and metadata (color: blue)
+3. Navigated to item detail page /totes/2r7V7R/items/85 - clicked "Copy" button
+4. Copy modal opened showing "Copy COPY_TEST_ITEM_F24 to:" with dropdown listing both totes (Tote A marked "- Current")
+5. Selected "COPY_TEST_TOTE_B (Shelf Beta)" from dropdown, clicked "Copy Item"
+6. Page redirected to /totes/DEXWk1/items/86 - success toast shown, copy named "COPY_TEST_ITEM_F24 (Copy)" in Tote B
+7. Verified original item 85 still exists in Tote A with all original data (name, description, qty=5, metadata color=blue)
+8. Verified copy item 86 exists in Tote B with matching data (description, qty=5, metadata color=blue, "(Copy)" suffix)
+9. Cleaned up: deleted both totes (cascade deleted all items)
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings - only React DevTools info)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence test: created RESTART_TEST_F24_12345, copied to Tote B, killed server, restarted, both original and copy persisted correctly
+- All test data cleaned up after verification
+
+**Current status:** 33/90 features passing (36.7%)
+
+---
+
 ## Session - Feature #23 - 2026-02-21
 
 ### Feature #23: Duplicate item within same tote - PASSED
