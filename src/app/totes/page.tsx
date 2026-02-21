@@ -44,6 +44,12 @@ export default function TotesPage() {
     }
   }, [searchParams]);
 
+  // Default tote field values from settings
+  const [defaultSize, setDefaultSize] = useState('');
+  const [defaultColor, setDefaultColor] = useState('');
+  const [defaultOwner, setDefaultOwner] = useState('');
+  const [defaultsLoaded, setDefaultsLoaded] = useState(false);
+
   // Create form state
   const [formName, setFormName] = useState('');
   const [formLocation, setFormLocation] = useState('');
@@ -57,6 +63,44 @@ export default function TotesPage() {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
   };
+
+  // Fetch default tote field values from settings
+  const fetchDefaults = useCallback(async () => {
+    try {
+      const res = await fetch('/api/settings');
+      if (!res.ok) return;
+      const json = await res.json();
+      const defaultToteFields = json.settings?.default_tote_fields;
+      if (defaultToteFields) {
+        try {
+          const parsed = JSON.parse(defaultToteFields);
+          if (typeof parsed === 'object' && !Array.isArray(parsed)) {
+            setDefaultSize(parsed.size || '');
+            setDefaultColor(parsed.color || '');
+            setDefaultOwner(parsed.owner || '');
+          }
+        } catch {
+          // Ignore parse errors
+        }
+      }
+      setDefaultsLoaded(true);
+    } catch {
+      setDefaultsLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDefaults();
+  }, [fetchDefaults]);
+
+  // Pre-populate form fields with defaults when the create form is opened
+  useEffect(() => {
+    if (showCreateForm && defaultsLoaded) {
+      setFormSize(defaultSize);
+      setFormColor(defaultColor);
+      setFormOwner(defaultOwner);
+    }
+  }, [showCreateForm, defaultsLoaded, defaultSize, defaultColor, defaultOwner]);
 
   const fetchTotes = useCallback(async () => {
     try {
@@ -80,9 +124,9 @@ export default function TotesPage() {
   const resetForm = () => {
     setFormName('');
     setFormLocation('');
-    setFormSize('');
-    setFormColor('');
-    setFormOwner('');
+    setFormSize(defaultSize);
+    setFormColor(defaultColor);
+    setFormOwner(defaultOwner);
     setFormErrors({});
   };
 
