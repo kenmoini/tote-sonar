@@ -45,7 +45,17 @@ export default function ItemDetailPage() {
   const [moveError, setMoveError] = useState<string | null>(null);
   const [loadingTotes, setLoadingTotes] = useState(false);
   const [duplicatingItem, setDuplicatingItem] = useState(false);
+  const [showCopyModal, setShowCopyModal] = useState(false);
+  const [copyTargetToteId, setCopyTargetToteId] = useState<string>('');
+  const [copyError, setCopyError] = useState<string | null>(null);
+  const [copyTotes, setCopyTotes] = useState<Tote[]>([]);
+  const [loadingCopyTotes, setLoadingCopyTotes] = useState(false);
   const [maxUploadSize, setMaxUploadSize] = useState<number>(5242880); // Default 5MB
+  const [editingMetadataId, setEditingMetadataId] = useState<number | null>(null);
+  const [editMetaKey, setEditMetaKey] = useState('');
+  const [editMetaValue, setEditMetaValue] = useState('');
+  const [savingMetadata, setSavingMetadata] = useState(false);
+  const [editMetaError, setEditMetaError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchItem = useCallback(async () => {
@@ -237,6 +247,54 @@ export default function ItemDetailPage() {
     }
   };
 
+  const startEditMetadata = (meta: ItemMetadata) => {
+    setEditingMetadataId(meta.id);
+    setEditMetaKey(meta.key);
+    setEditMetaValue(meta.value);
+    setEditMetaError(null);
+  };
+
+  const cancelEditMetadata = () => {
+    setEditingMetadataId(null);
+    setEditMetaKey('');
+    setEditMetaValue('');
+    setEditMetaError(null);
+  };
+
+  const handleSaveMetadata = async () => {
+    if (!editMetaKey.trim() || !editMetaValue.trim()) {
+      setEditMetaError('Both key and value are required');
+      return;
+    }
+
+    setSavingMetadata(true);
+    setEditMetaError(null);
+
+    try {
+      const res = await fetch(`/api/items/${itemId}/metadata/${editingMetadataId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: editMetaKey.trim(), value: editMetaValue.trim() }),
+      });
+
+      if (!res.ok) {
+        const json = await res.json();
+        setEditMetaError(json.error || 'Failed to update metadata');
+        return;
+      }
+
+      setToast({ message: `Metadata "${editMetaKey.trim()}" updated successfully!`, type: 'success' });
+      setEditingMetadataId(null);
+      setEditMetaKey('');
+      setEditMetaValue('');
+      await fetchItem();
+    } catch {
+      setEditMetaError('Failed to update metadata. Please try again.');
+    } finally {
+      setSavingMetadata(false);
+    }
+  };
+
   const openEditModal = () => {
     if (!item) return;
     setEditName(item.name);
@@ -371,31 +429,65 @@ export default function ItemDetailPage() {
     }
   };
 
-  const handleDuplicateItem = async () => {
-    setDuplicatingItem(true);
+  const openCopyModal = async () => {
+    setCopyError(null);
+    setCopyTargetToteId('');
+    setLoadingCopyTotes(true);
+    setShowCopyModal(true);
+
     try {
+      const res = await fetch('/api/totes');
+      if (!res.ok) throw new Error('Failed to load totes');
+      const json = await res.json();
+      // Show all totes including current one (copy can be to same or different tote)
+      const totes = (json.data || []);
+      setCopyTotes(totes);
+    } catch {
+      setCopyError('Failed to load totes. Please try again.');
+    } finally {
+      setLoadingCopyTotes(false);
+    }
+  };
+
+  const handleCopyItem = async () => {
+    if (!copyTargetToteId) {
+      setCopyError('Please select a destination tote');
+      return;
+    }
+
+    setDuplicatingItem(true);
+    setCopyError(null);
+
+    try {
+      const body: Record<string, string> = {};
+      // Only send target_tote_id if copying to a different tote
+      if (copyTargetToteId !== toteId) {
+        body.target_tote_id = copyTargetToteId;
+      }
+
       const res = await fetch(`/api/items/${itemId}/duplicate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
         const json = await res.json();
-        setToast({ message: json.error || 'Failed to duplicate item', type: 'error' });
+        setCopyError(json.error || 'Failed to copy item');
         return;
       }
 
       const json = await res.json();
       const newItem = json.data;
-      setToast({ message: json.message || 'Item duplicated successfully!', type: 'success' });
+      setToast({ message: json.message || 'Item copied successfully!', type: 'success' });
+      setShowCopyModal(false);
 
-      // Navigate to the duplicated item after a brief delay
+      // Navigate to the copied item after a brief delay
       setTimeout(() => {
         router.push(`/totes/${newItem.tote_id}/items/${newItem.id}`);
       }, 500);
     } catch {
-      setToast({ message: 'Failed to duplicate item. Please try again.', type: 'error' });
+      setCopyError('Failed to copy item. Please try again.');
     } finally {
       setDuplicatingItem(false);
     }
@@ -658,6 +750,88 @@ export default function ItemDetailPage() {
         </div>
       )}
 
+      {/* Copy/Duplicate modal */}
+      {showCopyModal && item && (
+        <div className="modal-overlay" onClick={() => { if (!duplicatingItem) setShowCopyModal(false); }}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-header-icon-title">
+                <div className="meta-card-icon">
+                  <Copy size={22} />
+                </div>
+                <h2>Copy Item</h2>
+              </div>
+              <button
+                className="modal-close"
+                onClick={() => { if (!duplicatingItem) setShowCopyModal(false); }}
+                aria-label="Close"
+                disabled={duplicatingItem}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="confirm-body">
+              <p>
+                Copy <strong>&ldquo;{item.name}&rdquo;</strong> to:
+              </p>
+              {loadingCopyTotes ? (
+                <div className="loading-state" style={{ padding: '1rem 0' }}>
+                  <div className="spinner" />
+                  <p>Loading totes...</p>
+                </div>
+              ) : copyTotes.length === 0 ? (
+                <div className="metadata-empty-state" style={{ padding: '1rem 0' }}>
+                  <Package size={32} />
+                  <p>No totes available</p>
+                  <span className="metadata-empty-hint">Create a tote first</span>
+                </div>
+              ) : (
+                <div className="form-group" style={{ marginTop: '0.75rem' }}>
+                  <label className="form-label">Destination Tote <span className="form-required">*</span></label>
+                  <select
+                    className="form-input form-select"
+                    value={copyTargetToteId}
+                    onChange={(e) => {
+                      setCopyTargetToteId(e.target.value);
+                      setCopyError(null);
+                    }}
+                    disabled={duplicatingItem}
+                  >
+                    <option value="">Select a tote...</option>
+                    {copyTotes.map((t: Tote) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name} ({t.location}){t.id === toteId ? ' - Current' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {copyError && (
+                <div className="form-error-text" style={{ marginTop: '0.5rem' }}>{copyError}</div>
+              )}
+            </div>
+            <div className="form-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowCopyModal(false)}
+                disabled={duplicatingItem}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleCopyItem}
+                disabled={duplicatingItem || !copyTargetToteId || loadingCopyTotes}
+              >
+                {duplicatingItem ? 'Copying...' : 'Copy Item'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Full-size photo lightbox */}
       {viewingPhoto && (
         <div className="photo-lightbox" onClick={() => setViewingPhoto(null)}>
@@ -727,12 +901,12 @@ export default function ItemDetailPage() {
           </button>
           <button
             className="btn btn-secondary"
-            onClick={handleDuplicateItem}
+            onClick={openCopyModal}
             disabled={duplicatingItem}
-            title="Duplicate item in this tote"
+            title="Copy item to same or different tote"
           >
             <Copy size={16} />
-            <span>{duplicatingItem ? 'Duplicating...' : 'Duplicate'}</span>
+            <span>{duplicatingItem ? 'Copying...' : 'Copy'}</span>
           </button>
           <button
             className="btn btn-danger"
@@ -954,18 +1128,90 @@ export default function ItemDetailPage() {
         {item.metadata && item.metadata.length > 0 ? (
           <div className="metadata-tags-list">
             {item.metadata.map((meta: ItemMetadata) => (
-              <div key={meta.id} className="metadata-tag">
-                <span className="metadata-tag-key">{meta.key}</span>
-                <span className="metadata-tag-separator">:</span>
-                <span className="metadata-tag-value">{meta.value}</span>
-                <button
-                  className="metadata-tag-remove"
-                  onClick={() => handleDeleteMetadata(meta.id, meta.key)}
-                  title={`Remove ${meta.key}`}
-                >
-                  <X size={14} />
-                </button>
-              </div>
+              editingMetadataId === meta.id ? (
+                <div key={meta.id} className="metadata-edit-form">
+                  <div className="metadata-edit-fields">
+                    <div className="form-group">
+                      <label className="form-label">Key <span className="form-required">*</span></label>
+                      <input
+                        type="text"
+                        className={`form-input form-input-sm ${editMetaError ? 'form-input-error' : ''}`}
+                        value={editMetaKey}
+                        onChange={(e) => setEditMetaKey(e.target.value)}
+                        disabled={savingMetadata}
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSaveMetadata();
+                          }
+                          if (e.key === 'Escape') {
+                            cancelEditMetadata();
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Value <span className="form-required">*</span></label>
+                      <input
+                        type="text"
+                        className={`form-input form-input-sm ${editMetaError ? 'form-input-error' : ''}`}
+                        value={editMetaValue}
+                        onChange={(e) => setEditMetaValue(e.target.value)}
+                        disabled={savingMetadata}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSaveMetadata();
+                          }
+                          if (e.key === 'Escape') {
+                            cancelEditMetadata();
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                  {editMetaError && (
+                    <div className="form-error-text" style={{ marginTop: '0.25rem' }}>{editMetaError}</div>
+                  )}
+                  <div className="metadata-edit-actions">
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={cancelEditMetadata}
+                      disabled={savingMetadata}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={handleSaveMetadata}
+                      disabled={savingMetadata}
+                    >
+                      {savingMetadata ? 'Saving...' : 'Save'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div key={meta.id} className="metadata-tag">
+                  <span className="metadata-tag-key">{meta.key}</span>
+                  <span className="metadata-tag-separator">:</span>
+                  <span className="metadata-tag-value">{meta.value}</span>
+                  <button
+                    className="metadata-tag-edit"
+                    onClick={() => startEditMetadata(meta)}
+                    title={`Edit ${meta.key}`}
+                  >
+                    <Pencil size={14} />
+                  </button>
+                  <button
+                    className="metadata-tag-remove"
+                    onClick={() => handleDeleteMetadata(meta.id, meta.key)}
+                    title={`Remove ${meta.key}`}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )
             ))}
           </div>
         ) : !showAddMetadata ? (
