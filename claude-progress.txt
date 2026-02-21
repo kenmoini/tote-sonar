@@ -1,5 +1,39 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #20 - 2026-02-21
+
+### Feature #20: Delete item with confirmation - PASSED
+
+**What was accomplished:**
+- Verified existing item deletion with confirmation dialog works end-to-end through browser automation
+- No code changes needed - delete item with confirmation was already fully implemented:
+  - Delete Item button (red) on item detail page opens confirmation modal
+  - Modal shows "Delete Item" heading with warning triangle icon
+  - Modal displays item name in bold quotes: "F20_TEST_WIDGET"
+  - Warning text: "This will also remove all photos and metadata associated with this item. This action cannot be undone."
+  - Cancel and red "Delete Item" buttons
+  - DELETE /api/items/:id removes item and returns success message
+  - After deletion, redirects to tote detail page
+
+**Verification (all 9 feature steps):**
+1. Created test tote "F20_DELETE_TEST_TOTE" (ID: PqOAvI) and item "F20_TEST_WIDGET" (ID: 78) via API
+2. Navigated to item detail page /totes/PqOAvI/items/78 - page loaded with correct data
+3. Clicked "Delete Item" button - confirmation dialog appeared
+4. Verified confirmation dialog contains: heading, item name, warning about photos/metadata, Cancel and Delete buttons
+5. Clicked Cancel - dialog dismissed, item still present (verified via API: 200 OK)
+6. Clicked Delete Item again, then clicked Delete Item in confirmation dialog
+7. Page redirected to /totes/PqOAvI - tote detail shows "Items (0)" and "No items in this tote yet."
+8. GET /api/items/78 returned 404 {"error":"Item not found"}
+9. Cleaned up: deleted test tote PqOAvI
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns (globalThis, devStore, mockDb, MOCK, etc.) found in src/
+- Step 5.7 server restart persistence test: created RESTART_TEST_F20_12345, killed server (kill -9), restarted, item persisted, then deleted and verified 404
+- All test data cleaned up after verification
+
+**Current status:** 31/90 features passing (34.4%)
+
 ## Session - Feature #15 - 2026-02-21
 
 ### Feature #15: Tote list supports sorting by name, location, owner, date - PASSED
