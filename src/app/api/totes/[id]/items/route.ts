@@ -61,7 +61,17 @@ export async function POST(
       );
     }
 
-    const quantity = body.quantity !== undefined ? body.quantity : 1;
+    let quantity = 1;
+    if (body.quantity !== undefined) {
+      const q = Number(body.quantity);
+      if (isNaN(q) || !Number.isInteger(q) || q < 1) {
+        return NextResponse.json(
+          { error: 'Quantity must be a positive whole number' },
+          { status: 400 }
+        );
+      }
+      quantity = q;
+    }
 
     const stmt = db.prepare(`
       INSERT INTO items (tote_id, name, description, quantity)

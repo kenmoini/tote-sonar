@@ -42,7 +42,7 @@ export default function ToteDetailPage() {
   const [itemDescription, setItemDescription] = useState('');
   const [itemQuantity, setItemQuantity] = useState('1');
   const [addingItem, setAddingItem] = useState(false);
-  const [itemFormErrors, setItemFormErrors] = useState<{ name?: string }>({});
+  const [itemFormErrors, setItemFormErrors] = useState<{ name?: string; quantity?: string }>({});
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Edit Tote form state
@@ -187,8 +187,20 @@ export default function ToteDetailPage() {
     e.preventDefault();
 
     // Validate
-    const errors: { name?: string } = {};
+    const errors: { name?: string; quantity?: string } = {};
     if (!itemName.trim()) errors.name = 'Item name is required';
+
+    // Quantity validation
+    const qtyStr = itemQuantity.trim();
+    const qty = Number(qtyStr);
+    if (qtyStr === '' || isNaN(qty)) {
+      errors.quantity = 'Quantity must be a valid number';
+    } else if (!Number.isInteger(qty)) {
+      errors.quantity = 'Quantity must be a whole number';
+    } else if (qty < 1) {
+      errors.quantity = 'Quantity must be at least 1';
+    }
+
     if (Object.keys(errors).length > 0) {
       setItemFormErrors(errors);
       return;
@@ -198,14 +210,13 @@ export default function ToteDetailPage() {
     setItemFormErrors({});
 
     try {
-      const qty = parseInt(itemQuantity, 10);
       const res = await fetch(`/api/totes/${toteId}/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: itemName.trim(),
           description: itemDescription.trim() || undefined,
-          quantity: isNaN(qty) || qty < 1 ? 1 : qty,
+          quantity: qty,
         }),
       });
 
@@ -780,11 +791,13 @@ export default function ToteDetailPage() {
                 <input
                   id="item-quantity"
                   type="number"
-                  className="form-input"
+                  className={`form-input ${itemFormErrors.quantity ? 'form-input-error' : ''}`}
                   min="1"
+                  step="1"
                   value={itemQuantity}
-                  onChange={(e) => setItemQuantity(e.target.value)}
+                  onChange={(e) => { setItemQuantity(e.target.value); setItemFormErrors(prev => ({ ...prev, quantity: undefined })); }}
                 />
+                {itemFormErrors.quantity && <span className="form-error-text">{itemFormErrors.quantity}</span>}
               </div>
 
               <div className="form-actions">

@@ -1,5 +1,35 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #68 - 2026-02-21
+
+### Feature #68: Item creation requires name field - PASSED
+
+**What was accomplished:**
+- Verified that the item creation form validates the required name field both client-side and server-side
+- No code changes needed - validation was already implemented in previous sessions:
+  - Client-side: `handleAddItem` checks `!itemName.trim()` and shows "Item name is required" error
+  - Server-side: POST /api/totes/:toteId/items returns 400 "Name is required" for empty/missing/whitespace name
+
+**Verification (all 8 feature steps):**
+1. Created test tote "ITEMVAL_TEST_F68" (ID: yOslPl) via API
+2. Navigated to tote detail page, clicked "Add Item" to open modal form
+3. Left name field empty
+4. Clicked "Add Item" submit button
+5. Verified validation error "Item name is required" displayed in red below name field (confirmed via snapshot + screenshot)
+6. Filled in name "VALID_ITEM_F68_TEST" and submitted - item created successfully, appeared in items list with Qty: 1
+7. Tested API directly - all 3 empty name cases return HTTP 400:
+   - Empty string `{"name":""}` → 400
+   - Missing name field `{"description":"no name"}` → 400
+   - Whitespace only `{"name":"   "}` → 400
+8. Cleaned up: deleted test tote and its items
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Visual screenshot verified red error styling on validation failure
+
+**Current status:** 68/90 features passing (75.6%)
+
 ## Session - Feature #66 - 2026-02-21
 
 ### Feature #66: File upload rejects invalid file types with error - PASSED
