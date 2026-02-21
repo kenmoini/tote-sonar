@@ -1,5 +1,34 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #40 - 2026-02-21
+
+### Feature #40: Search items by name returns matching results - PASSED
+
+**What was accomplished:**
+- Verified existing search implementation correctly finds items by name
+- Search API (GET /api/search?q=...) uses SQL LIKE queries against item name and description
+- Search page has search input, Search button, filter toggle, and results display
+- Results show item name (with search term highlighted), description, tote name, tote ID, location, and quantity
+
+**Verification (all 8 feature steps):**
+1. Created test tote "SEARCH_TEST_F40" at "Test Shelf Alpha" with two items via API
+2. Created item "Unique Gadget XYZ" (description: "A special gadget for testing") and "Common Widget" (description: "An ordinary widget", qty: 3)
+3. Navigated to /search page in Playwright browser
+4. Entered "Unique Gadget" in search bar, clicked Search
+5. "Unique Gadget XYZ" appeared in results (1 result found) with "Unique Gadget" highlighted
+6. "Common Widget" did NOT appear in results - confirmed only matching item shown
+7. Cleared search, entered "Widget", clicked Search
+8. "Common Widget" appeared in results (1 result found) with "Widget" highlighted in name and description
+9. Cleaned up: deleted test tote (cascade deleted both items)
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Search results show correct tote name, ID, and location for each item
+- All test data cleaned up after verification
+
+**Current status:** 20/90 features passing (22.2%)
+
 ## Session - Feature #55 - 2026-02-21
 
 ### Feature #55: Export all totes items and settings to ZIP file - PASSED
