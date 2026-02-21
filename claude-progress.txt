@@ -1,5 +1,38 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #11 - 2026-02-21
+
+### Feature #11: View tote detail page with all metadata fields - PASSED
+
+**What was accomplished:**
+- Added "Updated" timestamp meta card to tote detail page (was missing - only "Created" was shown)
+- Verified all 9 metadata fields display correctly on tote detail page
+
+**Verification (all 10 feature steps):**
+1. Created test tote "F11_TEST_TOTE_DETAIL" (ID: Tswfne) via API with all fields: name, location, size=Large, color=Blue, owner=TestUser11
+2. Navigated to /totes/Tswfne in browser - tote detail page loaded correctly
+3. Verified tote name "F11_TEST_TOTE_DETAIL" displayed as h1 heading
+4. Verified location "Garage Shelf B" displayed in meta card
+5. Verified size "Large" displayed in meta card
+6. Verified color "Blue" displayed in meta card with blue swatch
+7. Verified owner "TestUser11" displayed in meta card
+8. Verified item count "0" displayed in meta card (new tote, no items)
+9. Verified created timestamp "Feb 20, 2026, 11:56 PM" displayed; updated timestamp also displayed
+10. Cleaned up: deleted test tote Tswfne, confirmed deletion
+
+**Code changes:**
+- Added "Updated" timestamp meta card to src/app/totes/[id]/page.tsx (7 lines added)
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Visual screenshot verified clean metadata grid layout with all fields
+- All test data cleaned up after verification
+
+**Current status:** 11/90 features passing (12.2%)
+
+---
+
 ## Session - Feature #16 - 2026-02-21
 
 ### Feature #16: Add item to tote with name, description, and quantity - PASSED
