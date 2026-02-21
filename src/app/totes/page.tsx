@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, Box, MapPin, User, ArrowUpDown, X, Check, Printer, CheckSquare, Square, Loader2 } from 'lucide-react';
@@ -58,6 +58,7 @@ export default function TotesPage() {
   const [formColor, setFormColor] = useState('');
   const [formOwner, setFormOwner] = useState('');
   const [creating, setCreating] = useState(false);
+  const creatingRef = useRef(false); // Synchronous guard against double-submit
   const [formErrors, setFormErrors] = useState<{ name?: string; location?: string }>({});
 
   const showToast = (message: string, type: 'success' | 'error') => {
@@ -151,6 +152,9 @@ export default function TotesPage() {
   const handleCreateTote = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Synchronous guard against double-submit (ref is updated instantly, unlike state)
+    if (creatingRef.current) return;
+
     // Validate
     const errors: { name?: string; location?: string } = {};
     if (!formName.trim()) errors.name = 'Name is required';
@@ -160,6 +164,7 @@ export default function TotesPage() {
       return;
     }
 
+    creatingRef.current = true;
     setCreating(true);
     setFormErrors({});
 
@@ -191,6 +196,7 @@ export default function TotesPage() {
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to create tote', 'error');
     } finally {
+      creatingRef.current = false;
       setCreating(false);
     }
   };

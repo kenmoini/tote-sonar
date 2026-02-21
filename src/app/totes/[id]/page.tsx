@@ -166,7 +166,7 @@ export default function ToteDetailPage() {
       setLoading(true);
       const res = await fetch(`/api/totes/${toteId}`);
       if (!res.ok) {
-        if (res.status === 404) throw new Error('Tote not found');
+        if (res.status === 404 || res.status === 400) throw new Error('Tote not found');
         throw new Error('Failed to load tote');
       }
       const json = await res.json();
