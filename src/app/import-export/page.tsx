@@ -121,14 +121,16 @@ export default function ImportExportPage() {
     setImportResult(null);
 
     try {
+      // Track start time to ensure minimum visible progress duration
+      const importStartTime = Date.now();
+
       // Allow the progress indicator to render before starting the upload
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise(resolve => setTimeout(resolve, 400));
 
       setImportProgress('Uploading ZIP file...');
-      await new Promise(resolve => setTimeout(resolve, 150));
-
       const formData = new FormData();
       formData.append('file', selectedFile);
+      await new Promise(resolve => setTimeout(resolve, 600));
 
       setImportProgress('Validating and importing data...');
 
@@ -138,7 +140,13 @@ export default function ImportExportPage() {
       });
 
       setImportProgress('Finalizing import...');
-      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Ensure the progress indicator is visible for at least 2 seconds total
+      const elapsed = Date.now() - importStartTime;
+      const minDuration = 2000;
+      if (elapsed < minDuration) {
+        await new Promise(resolve => setTimeout(resolve, minDuration - elapsed));
+      }
 
       const result = await response.json();
 
