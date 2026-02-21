@@ -1,5 +1,52 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #38 - 2026-02-21
+
+### Feature #38: Bulk print QR labels for multiple totes - PASSED
+
+**What was accomplished:**
+- Created POST /api/totes/qr/bulk API endpoint that:
+  - Accepts array of tote_ids (max 50)
+  - Validates input and fetches totes from SQLite
+  - Gets server hostname from settings table
+  - Generates QR code data URLs for each tote using qrcode library
+  - Returns array of {tote_id, tote_name, tote_location, qr_data_url, encoded_url}
+- Updated tote list page (src/app/totes/page.tsx) with:
+  - "Select" button to enter selection mode
+  - Checkbox UI on each tote card (CheckSquare/Square icons)
+  - Visual feedback for selected cards (blue border, highlighted background)
+  - Bulk action bar showing selection count and "Print N QR Labels" button
+  - "Select All" / "Deselect All" toggle
+  - Bulk print handler that calls API, populates hidden print container, triggers window.print()
+  - Print container hidden on screen (display:none) but visible in @media print
+- Added CSS for:
+  - .page-header-actions layout
+  - .bulk-action-bar with selection info and print button
+  - .btn-outline, .btn-sm styles
+  - .tote-card-selectable, .tote-card-selected states
+  - .tote-select-checkbox with checked/unchecked styles
+  - .bulk-print-container (hidden on screen)
+  - @media print: .bulk-print-label, .bulk-print-label-qr, .bulk-print-label-id, etc.
+
+**Verification (all 7 feature steps):**
+1. Created 3 test totes via API: BULK_PRINT_TEST_A (e2BVj7), BULK_PRINT_TEST_B (p2dN8t), BULK_PRINT_TEST_C (eeEN2y)
+2. Navigated to tote list page - all totes displayed, "Select" button visible
+3. Clicked "Select" to enter selection mode - checkboxes appeared on all cards
+4. Selected all 3 test totes by clicking each card - checkboxes checked, cards highlighted
+5. Clicked "Print 3 QR Labels" button - API called successfully
+6. Generated PDF verified: contains 3 QR codes with tote IDs (e2BVj7, eeEN2y, p2dN8t), names, and locations
+7. Cleaned up: deleted all 3 test totes
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Bulk QR API tested directly with curl - returns correct QR data URLs
+- Print layout verified via PDF generation - QR codes, IDs, names, locations all correct
+
+**Current status:** 44/90 features passing (48.9%)
+
+---
+
 ## Session - Feature #41 (Search by Description) - 2026-02-21
 
 ### Feature #41: Search items by description returns matching results - PASSED
