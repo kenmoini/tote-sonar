@@ -9,6 +9,18 @@ async function resolveId(params: Promise<{ id: string }> | { id: string }): Prom
   return resolved.id;
 }
 
+// Validate tote ID format: must be 6-character alphanumeric
+function isValidToteId(id: string): boolean {
+  return /^[a-zA-Z0-9]{6}$/.test(id);
+}
+
+function invalidIdResponse() {
+  return NextResponse.json(
+    { error: 'Invalid tote ID format. Tote IDs must be exactly 6 alphanumeric characters.' },
+    { status: 400 }
+  );
+}
+
 // GET /api/totes/:id - Get tote details with items
 export async function GET(
   request: NextRequest,
@@ -17,6 +29,12 @@ export async function GET(
   try {
     const db = getDb();
     const id = await resolveId(context.params);
+
+    // Validate tote ID format
+    if (!isValidToteId(id)) {
+      return invalidIdResponse();
+    }
+
     const tote = db.prepare('SELECT * FROM totes WHERE id = ?').get(id) as Tote | undefined;
 
     if (!tote) {
@@ -82,6 +100,12 @@ export async function PUT(
   try {
     const db = getDb();
     const id = await resolveId(context.params);
+
+    // Validate tote ID format
+    if (!isValidToteId(id)) {
+      return invalidIdResponse();
+    }
+
     const body: UpdateToteInput = await request.json();
 
     // Check tote exists
@@ -151,6 +175,11 @@ export async function DELETE(
   try {
     const db = getDb();
     const id = await resolveId(context.params);
+
+    // Validate tote ID format
+    if (!isValidToteId(id)) {
+      return invalidIdResponse();
+    }
 
     // Check tote exists
     const existing = db.prepare('SELECT * FROM totes WHERE id = ?').get(id) as Tote | undefined;
