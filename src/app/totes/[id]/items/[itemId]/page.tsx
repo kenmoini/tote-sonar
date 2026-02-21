@@ -149,10 +149,10 @@ export default function ItemDetailPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Filter suggested keys based on current input
+  // Filter suggested keys based on current input (show all when empty for default key discovery)
   const filteredSuggestions = metadataKey.trim().length > 0
     ? suggestedKeys.filter((key) => key.toLowerCase().includes(metadataKey.toLowerCase().trim()))
-    : [];
+    : suggestedKeys;
 
   const handleKeyInputChange = (value: string) => {
     setMetadataKey(value);
@@ -1129,9 +1129,7 @@ export default function ItemDetailPage() {
                   value={metadataKey}
                   onChange={(e) => handleKeyInputChange(e.target.value)}
                   onFocus={() => {
-                    if (metadataKey.trim().length > 0) {
-                      setShowKeySuggestions(true);
-                    }
+                    setShowKeySuggestions(true);
                   }}
                   onKeyDown={(e) => {
                     if (showKeySuggestions && filteredSuggestions.length > 0) {
