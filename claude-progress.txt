@@ -1,5 +1,36 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #54 - 2026-02-21
+
+### Feature #54: Default item metadata keys configurable in settings - PASSED
+
+**What was accomplished:**
+- Updated /api/metadata-keys endpoint to merge default metadata keys from the settings table (`default_metadata_keys` setting) with existing keys from the `metadata_keys` table
+- Keys are deduplicated and sorted alphabetically before returning
+- Updated item detail page metadata add form to show all suggested keys on input focus (not just when typing), improving discoverability of configured default keys
+- The `onFocus` handler now always shows suggestions, and `filteredSuggestions` returns all keys when input is empty
+
+**Verification (all 7 feature steps):**
+1. Navigated to Settings page
+2. Added default item metadata keys: 'Brand', 'Model', 'Serial' via the tag input UI
+3. Saved settings - toast "Settings saved successfully!" appeared, verified via API that settings persisted
+4. Created test tote "F54_TEST_TOTE" and item "F54_TEST_ITEM"
+5. Navigated to item detail page, clicked "Add Metadata"
+6. Verified autocomplete dropdown immediately showed all suggested keys including Brand, Model, Serial
+7. Typed "B" to verify filtering works - showed "brand" and "Brand" only
+8. Selected "Brand", added value "TestBrandValue", saved successfully
+9. Clean up: reverted settings (set default_metadata_keys to []), deleted test tote
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence test: settings and metadata persisted after kill + restart
+- All test data cleaned up after verification
+
+**Current status:** 55/90 features passing (61.1%)
+
+---
+
 ## Session - Feature #53 - 2026-02-21
 
 ### Feature #53: Default tote metadata fields configurable in settings - PASSED
