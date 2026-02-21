@@ -1,5 +1,35 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #62 - 2026-02-21
+
+### Feature #62: Navigating to deleted tote shows appropriate error - PASSED
+
+**What was accomplished:**
+- Verified existing error handling implementation for deleted/non-existent totes
+- The tote detail page (/totes/[id]/page.tsx) already handles this case:
+  - API returns 404 for non-existent totes
+  - Frontend catches 404 and displays error state with AlertTriangle icon
+  - Error message: "Tote not found" with explanation text
+  - "Back to Totes" link navigates user back to /totes list
+- No code changes needed - implementation was already complete
+
+**Verification (all 5 feature steps):**
+1. Created test tote "DELETED_TOTE_F62" via API (ID: Yumsw2)
+2. Deleted the tote via API - confirmed API returns 404 for GET /api/totes/Yumsw2
+3. Navigated to /totes/Yumsw2 in browser
+4. Verified error message displayed: warning icon, "Tote not found" heading, explanation paragraph
+5. Clicked "Back to Totes" link - navigated to /totes (tote list page) successfully
+6. Also tested with completely fake ID "XXXXXX" - same error behavior displayed
+
+**Quality checks:**
+- Zero JS console errors (only expected 404 network resource errors, not JavaScript errors)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Visual screenshot confirmed clean error state with proper styling
+
+**Current status:** 62/90 features passing (68.9%)
+
+---
+
 ## Session - Feature #63 - 2026-02-21
 
 ### Feature #63: API returns proper error for invalid tote ID format - PASSED
