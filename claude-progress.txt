@@ -1,5 +1,39 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #69 - 2026-02-21
+
+### Feature #69: Quantity field rejects non-numeric input - PASSED
+
+**What was accomplished:**
+- Verified and completed quantity validation on the add item form
+- Most validation code was already implemented in previous session (feature #68):
+  - Extended itemFormErrors to include quantity field
+  - Added validation in handleAddItem: checks for empty, NaN, non-integer, and < 1
+  - Shows specific error messages: "Quantity must be a valid number", "Quantity must be a whole number", "Quantity must be at least 1"
+  - Error styling applied to quantity input field with red border
+  - Error clears on onChange when user types new value
+  - Backend API also validates quantity (400 error for invalid values)
+- Added `noValidate` to form element to bypass HTML5 native validation in favor of custom styled error messages
+
+**Verification (all 7 feature steps):**
+1. Created test tote "QTY_VALID_TEST_F69" (ID: wxguzF) via API
+2. Navigated to add item form on tote detail page
+3. Attempted to type 'abc' in quantity field → HTML number input rejects non-numeric characters (browser-level rejection)
+4. Entered '-1' in quantity field, clicked Add Item → error message displayed: "Quantity must be at least 1"
+5. Entered '0' in quantity field → error: "Quantity must be at least 1"
+6. Cleared field entirely → error: "Quantity must be a valid number"
+7. Entered '5', clicked Add Item → item created successfully with Qty: 5, toast confirmed
+8. Cleaned up: deleted test tote (cascade deleted test item)
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Backend API also validates: 'abc' → 400, -1 → 400, 5 → 201 Created
+
+**Current status:** 68/90 features passing (75.6%)
+
+---
+
 ## Session - Feature #68 - 2026-02-21
 
 ### Feature #68: Item creation requires name field - PASSED
