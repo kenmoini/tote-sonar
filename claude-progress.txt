@@ -1,5 +1,35 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #25 - 2026-02-21
+
+### Feature #25: Add metadata key-value pair to item - PASSED
+
+**What was accomplished:**
+- Verified end-to-end metadata addition workflow through browser automation
+- No code changes needed - metadata feature was already fully implemented
+
+**Verification (all 9 feature steps):**
+1. Created tote "F25_META_TEST_TOTE" (ID: ebSQAw) and item "F25_Test_Gadget" (ID: 62) via API
+2. Navigated to item detail page /totes/ebSQAw/items/62 in browser
+3. Found "Metadata Tags" section with "No metadata tags" empty state and "Add Metadata" button
+4. Clicked "Add Metadata" button - form appeared with Key and Value input fields
+5. Entered key: "Brand" in the Key field (placeholder "e.g., Brand, Color, Size")
+6. Entered value: "Acme" in the Value field (placeholder "e.g., Acme, Red, Large")
+7. Clicked "Save" button - success toast: 'Metadata "Brand" added successfully!'
+8. Verified metadata tag "Brand : Acme" displayed in Metadata Tags section with remove button
+9. GET /api/items/62/metadata returned: id=7, key="Brand", value="Acme" - confirmed in database
+
+**Quality checks:**
+- Console: 0 real errors, 0 warnings (only HMR WebSocket error from headless dev mode)
+- Step 5.6 mock data grep: no prohibited patterns (globalThis, devStore, mockDb, MOCK, etc.) found in src/
+- Step 5.7 server restart persistence: killed server, restarted, metadata "Brand: Acme" persisted and rendered correctly in browser after restart
+- Screenshot verified clean visual layout with styled metadata tag
+- All test data cleaned up: DELETE /api/totes/ebSQAw (cascade deleted item and metadata)
+
+**Current status:** 17/90 features passing (18.9%)
+
+---
+
 ## Session - Feature #29 - 2026-02-21
 
 ### Feature #29: Upload photo to item - PASSED
