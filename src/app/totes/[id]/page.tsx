@@ -915,6 +915,7 @@ export default function ToteDetailPage() {
                     className="btn-icon-danger"
                     onClick={(e) => promptDeleteItem(e, item.id, item.name)}
                     title="Delete item"
+                    aria-label={`Delete item ${item.name}`}
                   >
                     <Trash2 size={16} />
                   </button>

@@ -926,6 +926,7 @@ export default function ItemDetailPage() {
                   className="btn btn-danger btn-sm"
                   onClick={() => handleDeletePhoto(viewingPhoto.id)}
                   title="Delete photo"
+                  aria-label="Delete photo"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -933,6 +934,7 @@ export default function ItemDetailPage() {
                   className="photo-lightbox-close"
                   onClick={() => setViewingPhoto(null)}
                   title="Close"
+                  aria-label="Close lightbox"
                 >
                   <X size={20} />
                 </button>
@@ -1085,6 +1087,7 @@ export default function ItemDetailPage() {
                     className="photo-delete-btn"
                     onClick={() => handleDeletePhoto(photo.id)}
                     title="Delete photo"
+                    aria-label="Delete photo"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -1329,6 +1332,7 @@ export default function ItemDetailPage() {
                     className="metadata-tag-edit"
                     onClick={() => startEditMetadata(meta)}
                     title={`Edit ${meta.key}`}
+                    aria-label={`Edit ${meta.key}`}
                   >
                     <Pencil size={14} />
                   </button>
@@ -1336,6 +1340,7 @@ export default function ItemDetailPage() {
                     className="metadata-tag-remove"
                     onClick={() => handleDeleteMetadata(meta.id, meta.key)}
                     title={`Remove ${meta.key}`}
+                    aria-label={`Remove ${meta.key}`}
                   >
                     <X size={14} />
                   </button>

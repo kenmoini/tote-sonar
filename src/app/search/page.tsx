@@ -301,6 +301,7 @@ function SearchContent() {
                     className="search-filter-clear-btn"
                     onClick={clearLocationFilter}
                     title="Clear location filter"
+                    aria-label="Clear location filter"
                   >
                     <X size={14} />
                   </button>
@@ -330,6 +331,7 @@ function SearchContent() {
                     className="search-filter-clear-btn"
                     onClick={clearOwnerFilter}
                     title="Clear owner filter"
+                    aria-label="Clear owner filter"
                   >
                     <X size={14} />
                   </button>
@@ -359,6 +361,7 @@ function SearchContent() {
                     className="search-filter-clear-btn"
                     onClick={clearMetadataKeyFilter}
                     title="Clear metadata key filter"
+                    aria-label="Clear metadata key filter"
                   >
                     <X size={14} />
                   </button>
@@ -374,7 +377,7 @@ function SearchContent() {
                 <span className="search-active-filter-tag">
                   <MapPin size={12} />
                   {locationFilter}
-                  <button type="button" onClick={clearLocationFilter} className="search-active-filter-remove">
+                  <button type="button" onClick={clearLocationFilter} className="search-active-filter-remove" aria-label={`Remove location filter: ${locationFilter}`}>
                     <X size={12} />
                   </button>
                 </span>
@@ -383,7 +386,7 @@ function SearchContent() {
                 <span className="search-active-filter-tag">
                   <User size={12} />
                   {ownerFilter}
-                  <button type="button" onClick={clearOwnerFilter} className="search-active-filter-remove">
+                  <button type="button" onClick={clearOwnerFilter} className="search-active-filter-remove" aria-label={`Remove owner filter: ${ownerFilter}`}>
                     <X size={12} />
                   </button>
                 </span>
@@ -392,7 +395,7 @@ function SearchContent() {
                 <span className="search-active-filter-tag">
                   <Tag size={12} />
                   {metadataKeyFilter}
-                  <button type="button" onClick={clearMetadataKeyFilter} className="search-active-filter-remove">
+                  <button type="button" onClick={clearMetadataKeyFilter} className="search-active-filter-remove" aria-label={`Remove metadata key filter: ${metadataKeyFilter}`}>
                     <X size={12} />
                   </button>
                 </span>
