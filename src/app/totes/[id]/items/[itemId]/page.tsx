@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
-import { Package, ArrowLeft, Hash, Calendar, FileText, Camera, Upload, X, Trash2, ImageIcon, AlertTriangle, Check, Tag, Plus, Pencil, ArrowRightLeft, Clock, MapPin } from 'lucide-react';
+import { Package, ArrowLeft, Hash, Calendar, FileText, Camera, Upload, X, Trash2, ImageIcon, AlertTriangle, Check, Tag, Plus, Pencil, ArrowRightLeft, Clock, MapPin, Copy } from 'lucide-react';
 import { Item, ItemPhoto, ItemMetadata, MovementHistory, Tote } from '@/types';
 import Breadcrumb from '@/components/Breadcrumb';
 
@@ -44,6 +44,7 @@ export default function ItemDetailPage() {
   const [movingItem, setMovingItem] = useState(false);
   const [moveError, setMoveError] = useState<string | null>(null);
   const [loadingTotes, setLoadingTotes] = useState(false);
+  const [duplicatingItem, setDuplicatingItem] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchItem = useCallback(async () => {
@@ -337,6 +338,36 @@ export default function ItemDetailPage() {
       setMoveError('Failed to move item. Please try again.');
     } finally {
       setMovingItem(false);
+    }
+  };
+
+  const handleDuplicateItem = async () => {
+    setDuplicatingItem(true);
+    try {
+      const res = await fetch(`/api/items/${itemId}/duplicate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+
+      if (!res.ok) {
+        const json = await res.json();
+        setToast({ message: json.error || 'Failed to duplicate item', type: 'error' });
+        return;
+      }
+
+      const json = await res.json();
+      const newItem = json.data;
+      setToast({ message: json.message || 'Item duplicated successfully!', type: 'success' });
+
+      // Navigate to the duplicated item after a brief delay
+      setTimeout(() => {
+        router.push(`/totes/${newItem.tote_id}/items/${newItem.id}`);
+      }, 500);
+    } catch {
+      setToast({ message: 'Failed to duplicate item. Please try again.', type: 'error' });
+    } finally {
+      setDuplicatingItem(false);
     }
   };
 
@@ -663,6 +694,15 @@ export default function ItemDetailPage() {
           >
             <ArrowRightLeft size={16} />
             <span>Move</span>
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={handleDuplicateItem}
+            disabled={duplicatingItem}
+            title="Duplicate item in this tote"
+          >
+            <Copy size={16} />
+            <span>{duplicatingItem ? 'Duplicating...' : 'Duplicate'}</span>
           </button>
           <button
             className="btn btn-danger"
