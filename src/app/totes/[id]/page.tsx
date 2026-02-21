@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
-import { Box, MapPin, User, ArrowLeft, Package, Calendar, Plus, X, Check, Trash2, AlertTriangle, Pencil, QrCode, ArrowUpDown } from 'lucide-react';
-import { Tote, Item } from '@/types';
+import { Box, MapPin, User, ArrowLeft, Package, Calendar, Plus, X, Check, Trash2, AlertTriangle, Pencil, QrCode, ArrowUpDown, ImageIcon } from 'lucide-react';
+import { Tote, Item, ItemPhoto } from '@/types';
 import Breadcrumb from '@/components/Breadcrumb';
 
 interface ToteDetail extends Tote {
@@ -794,6 +794,19 @@ export default function ToteDetailPage() {
           <div className="items-list">
             {getSortedItems(tote.items).map((item) => (
               <Link key={item.id} href={`/totes/${toteId}/items/${item.id}`} className="item-row item-row-link">
+                <div className="item-row-thumbnail">
+                  {item.photos && item.photos.length > 0 ? (
+                    <img
+                      src={`/api/photos/${item.photos[0].id}/thumbnail`}
+                      alt={`${item.name} thumbnail`}
+                      className="item-thumbnail-img"
+                    />
+                  ) : (
+                    <div className="item-thumbnail-placeholder">
+                      <ImageIcon size={20} />
+                    </div>
+                  )}
+                </div>
                 <div className="item-row-info">
                   <span className="item-name">{item.name}</span>
                   {item.description && <span className="item-desc">{item.description}</span>}

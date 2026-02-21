@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
-import { UpdateToteInput, Tote, Item } from '@/types';
+import { UpdateToteInput, Tote, Item, ItemPhoto } from '@/types';
 
 type RouteContext = { params: Promise<{ id: string }> | { id: string } };
 
@@ -36,10 +36,32 @@ export async function GET(
       'SELECT COUNT(*) as count FROM items WHERE tote_id = ?'
     ).get(id) as { count: number };
 
+    // Get photos for all items in this tote to display thumbnails in list view
+    const itemIds = items.map(item => item.id);
+    let photosByItem: Record<number, ItemPhoto[]> = {};
+    if (itemIds.length > 0) {
+      const placeholders = itemIds.map(() => '?').join(',');
+      const photos = db.prepare(
+        `SELECT * FROM item_photos WHERE item_id IN (${placeholders}) ORDER BY created_at ASC`
+      ).all(...itemIds) as ItemPhoto[];
+      for (const photo of photos) {
+        if (!photosByItem[photo.item_id]) {
+          photosByItem[photo.item_id] = [];
+        }
+        photosByItem[photo.item_id].push(photo);
+      }
+    }
+
+    // Attach photos to each item
+    const itemsWithPhotos = items.map(item => ({
+      ...item,
+      photos: photosByItem[item.id] || [],
+    }));
+
     return NextResponse.json({
       data: {
         ...tote,
-        items,
+        items: itemsWithPhotos,
         item_count: countResult.count,
       },
     });
