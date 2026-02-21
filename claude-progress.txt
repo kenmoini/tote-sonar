@@ -1,5 +1,33 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #35 - 2026-02-21
+
+### Feature #35: QR code encodes correct URL with hostname and tote ID - PASSED
+
+**What was accomplished:**
+- Verified QR code generation endpoint correctly encodes URL with server hostname and tote ID
+- No code changes needed - implementation was already correct and complete
+
+**Verification (all 7 feature steps):**
+1. Set server hostname in settings to "http://localhost:3000" via PUT /api/settings
+2. Created test tote "QR_TEST_TOTE_F35" (ID: Xn1MBD) via POST /api/totes
+3. GET /api/totes/Xn1MBD/qr returned valid PNG image (2036 bytes); ?format=dataurl returned JSON with encoded_url
+4. Verified encoded_url "http://localhost:3000/totes/Xn1MBD" contains server hostname "http://localhost:3000"
+5. Verified encoded_url contains tote ID "Xn1MBD"
+6. Navigated to /totes/Xn1MBD in browser - tote detail page loaded correctly with QR code displayed, tote ID shown below QR, and "Scan to open this tote's page" text
+7. Cleaned up: deleted test tote, confirmed 404 on re-fetch
+
+**Additional verifications:**
+- Changed hostname to "https://totesonar.example.com" - QR code correctly updated to encode "https://totesonar.example.com/totes/Xn1MBD"
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- QR code URL format matches /totes/:id route pattern for correct page routing
+- All test data cleaned up after verification
+
+**Current status:** 41/90 features passing (45.6%)
+
+---
+
 ## Session - Feature #33 - 2026-02-21
 
 ### Feature #33: Placeholder icon shown when item has no photos - PASSED
