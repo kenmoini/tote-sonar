@@ -3,11 +3,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, Box, MapPin, User, ArrowUpDown, X, Check } from 'lucide-react';
+import { Plus, Box, MapPin, User, ArrowUpDown, X, Check, Printer, CheckSquare, Square } from 'lucide-react';
 import { Tote } from '@/types';
 
 interface ToteWithCount extends Tote {
   item_count: number;
+}
+
+interface BulkQrLabel {
+  tote_id: string;
+  tote_name: string;
+  tote_location: string;
+  qr_data_url: string;
+  encoded_url: string;
 }
 
 type SortField = 'name' | 'location' | 'owner' | 'created_at';
@@ -22,6 +30,12 @@ export default function TotesPage() {
   const [sortBy, setSortBy] = useState<SortField>('created_at');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // Bulk selection state
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedTotes, setSelectedTotes] = useState<Set<string>>(new Set());
+  const [bulkQrLabels, setBulkQrLabels] = useState<BulkQrLabel[]>([]);
+  const [loadingBulkPrint, setLoadingBulkPrint] = useState(false);
 
   // Auto-open create form when ?create=true is in the URL (from welcome screen)
   useEffect(() => {
@@ -137,6 +151,66 @@ export default function TotesPage() {
     });
   };
 
+  // Bulk selection handlers
+  const toggleSelectMode = () => {
+    if (selectMode) {
+      // Exiting select mode - clear selection and print labels
+      setSelectedTotes(new Set());
+      setBulkQrLabels([]);
+    }
+    setSelectMode(!selectMode);
+  };
+
+  const toggleToteSelection = (toteId: string) => {
+    setSelectedTotes(prev => {
+      const next = new Set(prev);
+      if (next.has(toteId)) {
+        next.delete(toteId);
+      } else {
+        next.add(toteId);
+      }
+      return next;
+    });
+  };
+
+  const selectAllTotes = () => {
+    if (selectedTotes.size === totes.length) {
+      setSelectedTotes(new Set());
+    } else {
+      setSelectedTotes(new Set(totes.map(t => t.id)));
+    }
+  };
+
+  const handleBulkPrint = async () => {
+    if (selectedTotes.size === 0) return;
+
+    setLoadingBulkPrint(true);
+    try {
+      const res = await fetch('/api/totes/qr/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tote_ids: Array.from(selectedTotes) }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to generate QR codes');
+      }
+
+      const json = await res.json();
+      setBulkQrLabels(json.data || []);
+
+      // Wait for images to render before printing
+      setTimeout(() => {
+        window.print();
+      }, 500);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to generate bulk QR codes', 'error');
+    } finally {
+      setLoadingBulkPrint(false);
+    }
+  };
+
   return (
     <main className="page-container">
       {/* Toast notification */}
@@ -158,14 +232,52 @@ export default function TotesPage() {
           <h1>Totes</h1>
           <p>Manage your totes and their contents.</p>
         </div>
-        <button
-          className="btn btn-primary"
-          onClick={() => setShowCreateForm(true)}
-        >
-          <Plus size={18} />
-          <span>Add Tote</span>
-        </button>
+        <div className="page-header-actions">
+          {totes.length > 0 && (
+            <button
+              className={`btn ${selectMode ? 'btn-secondary' : 'btn-outline'}`}
+              onClick={toggleSelectMode}
+              title={selectMode ? 'Exit selection mode' : 'Select totes for bulk printing'}
+            >
+              {selectMode ? <X size={18} /> : <CheckSquare size={18} />}
+              <span>{selectMode ? 'Cancel' : 'Select'}</span>
+            </button>
+          )}
+          <button
+            className="btn btn-primary"
+            onClick={() => setShowCreateForm(true)}
+          >
+            <Plus size={18} />
+            <span>Add Tote</span>
+          </button>
+        </div>
       </div>
+
+      {/* Bulk selection bar */}
+      {selectMode && (
+        <div className="bulk-action-bar">
+          <div className="bulk-action-info">
+            <button
+              className="btn btn-sm btn-outline"
+              onClick={selectAllTotes}
+            >
+              {selectedTotes.size === totes.length ? <CheckSquare size={16} /> : <Square size={16} />}
+              <span>{selectedTotes.size === totes.length ? 'Deselect All' : 'Select All'}</span>
+            </button>
+            <span className="bulk-selection-count">
+              {selectedTotes.size} of {totes.length} selected
+            </span>
+          </div>
+          <button
+            className="btn btn-primary"
+            onClick={handleBulkPrint}
+            disabled={selectedTotes.size === 0 || loadingBulkPrint}
+          >
+            <Printer size={18} />
+            <span>{loadingBulkPrint ? 'Generating...' : `Print ${selectedTotes.size} QR Label${selectedTotes.size !== 1 ? 's' : ''}`}</span>
+          </button>
+        </div>
+      )}
 
       {/* Create Tote Modal */}
       {showCreateForm && (
@@ -325,40 +437,119 @@ export default function TotesPage() {
       {/* Tote list */}
       {!loading && !error && totes.length > 0 && (
         <div className="tote-grid">
-          {totes.map((tote) => (
-            <Link key={tote.id} href={`/totes/${tote.id}`} className="tote-card">
-              <div className="tote-card-header">
-                <div className="tote-card-icon">
-                  <Box size={20} />
+          {totes.map((tote) => {
+            const isSelected = selectedTotes.has(tote.id);
+
+            if (selectMode) {
+              return (
+                <div
+                  key={tote.id}
+                  className={`tote-card tote-card-selectable ${isSelected ? 'tote-card-selected' : ''}`}
+                  onClick={() => toggleToteSelection(tote.id)}
+                  role="checkbox"
+                  aria-checked={isSelected}
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === ' ' || e.key === 'Enter') {
+                      e.preventDefault();
+                      toggleToteSelection(tote.id);
+                    }
+                  }}
+                >
+                  <div className="tote-card-header">
+                    <div className="tote-select-checkbox">
+                      {isSelected ? (
+                        <CheckSquare size={20} className="checkbox-checked" />
+                      ) : (
+                        <Square size={20} className="checkbox-unchecked" />
+                      )}
+                    </div>
+                    <span className="tote-id">{tote.id}</span>
+                  </div>
+                  <h3 className="tote-card-name">{tote.name}</h3>
+                  <div className="tote-card-meta">
+                    <span className="tote-meta-item">
+                      <MapPin size={14} />
+                      {tote.location}
+                    </span>
+                    {tote.owner && (
+                      <span className="tote-meta-item">
+                        <User size={14} />
+                        {tote.owner}
+                      </span>
+                    )}
+                  </div>
+                  <div className="tote-card-footer">
+                    <span className="tote-item-count">
+                      {tote.item_count} {tote.item_count === 1 ? 'item' : 'items'}
+                    </span>
+                    <span className="tote-date">{formatDate(tote.created_at)}</span>
+                  </div>
+                  {(tote.size || tote.color) && (
+                    <div className="tote-card-tags">
+                      {tote.size && <span className="tote-tag">{tote.size}</span>}
+                      {tote.color && <span className="tote-tag">{tote.color}</span>}
+                    </div>
+                  )}
                 </div>
-                <span className="tote-id">{tote.id}</span>
-              </div>
-              <h3 className="tote-card-name">{tote.name}</h3>
-              <div className="tote-card-meta">
-                <span className="tote-meta-item">
-                  <MapPin size={14} />
-                  {tote.location}
-                </span>
-                {tote.owner && (
+              );
+            }
+
+            return (
+              <Link key={tote.id} href={`/totes/${tote.id}`} className="tote-card">
+                <div className="tote-card-header">
+                  <div className="tote-card-icon">
+                    <Box size={20} />
+                  </div>
+                  <span className="tote-id">{tote.id}</span>
+                </div>
+                <h3 className="tote-card-name">{tote.name}</h3>
+                <div className="tote-card-meta">
                   <span className="tote-meta-item">
-                    <User size={14} />
-                    {tote.owner}
+                    <MapPin size={14} />
+                    {tote.location}
                   </span>
-                )}
-              </div>
-              <div className="tote-card-footer">
-                <span className="tote-item-count">
-                  {tote.item_count} {tote.item_count === 1 ? 'item' : 'items'}
-                </span>
-                <span className="tote-date">{formatDate(tote.created_at)}</span>
-              </div>
-              {(tote.size || tote.color) && (
-                <div className="tote-card-tags">
-                  {tote.size && <span className="tote-tag">{tote.size}</span>}
-                  {tote.color && <span className="tote-tag">{tote.color}</span>}
+                  {tote.owner && (
+                    <span className="tote-meta-item">
+                      <User size={14} />
+                      {tote.owner}
+                    </span>
+                  )}
                 </div>
-              )}
-            </Link>
+                <div className="tote-card-footer">
+                  <span className="tote-item-count">
+                    {tote.item_count} {tote.item_count === 1 ? 'item' : 'items'}
+                  </span>
+                  <span className="tote-date">{formatDate(tote.created_at)}</span>
+                </div>
+                {(tote.size || tote.color) && (
+                  <div className="tote-card-tags">
+                    {tote.size && <span className="tote-tag">{tote.size}</span>}
+                    {tote.color && <span className="tote-tag">{tote.color}</span>}
+                  </div>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Bulk Print Labels Container (hidden on screen, visible when printing) */}
+      {bulkQrLabels.length > 0 && (
+        <div className="bulk-print-container" aria-hidden="true">
+          {bulkQrLabels.map((label) => (
+            <div key={label.tote_id} className="bulk-print-label">
+              <div className="bulk-print-label-qr">
+                <img
+                  src={label.qr_data_url}
+                  alt={`QR code for tote ${label.tote_id}`}
+                  style={{ width: '250px', height: '250px' }}
+                />
+              </div>
+              <div className="bulk-print-label-id">{label.tote_id}</div>
+              <div className="bulk-print-label-name">{label.tote_name}</div>
+              <div className="bulk-print-label-location">{label.tote_location}</div>
+            </div>
           ))}
         </div>
       )}
