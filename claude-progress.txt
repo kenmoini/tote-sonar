@@ -1,5 +1,49 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #56 - 2026-02-21
+
+### Feature #56: Import from ZIP file with validation - PASSED
+
+**What was accomplished:**
+- Created POST /api/import API endpoint (src/app/api/import/route.ts) with:
+  - Multipart form data file upload handling
+  - ZIP file validation (checks file extension and ability to parse as ZIP)
+  - JSON structure validation (checks for tote-sonar-data.json, required tables)
+  - Atomic database import within a transaction (disables foreign keys temporarily)
+  - Clears existing data before importing (totes, items, photos, metadata, settings)
+  - Imports all 7 data tables: totes, items, item_photos, item_metadata, metadata_keys, item_movement_history, settings
+  - Extracts photo files from ZIP to uploads/ and thumbnails/ directories
+  - Returns import summary with counts for each data type
+- Updated import-export page (src/app/import-export/page.tsx) with full working import UI:
+  - File dropzone with drag-and-drop support and click-to-select
+  - Selected file display (name and size)
+  - Import progress indicator with spinner
+  - Success result with summary stats (totes, items, photos, metadata, settings)
+  - Error result with clear validation messages
+  - Clear button to deselect file
+  - File automatically cleared after successful import
+- Added CSS styles for import progress, result states, and active dropzone
+
+**Verification (all 8 feature steps):**
+1. Exported current data to get a valid ZIP file (5.3KB with JSON + photos)
+2. Noted current data state (5 totes, 7 items)
+3. Navigated to import-export page - Import Data section fully interactive
+4. Uploaded the ZIP file via dropzone - file name and size displayed correctly
+5. Clicked Import Data - validation passed, import completed successfully
+6. Verified all totes from export were restored (confirmed via /totes page)
+7. Verified all items from export were restored (confirmed via API)
+8. Tested with invalid ZIP (plain text file) - validation error message displayed: "Invalid ZIP file. The file could not be read as a ZIP archive."
+
+**Quality checks:**
+- Console errors: only HMR WebSocket (headless mode) + expected 400 from invalid ZIP test
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence test: created RESTART_TEST_F56_UNIQUE, killed server, restarted, data persisted, import API works after restart
+- All test data cleaned up after verification
+
+**Current status:** 21/90 features passing (23.3%)
+
+---
+
 ## Session - Feature #17 - 2026-02-21
 
 ### Feature #17: Created item appears in tote detail with correct data - PASSED
