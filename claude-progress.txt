@@ -1,5 +1,37 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #28 - 2026-02-21
+
+### Feature #28: Metadata key autocomplete shows existing keys - PASSED
+
+**What was accomplished:**
+- Added autocomplete functionality to the metadata key input field on item detail page
+- When the "Add Metadata" form opens, existing metadata keys are fetched from /api/metadata-keys
+- As user types in the key field, matching suggestions appear in a dropdown below
+- User can click a suggestion to populate the key field
+- Keyboard navigation supported: ArrowDown/ArrowUp to navigate, Enter to select, Escape to dismiss
+- Dropdown closes on outside click or when a suggestion is selected
+- Added CSS styles for autocomplete-dropdown with light/dark mode support
+
+**Verification (all 7 feature steps):**
+1. Created test tote "AUTOCOMPLETE_TEST_F28", item, and added metadata with key 'Color' via API
+2. Created second item "Item2_F28" in same tote
+3. Navigated to second item detail, clicked "Add Metadata" button
+4. Typed 'Col' in the key field
+5. Autocomplete dropdown appeared showing 'Color', 'TestColor', and 'color' as matching suggestions
+6. Clicked 'Color' suggestion - key field populated with "Color", dropdown closed
+7. Cleaned up: deleted test tote (cascade deleted items and metadata)
+
+**Quality checks:**
+- Zero JS console errors (only WebSocket HMR noise from headless dev mode)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Screenshots verified proper visual appearance of dropdown and field population
+- All test data cleaned up after verification
+
+**Current status:** 37/90 features passing (41.1%)
+
+---
+
 ## Session - Feature #26 - 2026-02-21
 
 ### Feature #26: Edit metadata tag on item - PASSED
