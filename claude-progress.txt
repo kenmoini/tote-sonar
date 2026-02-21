@@ -1,5 +1,31 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #88 - 2026-02-21
+
+### Feature #88: Timestamps display correctly on totes and items - PASSED
+
+**What was accomplished:**
+- Added "Updated" timestamp meta card to item detail page (was missing - only "Added" was shown)
+- Tote detail page already displayed both "Created" and "Updated" timestamps correctly
+- Both pages use readable date format: "MMM DD, YYYY, H:MM AM/PM" (e.g., "Feb 21, 2026, 3:52 AM")
+- The `formatDate` function appends 'Z' to treat timestamps as UTC and formats via `toLocaleDateString`
+
+**Verification (all 7 feature steps):**
+1. Created test tote "TIMESTAMP_TEST_F88" via API - noted timestamp `2026-02-21 08:52:22`
+2. Navigated to tote detail page at /totes/f5UEju
+3. Verified created_at displayed in readable format: "Feb 21, 2026, 3:52 AM" ✓
+4. Edited the tote (changed name to "TIMESTAMP_TEST_F88_EDITED") via Edit Tote modal
+5. Verified updated_at timestamp changed to "Feb 21, 2026, 3:53 AM" while created_at stayed at 3:52 AM ✓
+6. Created item "TIMESTAMP_ITEM_F88" - item detail page shows "Added: Feb 21, 2026, 3:53 AM" and "Updated: Feb 21, 2026, 3:53 AM" ✓
+7. All timestamps are reasonable dates matching today's date (Feb 21, 2026) ✓
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- All test data cleaned up after verification (deleted test tote cascade deleted item)
+
+**Current status:** 87/90 features passing (96.7%)
+
 ## Session - Feature #86 - 2026-02-21
 
 ### Feature #86: Double-click on create tote submits only once - PASSED
