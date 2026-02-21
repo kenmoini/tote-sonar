@@ -2703,3 +2703,38 @@
 - Dev server starts on port 3000 with PORT=3000 npx next dev --port 3000
 - Database created automatically at data/tote-sonar.db on first access via getDb()
 - Many API route directories already scaffolded (dashboard, export, health, import, items, metadata-keys, photos, search, settings, totes)
+
+---
+
+## Session - Feature #59 - 2026-02-21
+
+### Feature #59: Breadcrumb navigation on tote and item detail pages - PASSED
+
+**What was accomplished:**
+- Verified breadcrumb navigation displays correct hierarchy on both detail pages
+- Item detail page breadcrumb: Dashboard > Totes > [Tote Name] > [Item Name]
+- Tote detail page breadcrumb: Dashboard > Totes > [Tote Name]
+- All breadcrumb links are clickable and navigate to correct pages
+- Current page (last item) is displayed as plain text (not a link)
+- Chevron separators between breadcrumb items
+
+**Verification (all 7 feature steps):**
+1. Created test tote "BREADCRUMB_TEST_F59" (ID: 7awYLH) and item "CRUMB_ITEM_F59" (ID: 119) via API
+2. Navigated to item detail page /totes/7awYLH/items/119
+3. Verified breadcrumb shows: Dashboard > Totes > BREADCRUMB_TEST_F59 > CRUMB_ITEM_F59
+4. Clicked Tote Name in breadcrumb → navigated to /totes/7awYLH (tote detail)
+5. Clicked Totes in breadcrumb → navigated to /totes (tote list)
+6. Clicked Dashboard in breadcrumb → navigated to / (dashboard)
+7. Cleaned up: deleted test tote (cascade deleted item)
+
+**Also verified tote detail page breadcrumbs:**
+- Tote detail breadcrumb: Dashboard > Totes > BREADCRUMB_TEST_F59
+- Totes link → /totes, Dashboard link → / - both work correctly
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Visual screenshot verified breadcrumb styling with proper link colors and chevron separators
+- All test data cleaned up after verification
+
+**Current status:** 58/90 features passing (64.4%)
