@@ -1,5 +1,25 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #3 (re-verification) - 2026-02-21
+
+### Feature #3: Data persists across server restart - PASSED (re-verified)
+
+**What was accomplished:**
+- Re-verified infrastructure feature #3 which had been marked as failing (regression)
+- Created test tote "RESTART_TEST_TOTE_98765" via POST /api/totes (got ID: jRog8s)
+- Server crashed naturally during testing (connection refused on subsequent request)
+- Restarted the server after crash
+- Verified RESTART_TEST_TOTE_98765 still existed in database after restart - data persisted
+- Verified via browser automation: tote visible in /totes UI with correct name, location, and ID
+- Verified via API: GET /api/totes/jRog8s returned matching name "RESTART_TEST_TOTE_98765" and location "Garage"
+- Cleaned up test data: deleted test tote and leftover test totes from other sessions
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+
+**Current status:** 89/90 features passing (98.9%)
+
+---
+
 ## Session - Feature #90 - 2026-02-21
 
 ### Feature #90: Tote and item lists load within acceptable time - PASSED
