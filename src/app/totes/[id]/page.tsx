@@ -753,7 +753,7 @@ export default function ToteDetailPage() {
                 <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleAddItem} className="tote-form">
+            <form onSubmit={handleAddItem} className="tote-form" noValidate>
               <div className="form-group">
                 <label htmlFor="item-name" className="form-label">
                   Name <span className="form-required">*</span>
