@@ -1,5 +1,33 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #17 - 2026-02-21
+
+### Feature #17: Created item appears in tote detail with correct data - PASSED
+
+**What was accomplished:**
+- Verified that items created via API display correctly on tote detail page and item detail page
+- This was a Real Data Verification feature - no code changes needed
+
+**Verification (all 8 feature steps):**
+1. Created test tote "F17_DATA_VERIFY_TOTE" via POST /api/totes (ID: zly2hk)
+2. Created item via POST /api/totes/zly2hk/items with name="DATA_VERIFY_ITEM", description="Verification test", quantity=3
+3. Navigated to tote detail page (/totes/zly2hk) - item visible in list
+4. Verified item name "DATA_VERIFY_ITEM" displayed correctly
+5. Verified quantity "Qty: 3" displayed correctly
+6. Clicked item link to navigate to detail page (/totes/zly2hk/items/69)
+7. Verified description "Verification test" displayed on detail page
+8. Cleaned up: deleted test tote (cascade deleted both items)
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence test: created RESTART_TEST_F17_98765, killed server (kill -9), restarted, verified data persisted, cleaned up
+- All test data cleaned up after verification
+
+**Current status:** 22/90 features passing (24.4%)
+
+---
+
 ## Session - Feature #40 - 2026-02-21
 
 ### Feature #40: Search items by name returns matching results - PASSED
