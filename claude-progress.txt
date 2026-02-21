@@ -1,5 +1,35 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #47 - 2026-02-21
+
+### Feature #47: Dashboard displays total tote count - PASSED
+
+**What was accomplished:**
+- Verified dashboard metric card shows correct total tote count from real SQLite database
+- No code changes needed - implementation was already correct and complete
+- Dashboard API (GET /api/dashboard) queries `SELECT COUNT(*) as count FROM totes` from real database
+- Dashboard page (src/app/page.tsx) renders the count in a styled metric card with "Total Totes" label
+
+**Verification (all 7 feature steps):**
+1. Created 3 totes via API (F47_Tote_Alpha, F47_Tote_Beta, F47_Tote_Gamma)
+2. Navigated to dashboard - page loaded with metric cards showing "Dashboard" heading
+3. Verified tote count metric displayed correctly (6 = 3 existing + 3 new), matching API count exactly
+4. Deleted one tote (F47_Tote_Alpha) via API
+5. Refreshed dashboard page
+6. Verified tote count updated correctly (decreased to match real database count)
+7. Cleaned up: deleted all remaining F47 test totes
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings - only React DevTools info)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence test: created RESTART_TEST_F47_12345, killed server (kill -9), restarted, dashboard showed correct count with persisted data
+- Screenshots verified clean UI: metric card with icon, "TOTAL TOTES" label, and accurate number
+- All test data cleaned up after verification
+
+**Current status:** 51/90 features passing (56.7%)
+
+---
+
 ## Session - Feature #48 - 2026-02-21
 
 ### Feature #48: Dashboard displays total item count - PASSED
