@@ -4,10 +4,10 @@ import { UpdateToteInput, Tote, Item, ItemPhoto } from '@/types';
 import fs from 'fs';
 import path from 'path';
 
-type RouteContext = { params: Promise<{ id: string }> | { id: string } };
+type RouteContext = { params: Promise<{ id: string }> };
 
-async function resolveId(params: Promise<{ id: string }> | { id: string }): Promise<string> {
-  const resolved = await Promise.resolve(params);
+async function resolveId(params: Promise<{ id: string }>): Promise<string> {
+  const resolved = await params;
   return resolved.id;
 }
 
