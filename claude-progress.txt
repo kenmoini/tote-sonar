@@ -1,5 +1,39 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #1 - 2026-02-21
+
+### Feature #1: Database connection established - PASSED
+
+**What was accomplished:**
+- Verified existing database connection and health endpoint implementation
+- No code changes required - implementation was already complete from initial setup
+
+**Implementation details (already in place):**
+- SQLite database at `data/tote-sonar.db` using `better-sqlite3` library
+- `getDb()` singleton in `src/lib/db.ts` initializes connection with WAL mode, foreign keys, and schema
+- Server logs `Database connected: <path>` and `Database schema initialized` on first DB access
+- GET /api/health endpoint performs `SELECT 1` query and returns JSON with `database` status field
+- Returns HTTP 200 with `{"status":"ok","database":"connected","timestamp":"..."}` on success
+- Returns HTTP 503 with `{"status":"error","database":"disconnected",...}` on failure
+
+**Verification (all 6 feature steps):**
+1. Started dev server via init.sh - server started successfully on port 3000
+2. Checked server logs - confirmed "Database connected: /Users/.../data/tote-sonar.db" and "Database schema initialized" messages
+3. Sent GET /api/health - received response with database status field
+4. Verified response JSON includes `"database":"connected"` field
+5. Verified response HTTP status is 200
+6. Confirmed database status field is present (not missing from response)
+
+**Quality checks:**
+- Browser automation: opened /api/health in browser, verified JSON response visually via screenshot
+- Console: only favicon 404 (expected, unrelated)
+- Step 5.6 mock data grep: no prohibited patterns (globalThis, devStore, mockDb, etc.) found in src/
+- Step 5.7 server restart persistence: created test tote "RESTART_TEST_DB_12345" (ID: 9YlzD0), killed server, restarted, verified tote still existed via API, then cleaned up test data
+
+**Current status:** 1/90 features passing (1.1%)
+
+---
+
 ## Session - Feature #21 - 2026-02-20
 
 ### Feature #21: View all items within a tote - PASSED
