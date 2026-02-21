@@ -1,5 +1,28 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #26 - 2026-02-21
+
+### Feature #26: Edit metadata tag on item - PASSED
+
+**What was accomplished:**
+- Added inline edit functionality for metadata tags on item detail page
+- Edit button (pencil icon) on each metadata tag, alongside the existing remove button
+- Inline edit form replaces tag when editing, with Key and Value inputs pre-populated
+- Save/Cancel buttons plus keyboard shortcuts (Enter to save, Escape to cancel)
+- Calls PUT /api/items/:id/metadata/:metadataId to persist changes
+- Success toast notification on save
+- CSS styles for edit form, edit button hover state, responsive layout
+
+**Verification:**
+- Created test tote/item/metadata (Brand=Acme), clicked edit pencil, changed to BetterBrand, saved
+- UI updated with "BetterBrand", API confirmed value updated with new timestamp
+- Zero JS console errors, no mock data patterns, data persisted across server restart
+- All test data cleaned up
+
+**Current status:** 34/90 features passing (37.8%)
+
+---
+
 ## Session - Feature #27 - 2026-02-21
 
 ### Feature #27: Delete metadata tag from item - PASSED
