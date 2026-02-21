@@ -1,5 +1,37 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #16 - 2026-02-21
+
+### Feature #16: Add item to tote with name, description, and quantity - PASSED
+
+**What was accomplished:**
+- Verified end-to-end item creation workflow through browser automation
+- No code changes needed - item creation was already fully implemented
+
+**Verification (all 11 feature steps):**
+1. Created tote "F16_TEST_TOTE" (ID: Dk9nnS) via API with location "Test Lab B"
+2. Navigated to tote detail page /totes/Dk9nnS - page loaded with heading, ID, location, Items: 0, empty state
+3. Clicked "Add Item" button - "Add Item to Tote" modal opened with Name (required), Description (optional), Quantity fields
+4. Filled in item name: "Test Widget"
+5. Filled in description: "A test widget for verification"
+6. Set quantity to 5
+7. Submitted the form by clicking "Add Item" button
+8. Success toast displayed: 'Item "Test Widget" added successfully!'
+9. Item appeared in tote's item list: "Test Widget", description "A test widget for verification", "Qty: 5", linked to /totes/Dk9nnS/items/59. Items count updated from 0 to 1.
+10. GET /api/totes/Dk9nnS/items returned item with correct data: name "Test Widget", description "A test widget for verification", quantity 5, tote_id "Dk9nnS"
+11. Cleaned up: DELETE /api/totes/Dk9nnS returned success with items_deleted: 1, confirmed 404 on re-fetch
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings - only React DevTools info)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence: killed server, restarted, item data persisted with correct name, description, and quantity
+- Visual screenshots verified clean form layout and item list after creation
+- All test data cleaned up after verification
+
+**Current status:** 11/90 features passing (12.2%)
+
+---
+
 ## Session - Feature #50 - 2026-02-21
 
 ### Feature #50: Settings page accessible and loads current values - PASSED
