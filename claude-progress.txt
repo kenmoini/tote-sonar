@@ -1,5 +1,42 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #75 - 2026-02-21
+
+### Feature #75: Layout correct at tablet viewport 768px - PASSED
+
+**What was accomplished:**
+- Optimized responsive breakpoints for tablet viewport (768x1024)
+- Changed layout-critical breakpoints from `max-width: 768px` to `max-width: 767px`:
+  - `.tote-grid` now shows 2-column grid at 768px (instead of forced single column)
+  - `.dashboard-metrics` and `.dashboard-quick-nav` show 2-column grid at 768px
+  - `.page-header` stays as row layout at 768px (title left, buttons right)
+  - `.search-form` stays as row layout at 768px
+- Added tablet touch target CSS (768px-1024px range):
+  - `.btn` min-height: 44px with adjusted padding
+  - `.sort-btn` min-height: 44px
+  - `.nav-mobile-toggle` min-width/height: 44px
+  - `.item-row` min-height: 44px
+  - `.quick-nav-card` min-height: 44px
+  - `.breadcrumb a` min-height: 44px with flex centering
+- Navigation hamburger menu correctly shows at 768px (kept at original breakpoint)
+
+**Verification (all 6 feature steps):**
+1. Set viewport to 768x1024 via playwright-cli resize
+2. Dashboard: 2-column metric cards, recently added items list, 2-column quick nav - all verified
+3. Tote list: 2-column card grid, sort buttons in row, page header in row - all verified
+4. Tote detail: 3-column metadata grid, readable content, QR code, items list - all verified
+5. No horizontal scrollbar on any page (dashboard, totes, tote detail, search, settings)
+6. Touch targets at least 44px (buttons, sort controls, nav toggle all have min-height: 44px)
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- All test data cleaned up after verification
+
+**Current status:** 74/90 features passing (82.2%)
+
+---
+
 ## Session - Feature #74 - 2026-02-21
 
 ### Feature #74: Layout correct at desktop viewport 1920px - PASSED
