@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 
-// GET /api/search/filters - Get distinct locations and owners for filter dropdowns
+// GET /api/search/filters - Get distinct locations, owners, and metadata keys for filter dropdowns
 export async function GET() {
   try {
     const db = getDb();
@@ -14,10 +14,15 @@ export async function GET() {
       `SELECT DISTINCT owner FROM totes WHERE owner IS NOT NULL AND owner != '' ORDER BY owner ASC`
     ).all() as Array<{ owner: string }>;
 
+    const metadataKeys = db.prepare(
+      `SELECT DISTINCT key_name FROM metadata_keys ORDER BY key_name ASC`
+    ).all() as Array<{ key_name: string }>;
+
     return NextResponse.json({
       data: {
         locations: locations.map(l => l.location),
         owners: owners.map(o => o.owner),
+        metadataKeys: metadataKeys.map(k => k.key_name),
       },
     });
   } catch (error) {

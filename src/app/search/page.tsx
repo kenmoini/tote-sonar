@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Search, Package, Box, MapPin, ArrowRight, Filter, X, User } from 'lucide-react';
+import { Search, Package, Box, MapPin, ArrowRight, Filter, X, User, Tag } from 'lucide-react';
 
 interface SearchResultItem {
   id: number;
@@ -23,19 +23,22 @@ function SearchContent() {
   const initialQuery = searchParams.get('q') || '';
   const initialLocation = searchParams.get('location') || '';
   const initialOwner = searchParams.get('owner') || '';
+  const initialMetadataKey = searchParams.get('metadata_key') || '';
 
   const [query, setQuery] = useState(initialQuery);
   const [locationFilter, setLocationFilter] = useState(initialLocation);
   const [ownerFilter, setOwnerFilter] = useState(initialOwner);
+  const [metadataKeyFilter, setMetadataKeyFilter] = useState(initialMetadataKey);
   const [results, setResults] = useState<SearchResultItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [showFilters, setShowFilters] = useState(!!initialLocation || !!initialOwner);
+  const [showFilters, setShowFilters] = useState(!!initialLocation || !!initialOwner || !!initialMetadataKey);
 
   // Available filter options
   const [availableLocations, setAvailableLocations] = useState<string[]>([]);
   const [availableOwners, setAvailableOwners] = useState<string[]>([]);
+  const [availableMetadataKeys, setAvailableMetadataKeys] = useState<string[]>([]);
 
   // Fetch available filter options
   useEffect(() => {
@@ -46,6 +49,7 @@ function SearchContent() {
           const json = await res.json();
           setAvailableLocations(json.data.locations || []);
           setAvailableOwners(json.data.owners || []);
+          setAvailableMetadataKeys(json.data.metadataKeys || []);
         }
       } catch (err) {
         console.error('Failed to fetch filter options:', err);
@@ -54,8 +58,8 @@ function SearchContent() {
     fetchFilters();
   }, []);
 
-  const performSearch = useCallback(async (searchQuery: string, location: string, owner: string) => {
-    if (!searchQuery.trim() && !location.trim() && !owner.trim()) {
+  const performSearch = useCallback(async (searchQuery: string, location: string, owner: string, metadataKey: string) => {
+    if (!searchQuery.trim() && !location.trim() && !owner.trim() && !metadataKey.trim()) {
       setResults([]);
       setTotal(0);
       setHasSearched(false);
@@ -70,6 +74,7 @@ function SearchContent() {
       if (searchQuery.trim()) params.set('q', searchQuery.trim());
       if (location.trim()) params.set('location', location.trim());
       if (owner.trim()) params.set('owner', owner.trim());
+      if (metadataKey.trim()) params.set('metadata_key', metadataKey.trim());
 
       const res = await fetch(`/api/search?${params.toString()}`);
       if (!res.ok) throw new Error('Search failed');
@@ -87,19 +92,21 @@ function SearchContent() {
 
   // Run search on initial load if query param exists
   useEffect(() => {
-    if (initialQuery || initialLocation || initialOwner) {
+    if (initialQuery || initialLocation || initialOwner || initialMetadataKey) {
       setQuery(initialQuery);
       setLocationFilter(initialLocation);
       setOwnerFilter(initialOwner);
-      performSearch(initialQuery, initialLocation, initialOwner);
+      setMetadataKeyFilter(initialMetadataKey);
+      performSearch(initialQuery, initialLocation, initialOwner, initialMetadataKey);
     }
-  }, [initialQuery, initialLocation, initialOwner, performSearch]);
+  }, [initialQuery, initialLocation, initialOwner, initialMetadataKey, performSearch]);
 
-  const updateUrl = (q: string, loc: string, own: string) => {
+  const updateUrl = (q: string, loc: string, own: string, metaKey: string) => {
     const params = new URLSearchParams();
     if (q.trim()) params.set('q', q.trim());
     if (loc.trim()) params.set('location', loc.trim());
     if (own.trim()) params.set('owner', own.trim());
+    if (metaKey.trim()) params.set('metadata_key', metaKey.trim());
     const qs = params.toString();
     const url = `/search${qs ? '?' + qs : ''}`;
     window.history.pushState({}, '', url);
@@ -107,71 +114,91 @@ function SearchContent() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim() || locationFilter.trim() || ownerFilter.trim()) {
-      updateUrl(query, locationFilter, ownerFilter);
-      performSearch(query.trim(), locationFilter.trim(), ownerFilter.trim());
+    if (query.trim() || locationFilter.trim() || ownerFilter.trim() || metadataKeyFilter.trim()) {
+      updateUrl(query, locationFilter, ownerFilter, metadataKeyFilter);
+      performSearch(query.trim(), locationFilter.trim(), ownerFilter.trim(), metadataKeyFilter.trim());
     }
   };
 
   const handleLocationChange = (value: string) => {
     setLocationFilter(value);
-    // If there's already a search or other filter active, auto-search
-    if (query.trim() || ownerFilter.trim() || value.trim()) {
-      updateUrl(query, value, ownerFilter);
-      performSearch(query.trim(), value.trim(), ownerFilter.trim());
+    if (query.trim() || ownerFilter.trim() || metadataKeyFilter.trim() || value.trim()) {
+      updateUrl(query, value, ownerFilter, metadataKeyFilter);
+      performSearch(query.trim(), value.trim(), ownerFilter.trim(), metadataKeyFilter.trim());
     }
   };
 
   const handleOwnerChange = (value: string) => {
     setOwnerFilter(value);
-    // If there's already a search or other filter active, auto-search
-    if (query.trim() || locationFilter.trim() || value.trim()) {
-      updateUrl(query, locationFilter, value);
-      performSearch(query.trim(), locationFilter.trim(), value.trim());
+    if (query.trim() || locationFilter.trim() || metadataKeyFilter.trim() || value.trim()) {
+      updateUrl(query, locationFilter, value, metadataKeyFilter);
+      performSearch(query.trim(), locationFilter.trim(), value.trim(), metadataKeyFilter.trim());
+    }
+  };
+
+  const handleMetadataKeyChange = (value: string) => {
+    setMetadataKeyFilter(value);
+    if (query.trim() || locationFilter.trim() || ownerFilter.trim() || value.trim()) {
+      updateUrl(query, locationFilter, ownerFilter, value);
+      performSearch(query.trim(), locationFilter.trim(), ownerFilter.trim(), value.trim());
     }
   };
 
   const clearLocationFilter = () => {
     setLocationFilter('');
-    if (query.trim() || ownerFilter.trim()) {
-      updateUrl(query, '', ownerFilter);
-      performSearch(query.trim(), '', ownerFilter.trim());
+    if (query.trim() || ownerFilter.trim() || metadataKeyFilter.trim()) {
+      updateUrl(query, '', ownerFilter, metadataKeyFilter);
+      performSearch(query.trim(), '', ownerFilter.trim(), metadataKeyFilter.trim());
     } else {
       setResults([]);
       setTotal(0);
       setHasSearched(false);
-      updateUrl('', '', ownerFilter);
+      updateUrl('', '', ownerFilter, metadataKeyFilter);
     }
   };
 
   const clearOwnerFilter = () => {
     setOwnerFilter('');
-    if (query.trim() || locationFilter.trim()) {
-      updateUrl(query, locationFilter, '');
-      performSearch(query.trim(), locationFilter.trim(), '');
+    if (query.trim() || locationFilter.trim() || metadataKeyFilter.trim()) {
+      updateUrl(query, locationFilter, '', metadataKeyFilter);
+      performSearch(query.trim(), locationFilter.trim(), '', metadataKeyFilter.trim());
     } else {
       setResults([]);
       setTotal(0);
       setHasSearched(false);
-      updateUrl('', locationFilter, '');
+      updateUrl('', locationFilter, '', metadataKeyFilter);
+    }
+  };
+
+  const clearMetadataKeyFilter = () => {
+    setMetadataKeyFilter('');
+    if (query.trim() || locationFilter.trim() || ownerFilter.trim()) {
+      updateUrl(query, locationFilter, ownerFilter, '');
+      performSearch(query.trim(), locationFilter.trim(), ownerFilter.trim(), '');
+    } else {
+      setResults([]);
+      setTotal(0);
+      setHasSearched(false);
+      updateUrl('', locationFilter, ownerFilter, '');
     }
   };
 
   const clearAllFilters = () => {
     setLocationFilter('');
     setOwnerFilter('');
+    setMetadataKeyFilter('');
     if (query.trim()) {
-      updateUrl(query, '', '');
-      performSearch(query.trim(), '', '');
+      updateUrl(query, '', '', '');
+      performSearch(query.trim(), '', '', '');
     } else {
       setResults([]);
       setTotal(0);
       setHasSearched(false);
-      updateUrl('', '', '');
+      updateUrl('', '', '', '');
     }
   };
 
-  const activeFilterCount = (locationFilter.trim() ? 1 : 0) + (ownerFilter.trim() ? 1 : 0);
+  const activeFilterCount = (locationFilter.trim() ? 1 : 0) + (ownerFilter.trim() ? 1 : 0) + (metadataKeyFilter.trim() ? 1 : 0);
 
   const highlightMatch = (text: string, searchTerm: string) => {
     if (!searchTerm.trim() || !text) return <>{text}</>;
@@ -305,6 +332,34 @@ function SearchContent() {
                 )}
               </div>
             </div>
+            <div className="search-filter-group">
+              <label className="search-filter-label">
+                <Tag size={14} />
+                Metadata Key
+              </label>
+              <div className="search-filter-input-wrapper">
+                <select
+                  value={metadataKeyFilter}
+                  onChange={(e) => handleMetadataKeyChange(e.target.value)}
+                  className="search-filter-select"
+                >
+                  <option value="">All metadata keys</option>
+                  {availableMetadataKeys.map((key) => (
+                    <option key={key} value={key}>{key}</option>
+                  ))}
+                </select>
+                {metadataKeyFilter && (
+                  <button
+                    type="button"
+                    className="search-filter-clear-btn"
+                    onClick={clearMetadataKeyFilter}
+                    title="Clear metadata key filter"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Active filter tags */}
@@ -324,6 +379,15 @@ function SearchContent() {
                   <User size={12} />
                   {ownerFilter}
                   <button type="button" onClick={clearOwnerFilter} className="search-active-filter-remove">
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+              {metadataKeyFilter && (
+                <span className="search-active-filter-tag">
+                  <Tag size={12} />
+                  {metadataKeyFilter}
+                  <button type="button" onClick={clearMetadataKeyFilter} className="search-active-filter-remove">
                     <X size={12} />
                   </button>
                 </span>
@@ -409,7 +473,7 @@ function SearchContent() {
           <Search size={48} className="empty-icon" />
           <h2>Find Your Items</h2>
           <p>Enter a search term above to find items across all totes.</p>
-          <p className="search-hint">Use the <strong>Filters</strong> button to narrow results by location or owner.</p>
+          <p className="search-hint">Use the <strong>Filters</strong> button to narrow results by location, owner, or metadata key.</p>
         </div>
       )}
     </>

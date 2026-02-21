@@ -31,16 +31,16 @@ export async function GET(request: NextRequest) {
       params.push(`%${location.trim()}%`);
     }
 
-    // Filter by tote owner
+    // Filter by tote owner (exact match from dropdown)
     if (owner.trim()) {
-      conditions.push('t.owner LIKE ?');
-      params.push(`%${owner.trim()}%`);
+      conditions.push('t.owner = ?');
+      params.push(owner.trim());
     }
 
-    // Filter by metadata key
+    // Filter by metadata key (exact match from dropdown)
     if (metadataKey.trim()) {
-      conditions.push(`i.id IN (SELECT im.item_id FROM item_metadata im WHERE im.key LIKE ?)`);
-      params.push(`%${metadataKey.trim()}%`);
+      conditions.push(`i.id IN (SELECT im.item_id FROM item_metadata im WHERE im.key = ?)`);
+      params.push(metadataKey.trim());
     }
 
     // Also search metadata values if there's a query
