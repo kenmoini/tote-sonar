@@ -1,5 +1,35 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #30 - 2026-02-21
+
+### Feature #30: Uploaded photo thumbnail displays in item list - PASSED
+
+**What was accomplished:**
+- Updated GET /api/totes/:id API endpoint to include photos array for each item by querying item_photos table and attaching results
+- Added thumbnail display in tote detail page item list:
+  - Items with photos show a 40x40 thumbnail image from /api/photos/:id/thumbnail
+  - Items without photos show a placeholder icon (ImageIcon from lucide-react) in a styled container
+- Added CSS styles: .item-row-thumbnail, .item-thumbnail-img, .item-thumbnail-placeholder
+- Updated .item-row-info to use flex: 1 and min-width: 0 for proper layout with thumbnail
+
+**Verification (all 5 feature steps):**
+1. Created test tote "THUMB_TEST_F30" and item "THUMB_ITEM_F30", uploaded JPEG photo via API
+2. Navigated to tote detail page - item list view loaded with Items (2)
+3. Verified THUMB_ITEM_F30 shows blue thumbnail preview image (40x40, object-fit cover)
+4. Verified thumbnail loads without errors - img element src points to /api/photos/9/thumbnail, zero console errors
+5. Cleaned up: deleted test tote (cascade deleted items and photos)
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence test: killed server, restarted, thumbnail still displayed correctly with data intact
+- Placeholder icon verified for items without photos (NO_PHOTO_ITEM_F30)
+- All test data cleaned up after verification
+
+**Current status:** 37/90 features passing (41.1%)
+
+---
+
 ## Session - Feature #28 - 2026-02-21
 
 ### Feature #28: Metadata key autocomplete shows existing keys - PASSED
