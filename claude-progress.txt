@@ -1,5 +1,48 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #87 - 2026-02-21
+
+### Feature #87: Deleting tote cascades to all items photos and metadata - PASSED
+
+**What was accomplished:**
+- Fixed tote DELETE endpoint to clean up photo files from disk during cascade deletion
+- Previously, SQL CASCADE handled DB records (items, metadata, photos, movement_history) but photo files on disk were orphaned
+- Added code to query photo file paths BEFORE deleting the tote, then clean up files after CASCADE
+- Imported `getUploadDir`, `getThumbnailDir` from db.ts, added `fs` and `path` imports
+
+**Code changes:**
+- `src/app/api/totes/[id]/route.ts`: Added photo file cleanup in DELETE handler
+  - Query item_photos JOIN items to get all photo paths for items in the tote
+  - After SQL DELETE (CASCADE), iterate and unlink original + thumbnail files
+  - Error handling: continues if individual file deletion fails
+
+**Verification (all 10 feature steps):**
+1. Created tote CASCADE_TEST_F87 (ID: r7v2vn) via API
+2. Created 2 items: CASCADE_ITEM_A (142) and CASCADE_ITEM_B (143)
+3. Added metadata: material=plastic, weight=500g (item 142), color=red (item 143)
+4. Uploaded photo to item 142 (photo ID 18, file: 52f476caf002a0556e46ee4282516e73.jpg)
+5. Created movement history by moving item 143 to another tote and back (history IDs 11, 12)
+6. Deleted tote via API → "Tote 'CASCADE_TEST_F87' deleted successfully, items_deleted: 2"
+7. Items 142, 143 return 404 ✓
+8. Metadata IDs 24, 25, 26 removed from DB ✓
+9. Photo ID 18 removed from DB, upload + thumbnail files removed from disk ✓
+10. Movement history IDs 11, 12 removed from DB ✓
+
+**Second verification via UI (Playwright):**
+- Created UI_CASCADE_TEST_F87 (046HPZ) with 2 items, metadata, photo
+- Clicked Delete Tote in UI → confirmation dialog warned about 2 items
+- Confirmed deletion → redirected to /totes, tote gone from list
+- DB verification: all items, metadata, photos (DB + files), movement history removed
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- All test data cleaned up after verification
+
+**Current status:** 86/90 features passing (95.6%)
+
+---
+
 ## Session - Feature #88 - 2026-02-21
 
 ### Feature #88: Timestamps display correctly on totes and items - PASSED
