@@ -1,5 +1,38 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #15 - 2026-02-21
+
+### Feature #15: Tote list supports sorting by name, location, owner, date - PASSED
+
+**What was accomplished:**
+- Verified existing sorting implementation in both API and UI is fully functional
+- No code changes needed - sorting was already fully implemented:
+  - API (GET /api/totes) accepts `sort` and `order` query params with whitelist validation
+  - Allowed sort columns: name, location, owner, created_at
+  - Tote list page has 4 sort buttons: Name, Location, Owner, Date
+  - Active button highlighted with arrows icon showing sort direction
+  - Clicking same button toggles asc/desc; clicking different button sets asc
+
+**Verification (all 8 feature steps):**
+1. Created 3 totes via API: "Alpha Gadgets" (Garage West, Charlie), "Charlie Widgets" (Attic North, Alice), "Bravo Tools" (Basement East, Bob)
+2. Navigated to tote list page - all totes displayed with sort controls visible
+3. Clicked Name sort: list alphabetically sorted - Alpha Gadgets -> Bravo Tools -> Charlie Widgets
+4. Clicked Location sort: sorted by location - Attic North -> Basement East -> Garage West
+5. Clicked Owner sort: sorted by owner - Alice -> Bob -> Charlie
+6. Clicked Date sort: sorted by creation date (ascending, oldest first)
+7. Clicked Name again to verify toggle: first click = asc (A->Z), second click = desc (Z->A) - confirmed order reversed from Alpha->Bravo->Charlie to Charlie->Bravo->Alpha (with other totes interleaved correctly)
+8. Cleaned up: deleted all 3 test totes
+
+**Quality checks:**
+- Zero JS console errors (0 real errors, 0 warnings - only React DevTools info)
+- Step 5.6 mock data grep: no prohibited patterns (globalThis, devStore, mockDb, MOCK, etc.) found in src/
+- Step 5.7 server restart persistence test: killed server, restarted, all 3 test totes persisted, sorting API returned correct order after restart, UI rendered correctly
+- All test data cleaned up after verification
+
+**Current status:** 28/90 features passing (31.1%)
+
+---
+
 ## Session - Feature #19 - 2026-02-21
 
 ### Feature #19: Edit item name, description, and quantity - PASSED
