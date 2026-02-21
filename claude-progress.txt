@@ -1,5 +1,42 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #3 (re-verification) - 2026-02-21
+
+### Feature #3: Data persists across server restart - PASSED (re-verified)
+
+**Issue found:**
+- Feature #3 had regressed - data was NOT surviving kill -9 + restart
+- Root cause: the `wal_checkpoint(TRUNCATE)` pragma was not properly error-handled
+- When checkpoint failed (e.g., due to lock contention), the exception was unhandled
+  and could leave WAL data unrecovered on subsequent opens
+
+**Fix applied in src/lib/db.ts:**
+- Wrapped `wal_checkpoint(TRUNCATE)` in try-catch for robustness
+- Moved checkpoint immediately after `journal_mode = WAL` is set (before other pragmas)
+- Upgraded `synchronous` from `NORMAL` to `FULL` for maximum write durability
+- This ensures all WAL data from previous unclean shutdowns is recovered on startup
+
+**Verification (all 11 feature steps):**
+1. Started server via init.sh / npx next dev
+2. POST /api/totes with name "RESTART_TEST_TOTE_98765", location "Garage" → ID: vRWNzj
+3. GET /api/totes → confirmed tote appears in list
+4. Stopped server with kill -9 (simulating crash)
+5. Verified port 3000 was free (server fully stopped)
+6. Restarted server, waited for health check to pass
+7. GET /api/totes → RESTART_TEST_TOTE_98765 still exists (DATA PERSISTS!)
+8. No in-memory storage detected
+9. GET /api/totes/vRWNzj → name and location match exactly
+10. DELETE /api/totes/vRWNzj → cleanup successful
+11. GET /api/totes → no longer contains test tote
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns (globalThis, mockDb, etc.) found in src/
+- Browser automation: totes page shows test tote after restart, confirmed visually via screenshot
+- All test data cleaned up after verification
+
+**Current status:** 58/90 features passing (64.4%)
+
 ## Session - Feature #57 - 2026-02-21
 
 ### Feature #57: Import progress indicator displayed - PASSED
