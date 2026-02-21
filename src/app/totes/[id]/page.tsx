@@ -504,6 +504,13 @@ export default function ToteDetailPage() {
             <span className="meta-card-value">{formatDate(tote.created_at)}</span>
           </div>
         </div>
+        <div className="tote-detail-meta-card">
+          <div className="meta-card-icon"><Calendar size={18} /></div>
+          <div>
+            <span className="meta-card-label">Updated</span>
+            <span className="meta-card-value">{formatDate(tote.updated_at)}</span>
+          </div>
+        </div>
         {tote.size && (
           <div className="tote-detail-meta-card">
             <div className="meta-card-icon"><Box size={18} /></div>
