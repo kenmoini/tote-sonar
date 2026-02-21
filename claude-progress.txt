@@ -1,5 +1,37 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #37 - 2026-02-21
+
+### Feature #37: QR label size options available - PASSED
+
+**What was accomplished:**
+- Added QR label size selector to tote detail page with three options: Small (128px), Medium (200px), Large (300px)
+- Size selector uses a segmented button group with active state highlighting (primary color)
+- QR code display dynamically resizes when size is changed via inline styles
+- Print label also adapts to selected size for consistent print output
+- Added CSS for `.qr-label-size-selector`, `.qr-size-options`, `.qr-size-btn`, `.qr-size-btn-active`
+- Default selection is Medium (matching previous behavior)
+
+**Verification (all 6 feature steps):**
+1. Created test tote "QR_SIZE_TEST_F37" via API
+2. Navigated to tote detail page
+3. Found QR label size selector with "Label Size:" label and three buttons
+4. Verified Small, Medium, and Large options are available
+5. Clicked each size and verified QR code display changes:
+   - Small: QR code at 128x128 with Small button highlighted
+   - Medium: QR code at 200x200 with Medium button highlighted (default)
+   - Large: QR code at 300x300 with Large button highlighted
+6. Cleaned up: deleted test tote
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- All test data cleaned up after verification
+
+**Current status:** 43/90 features passing (47.8%)
+
+---
+
 ## Session - Feature #35 - 2026-02-21
 
 ### Feature #35: QR code encodes correct URL with hostname and tote ID - PASSED
