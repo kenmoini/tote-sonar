@@ -1,5 +1,36 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #3 - 2026-02-21
+
+### Feature #3: Data persists across server restart - PASSED
+
+**What was accomplished:**
+- Verified data persistence across a full server stop and restart cycle
+- No code changes required - SQLite file-based persistence was already correctly implemented
+
+**Verification (all 11 feature steps):**
+1. Server already running on port 3000, confirmed via /api/health
+2. POST /api/totes with {"name": "RESTART_TEST_TOTE_98765", "location": "Garage"} - created tote ID: Z3faPf
+3. GET /api/totes - verified RESTART_TEST_TOTE_98765 appears in list
+4. Killed server: kill -9 22150 (PID on port 3000)
+5. Waited 5 seconds, verified port 3000 is clear (no process listening)
+6. Restarted server: ./init.sh, waited 15 seconds
+7. GET /api/totes - RESTART_TEST_TOTE_98765 still exists after restart!
+8. Data NOT gone - no in-memory storage detected
+9. GET /api/totes/Z3faPf - name "RESTART_TEST_TOTE_98765" and location "Garage" match exactly
+10. DELETE /api/totes/Z3faPf - cleanup successful (0 items deleted)
+11. GET /api/totes - verified RESTART_TEST_TOTE_98765 no longer in list
+
+**Quality checks:**
+- Browser automation: opened app after restart, dashboard shows correct tote/item counts from real DB
+- Console: 0 errors, 0 warnings (only React DevTools info message)
+- Step 5.6 mock data grep: no prohibited patterns (globalThis, devStore, mockDb, MOCK, etc.) found in src/
+- SQLite database file at data/tote-sonar.db persists on disk across server restarts
+
+**Current status:** 3/90 features passing (3.3%)
+
+---
+
 ## Session - Feature #2 - 2026-02-21
 
 ### Feature #2: Database schema applied correctly - PASSED
