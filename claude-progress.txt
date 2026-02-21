@@ -1,5 +1,42 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #29 - 2026-02-21
+
+### Feature #29: Upload photo to item - PASSED
+
+**What was accomplished:**
+- Verified existing photo upload functionality end-to-end through the UI
+- All photo management code was already fully implemented from previous sessions:
+  - POST /api/items/:id/photos - uploads with multipart form, validates type/size, generates unique filename, creates thumbnail via sharp
+  - Photo gallery on item detail page with thumbnail cards, lightbox view, delete buttons
+  - Upload Photo button and clickable empty state placeholder
+
+**Verification (all 9 feature steps):**
+1. Created test tote "PHOTO_TEST_F29" and item "PHOTO_ITEM_F29" via API
+2. Navigated to item detail page - page loaded with breadcrumb, metadata, Photos (0/3) section
+3. Clicked "Upload Photo" button - file chooser appeared
+4. Selected valid JPEG test image (100x100 red square, 343 bytes) - under 5MB limit
+5. Upload completed - Photos section updated from (0/3) to (1/3), toast auto-dismissed
+6. Photo thumbnail displayed correctly (red square visible in screenshot)
+7. GET /api/items/61 returned photo data: id=6, filename, original_path, thumbnail_path, file_size=343, mime_type=image/jpeg
+8. Thumbnail file confirmed on disk at data/thumbnails/ (523 bytes, 200x200 resize)
+9. Cleaned up test tote via DELETE /api/totes/:id (cascade deleted item + photos)
+
+**Additional verification:**
+- Uploaded second photo successfully - Photos updated to (2/3)
+- Clicked thumbnail - lightbox opened showing full-size image with filename and close/delete buttons
+- Lightbox close button works correctly
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence test: uploaded 2 photos, killed server (kill -9), restarted, both photos with thumbnails persisted in DB and on disk, thumbnails displayed correctly in browser
+- All test data cleaned up after verification
+
+**Current status:** 15/90 features passing (16.7%)
+
+---
+
 ## Session - Feature #10 - 2026-02-21
 
 ### Feature #10: Created tote appears in tote list with correct data - PASSED
