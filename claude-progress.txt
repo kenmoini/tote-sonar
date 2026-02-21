@@ -1,5 +1,41 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #78 - 2026-02-21
+
+### Feature #78: Interactive elements are keyboard navigable - PASSED
+
+**What was accomplished:**
+- Verified all interactive elements (buttons, links, form fields, tote cards) are reachable via Tab key
+- Added comprehensive `:focus-visible` CSS styles for all interactive elements:
+  - Global fallback for a, button, input, select, textarea, [tabindex]
+  - Specific styles for nav links, nav logo, theme toggle, mobile toggle, modal close, sort buttons, tote cards, item rows, toast close
+  - Purple outline ring with box-shadow for consistent visibility in both light and dark themes
+- Added Escape key handlers to close all modal dialogs across 3 pages:
+  - `/totes` - Create Tote modal
+  - `/totes/[id]` - Delete Tote confirm, Delete Item confirm, Edit Tote, Add Item modals
+  - `/totes/[id]/items/[itemId]` - Delete Item confirm, Edit Item, Move Item, Copy Item, Add Metadata, Photo lightbox
+- All Escape handlers respect loading states (don't close during active API operations)
+
+**Verification (all 6 feature steps):**
+1. Navigated to tote list page ✓
+2. Pressed Tab repeatedly - focus moved through all interactive elements (logo, nav links, search input, theme toggle, buttons, sort buttons) ✓
+3. Verified focused elements have visible purple focus indicators (outline + box-shadow) ✓
+4. Pressed Enter on focused "Add Tote" button - successfully opened create modal ✓
+5. Tabbed through all form fields in the modal (Name → Location → Size → Color → Owner → Cancel → Create Tote) ✓
+6. Pressed Escape on both Create Tote modal and Delete Tote confirmation dialog - both closed successfully ✓
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Test data cleaned up after verification
+- All screenshots verified visual appearance of focus indicators
+
+**Note:** CSS focus-visible styles and Escape handlers were committed concurrently with feature #77 changes.
+
+**Current status:** 77/90 features passing (85.6%)
+
+---
+
 ## Session - Feature #77 - 2026-02-21
 
 ### Feature #77: All form fields have associated labels - PASSED
