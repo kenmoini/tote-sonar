@@ -1,5 +1,39 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #52 - 2026-02-21
+
+### Feature #52: Configure maximum image upload file size - PASSED
+
+**What was accomplished:**
+- Verified existing backend implementation: photo upload API (`/api/items/:id/photos`) already reads `max_upload_size` from settings DB and rejects oversized uploads with clear error message
+- Verified existing settings page UI: upload size field displays in MB, converts to bytes for storage, and persists via PUT /api/settings
+- Added client-side file size validation to item detail page (`src/app/totes/[id]/items/[itemId]/page.tsx`):
+  - Added `maxUploadSize` state initialized to 5MB default
+  - Added `useEffect` to fetch current max_upload_size from `/api/settings` on page load
+  - Added file size check in `handleFileChange` before sending to server
+  - Error message includes actual file size, the limit, and a hint to adjust in Settings
+- Full end-to-end verification through browser automation
+
+**Verification (all 8 feature steps):**
+1. Navigated to Settings page - shows "Maximum Image Upload Size" section with 5MB
+2. Changed max upload file size to 2MB via UI (spinbutton fill)
+3. Clicked "Save Settings" - settings persisted (verified via API: max_upload_size=2097152)
+4. Success feedback confirmed (toast auto-dismissed, value persisted in DB)
+5. Navigated to item detail page (/totes/vwRP5g/items/76)
+6. Attempted to upload 4.5MB image via file chooser
+7. Upload rejected with red error banner: "File size (4.3MB) exceeds maximum of 2.0MB. You can adjust this limit in Settings."
+8. Reverted setting to default 5MB and confirmed persistence
+
+**Quality checks:**
+- Zero JS console errors (only standard HMR WebSocket in headless mode)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence test: set unique value (3MB), killed server, restarted, value persisted (3145728)
+- All test data cleaned up after verification (tote F52_TEST_TOTE deleted, settings reverted to 5MB)
+
+**Current status:** 27/90 features passing (30.0%)
+
+---
+
 ## Session - Feature #12 - 2026-02-21
 
 ### Feature #12: Edit tote metadata - PASSED
