@@ -1,5 +1,34 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #61 - 2026-02-21
+
+### Feature #61: 404 page for non-existent routes - PASSED
+
+**What was accomplished:**
+- Verified existing 404 page implementation for non-existent routes and invalid tote IDs
+- No code changes needed - all functionality was already fully implemented
+- Root-level `not-found.tsx` handles unknown routes with large "404" display, "Page Not Found" heading, friendly message, and navigation buttons (Go to Dashboard, View Totes)
+- Tote detail page (`totes/[id]/page.tsx`) handles 404 API responses with "Tote not found" message, warning icon, and "Back to Totes" link
+- Full navigation bar remains available on both error pages
+
+**Verification (all 6 feature steps):**
+1. Navigated to /nonexistent-page - 404 error page displayed with large "404" code
+2. Verified the page shows user-friendly message: "The page you're looking for doesn't exist or may have been moved."
+3. Navigation links available: "Go to Dashboard" (/) and "View Totes" (/totes) buttons, plus full navigation bar
+4. Clicked "Go to Dashboard" - navigated successfully to /. Clicked "View Totes" - navigated successfully to /totes
+5. Navigated to /totes/INVALID_ID_999 - appropriate error shown with "Tote not found" heading and warning icon
+6. "Back to Totes" link navigated successfully to /totes. Full navigation bar available on error page
+
+**Quality checks:**
+- Zero real JS console errors (only expected 404 HTTP responses from API, and React DevTools info)
+- Step 5.6 mock data grep: no prohibited patterns (globalThis, mockDb, etc.) found in src/
+- Screenshots verified clean UI: 404 page with large purple "404", clean error state for invalid tote
+- All navigation links verified working end-to-end
+
+**Current status:** 60/90 features passing (66.7%)
+
+---
+
 ## Session - Feature #3 (re-verification) - 2026-02-21
 
 ### Feature #3: Data persists across server restart - PASSED (re-verified)
