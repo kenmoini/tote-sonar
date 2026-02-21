@@ -116,6 +116,22 @@ export default function ItemDetailPage() {
     }
   }, [toast]);
 
+  // Close modals on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (showDeleteConfirm && !deletingItem) setShowDeleteConfirm(false);
+        if (showEditItem && !editingItem) setShowEditItem(false);
+        if (showMoveModal && !movingItem) setShowMoveModal(false);
+        if (showCopyModal && !duplicatingItem) setShowCopyModal(false);
+        if (showAddMetadata) setShowAddMetadata(false);
+        if (viewingPhoto) setViewingPhoto(null);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showDeleteConfirm, deletingItem, showEditItem, editingItem, showMoveModal, movingItem, showCopyModal, duplicatingItem, showAddMetadata, viewingPhoto]);
+
   // Fetch metadata keys for autocomplete when add form opens
   const fetchMetadataKeys = useCallback(async () => {
     try {
@@ -671,8 +687,9 @@ export default function ItemDetailPage() {
               </button>
             </div>
             <div className="form-group">
-              <label className="form-label">Name <span className="form-required">*</span></label>
+              <label htmlFor="edit-item-name" className="form-label">Name <span className="form-required">*</span></label>
               <input
+                id="edit-item-name"
                 type="text"
                 className={`form-input ${editError && !editName.trim() ? 'form-input-error' : ''}`}
                 value={editName}
@@ -683,8 +700,9 @@ export default function ItemDetailPage() {
               />
             </div>
             <div className="form-group">
-              <label className="form-label">Description</label>
+              <label htmlFor="edit-item-description" className="form-label">Description</label>
               <textarea
+                id="edit-item-description"
                 className="form-input form-textarea"
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
@@ -694,8 +712,9 @@ export default function ItemDetailPage() {
               />
             </div>
             <div className="form-group">
-              <label className="form-label">Quantity</label>
+              <label htmlFor="edit-item-quantity" className="form-label">Quantity</label>
               <input
+                id="edit-item-quantity"
                 type="number"
                 className="form-input"
                 value={editQuantity}
@@ -767,8 +786,9 @@ export default function ItemDetailPage() {
                 </div>
               ) : (
                 <div className="form-group" style={{ marginTop: '0.75rem' }}>
-                  <label className="form-label">Destination Tote <span className="form-required">*</span></label>
+                  <label htmlFor="move-destination-tote" className="form-label">Destination Tote <span className="form-required">*</span></label>
                   <select
+                    id="move-destination-tote"
                     className="form-input form-select"
                     value={selectedToteId}
                     onChange={(e) => {
@@ -849,8 +869,9 @@ export default function ItemDetailPage() {
                 </div>
               ) : (
                 <div className="form-group" style={{ marginTop: '0.75rem' }}>
-                  <label className="form-label">Destination Tote <span className="form-required">*</span></label>
+                  <label htmlFor="copy-destination-tote" className="form-label">Destination Tote <span className="form-required">*</span></label>
                   <select
+                    id="copy-destination-tote"
                     className="form-input form-select"
                     value={copyTargetToteId}
                     onChange={(e) => {
@@ -1126,8 +1147,9 @@ export default function ItemDetailPage() {
           <div className="metadata-add-form">
             <div className="metadata-add-fields">
               <div className="form-group" style={{ position: 'relative' }}>
-                <label className="form-label">Key <span className="form-required">*</span></label>
+                <label htmlFor="add-metadata-key" className="form-label">Key <span className="form-required">*</span></label>
                 <input
+                  id="add-metadata-key"
                   ref={keyInputRef}
                   type="text"
                   className={`form-input ${metadataError ? 'form-input-error' : ''}`}
@@ -1186,8 +1208,9 @@ export default function ItemDetailPage() {
                 )}
               </div>
               <div className="form-group">
-                <label className="form-label">Value <span className="form-required">*</span></label>
+                <label htmlFor="add-metadata-value" className="form-label">Value <span className="form-required">*</span></label>
                 <input
+                  id="add-metadata-value"
                   type="text"
                   className={`form-input ${metadataError ? 'form-input-error' : ''}`}
                   placeholder="e.g., Acme, Red, Large"
@@ -1236,8 +1259,9 @@ export default function ItemDetailPage() {
                 <div key={meta.id} className="metadata-edit-form">
                   <div className="metadata-edit-fields">
                     <div className="form-group">
-                      <label className="form-label">Key <span className="form-required">*</span></label>
+                      <label htmlFor={`edit-meta-key-${meta.id}`} className="form-label">Key <span className="form-required">*</span></label>
                       <input
+                        id={`edit-meta-key-${meta.id}`}
                         type="text"
                         className={`form-input form-input-sm ${editMetaError ? 'form-input-error' : ''}`}
                         value={editMetaKey}
@@ -1256,8 +1280,9 @@ export default function ItemDetailPage() {
                       />
                     </div>
                     <div className="form-group">
-                      <label className="form-label">Value <span className="form-required">*</span></label>
+                      <label htmlFor={`edit-meta-value-${meta.id}`} className="form-label">Value <span className="form-required">*</span></label>
                       <input
+                        id={`edit-meta-value-${meta.id}`}
                         type="text"
                         className={`form-input form-input-sm ${editMetaError ? 'form-input-error' : ''}`}
                         value={editMetaValue}

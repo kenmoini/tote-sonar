@@ -388,19 +388,23 @@ export default function SettingsPage() {
               ))}
             </div>
             <div className="settings-add-row">
-              <input
-                type="text"
-                className="form-input"
-                placeholder="Add a metadata key..."
-                value={newMetadataKey}
-                onChange={(e) => setNewMetadataKey(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addMetadataKey();
-                  }
-                }}
-              />
+              <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+                <label htmlFor="new-metadata-key" className="sr-only">New metadata key</label>
+                <input
+                  id="new-metadata-key"
+                  type="text"
+                  className="form-input"
+                  placeholder="Add a metadata key..."
+                  value={newMetadataKey}
+                  onChange={(e) => setNewMetadataKey(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addMetadataKey();
+                    }
+                  }}
+                />
+              </div>
               <button
                 className="btn btn-secondary"
                 onClick={addMetadataKey}

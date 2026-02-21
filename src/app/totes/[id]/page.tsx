@@ -183,6 +183,27 @@ export default function ToteDetailPage() {
     if (toteId) fetchTote();
   }, [toteId, fetchTote]);
 
+  // Close modals on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (showDeleteConfirm && !deleting) setShowDeleteConfirm(false);
+        if (showDeleteItemConfirm && !deletingItemLoading) {
+          setShowDeleteItemConfirm(false);
+          setDeletingItemId(null);
+          setDeletingItemName('');
+        }
+        if (showEditForm && !editingTote) setShowEditForm(false);
+        if (showAddItemForm) {
+          setShowAddItemForm(false);
+          resetItemForm();
+        }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showDeleteConfirm, deleting, showDeleteItemConfirm, deletingItemLoading, showEditForm, editingTote, showAddItemForm]);
+
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
 

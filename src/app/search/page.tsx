@@ -230,8 +230,10 @@ function SearchContent() {
       {/* Search Form */}
       <form onSubmit={handleSearch} className="search-form">
         <div className="search-input-wrapper">
+          <label htmlFor="search-query" className="sr-only">Search items</label>
           <Search size={20} className="search-input-icon" />
           <input
+            id="search-query"
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -277,12 +279,13 @@ function SearchContent() {
           </div>
           <div className="search-filters-grid">
             <div className="search-filter-group">
-              <label className="search-filter-label">
+              <label htmlFor="filter-location" className="search-filter-label">
                 <MapPin size={14} />
                 Location
               </label>
               <div className="search-filter-input-wrapper">
                 <select
+                  id="filter-location"
                   value={locationFilter}
                   onChange={(e) => handleLocationChange(e.target.value)}
                   className="search-filter-select"
@@ -305,12 +308,13 @@ function SearchContent() {
               </div>
             </div>
             <div className="search-filter-group">
-              <label className="search-filter-label">
+              <label htmlFor="filter-owner" className="search-filter-label">
                 <User size={14} />
                 Owner
               </label>
               <div className="search-filter-input-wrapper">
                 <select
+                  id="filter-owner"
                   value={ownerFilter}
                   onChange={(e) => handleOwnerChange(e.target.value)}
                   className="search-filter-select"
@@ -333,12 +337,13 @@ function SearchContent() {
               </div>
             </div>
             <div className="search-filter-group">
-              <label className="search-filter-label">
+              <label htmlFor="filter-metadata-key" className="search-filter-label">
                 <Tag size={14} />
                 Metadata Key
               </label>
               <div className="search-filter-input-wrapper">
                 <select
+                  id="filter-metadata-key"
                   value={metadataKeyFilter}
                   onChange={(e) => handleMetadataKeyChange(e.target.value)}
                   className="search-filter-select"

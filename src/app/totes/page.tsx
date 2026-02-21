@@ -131,6 +131,23 @@ export default function TotesPage() {
     setFormErrors({});
   };
 
+  // Close modals on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showCreateForm) {
+        setShowCreateForm(false);
+        setFormName('');
+        setFormLocation('');
+        setFormSize(defaultSize);
+        setFormColor(defaultColor);
+        setFormOwner(defaultOwner);
+        setFormErrors({});
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showCreateForm, defaultSize, defaultColor, defaultOwner]);
+
   const handleCreateTote = async (e: React.FormEvent) => {
     e.preventDefault();
 
