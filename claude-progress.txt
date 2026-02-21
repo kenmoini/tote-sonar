@@ -1,5 +1,37 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #18 - 2026-02-21
+
+### Feature #18: View item detail page with all fields - PASSED
+
+**What was accomplished:**
+- Created POST /api/items/:id/duplicate API endpoint with metadata duplication support
+- Added "Duplicate" button to item detail page action buttons (Edit, Move, Duplicate, Delete)
+- Verified all item detail page sections render correctly
+
+**Verification (all 10 feature steps):**
+1. Created tote "F18_TEST_TOTE" (ID: KHOwXB) and item "F18_Test_Widget" (ID: 60) with description and quantity=3 via API
+2. Navigated to item detail page /totes/KHOwXB/items/60
+3. Verified item name "F18_Test_Widget" displayed as h1 heading
+4. Verified description "A detailed test widget for feature 18 verification" displayed in description card
+5. Verified quantity "3" displayed in quantity card
+6. Verified photo section visible with empty state: "Photos (0/3)", "No photos yet", "Click to upload a photo", Upload Photo button
+7. Verified metadata section visible: "Metadata Tags" heading, "No metadata tags" empty state, "Add Metadata" button
+8. Verified movement history section visible: "Movement History" heading, "No movement history" empty state
+9. Verified action buttons present: Edit Item, Move, Duplicate, Delete Item (all 4 buttons visible)
+10. Cleaned up: DELETE /api/totes/KHOwXB - tote and item deleted, confirmed 404
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings - only React DevTools info)
+- Step 5.6 mock data grep: no prohibited patterns (globalThis, devStore, mockDb, MOCK, etc.) found in src/
+- Step 5.7 server restart persistence: killed server, restarted, item data (name, description, quantity) persisted correctly, page rendered all sections after restart
+- Full-page screenshot verified clean layout with all sections visible
+- All test data cleaned up after verification
+
+**Current status:** 13/90 features passing (14.4%)
+
+---
+
 ## Session - Feature #34 - 2026-02-21
 
 ### Feature #34: QR code generated and displayed on tote detail - PASSED
