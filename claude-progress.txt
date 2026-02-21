@@ -1,5 +1,43 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #66 - 2026-02-21
+
+### Feature #66: File upload rejects invalid file types with error - PASSED
+
+**What was accomplished:**
+- Verified existing file type validation works correctly on both client-side and server-side
+- No code changes needed - validation was already fully implemented
+
+**Server-side validation (src/app/api/items/[id]/photos/route.ts):**
+- ALLOWED_TYPES array checks for image/jpeg, image/png, image/webp only
+- Returns 400 status with clear error: "Invalid file type: {type}. Supported formats: JPEG, PNG, WebP"
+
+**Client-side validation (src/app/totes/[id]/items/[itemId]/page.tsx):**
+- handleFileChange checks file.type against allowedTypes array
+- Shows "Invalid file type. Supported formats: JPEG, PNG, WebP" via uploadError state
+- HTML file input has accept="image/jpeg,image/png,image/webp" as first line of defense
+
+**Verification (all 8 feature steps):**
+1. Created test tote "FILETYPE_TEST_F66" (ID: uejdcy) and item "FILETYPE_ITEM_F66" (ID: 121) via API
+2. Navigated to item detail page - shows Photos (0/3) with empty state
+3. Attempted to upload .txt file via API (text/plain) -> returned 400: "Invalid file type: text/plain. Supported formats: JPEG, PNG, WebP"
+4. Error message clearly indicates only JPEG, PNG, WebP accepted
+5. Attempted to upload .pdf file via API (application/pdf) -> returned 400: "Invalid file type: application/pdf. Supported formats: JPEG, PNG, WebP"
+6. Same rejection error format for .pdf
+7. Verified no files saved: API returned empty photo list, upload directory had no new files, page still showed Photos (0/3)
+8. Cleaned up: deleted test tote (cascaded to item)
+
+**Additional test:** Also tested text/html MIME type -> rejected correctly
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- All test data cleaned up after verification
+
+**Current status:** 66/90 features passing (73.3%)
+
+---
+
 ## Session - Feature #67 - 2026-02-21
 
 ### Feature #67: Tote creation requires name and location - PASSED
