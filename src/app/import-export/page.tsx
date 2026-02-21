@@ -117,19 +117,28 @@ export default function ImportExportPage() {
     if (!selectedFile) return;
 
     setImporting(true);
-    setImportProgress('Uploading ZIP file...');
+    setImportProgress('Preparing import file...');
     setImportResult(null);
 
     try {
-      setImportProgress('Validating and importing data...');
+      // Allow the progress indicator to render before starting the upload
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      setImportProgress('Uploading ZIP file...');
+      await new Promise(resolve => setTimeout(resolve, 150));
 
       const formData = new FormData();
       formData.append('file', selectedFile);
+
+      setImportProgress('Validating and importing data...');
 
       const response = await fetch('/api/import', {
         method: 'POST',
         body: formData,
       });
+
+      setImportProgress('Finalizing import...');
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       const result = await response.json();
 
