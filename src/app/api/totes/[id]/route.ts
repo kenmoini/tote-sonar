@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { getDb, getUploadDir, getThumbnailDir } from '@/lib/db';
 import { UpdateToteInput, Tote, Item, ItemPhoto } from '@/types';
+import fs from 'fs';
+import path from 'path';
 
 type RouteContext = { params: Promise<{ id: string }> | { id: string } };
 
@@ -235,8 +237,31 @@ export async function DELETE(
       'SELECT COUNT(*) as count FROM items WHERE tote_id = ?'
     ).get(id) as { count: number };
 
-    // Delete the tote (cascade will handle items due to foreign key)
+    // Get all photo files for items in this tote BEFORE deleting (CASCADE will remove DB records)
+    const photos = db.prepare(`
+      SELECT ip.original_path, ip.thumbnail_path
+      FROM item_photos ip
+      JOIN items i ON ip.item_id = i.id
+      WHERE i.tote_id = ?
+    `).all(id) as Array<{ original_path: string; thumbnail_path: string }>;
+
+    // Delete the tote (cascade will handle items, photos, metadata, movement history in DB)
     db.prepare('DELETE FROM totes WHERE id = ?').run(id);
+
+    // Clean up photo files from disk
+    const uploadsDir = getUploadDir();
+    const thumbnailsDir = getThumbnailDir();
+    for (const photo of photos) {
+      try {
+        const originalFile = path.join(uploadsDir, path.basename(photo.original_path));
+        const thumbnailFile = path.join(thumbnailsDir, path.basename(photo.thumbnail_path));
+        if (fs.existsSync(originalFile)) fs.unlinkSync(originalFile);
+        if (fs.existsSync(thumbnailFile)) fs.unlinkSync(thumbnailFile);
+      } catch (fileErr) {
+        console.error('Error deleting photo file during tote cascade:', fileErr);
+        // Continue - DB records are already deleted via cascade
+      }
+    }
 
     return NextResponse.json({
       message: `Tote '${existing.name}' deleted successfully`,
