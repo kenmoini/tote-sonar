@@ -1,5 +1,48 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #77 - 2026-02-21
+
+### Feature #77: All form fields have associated labels - PASSED
+
+**What was accomplished:**
+- Audited all form inputs across the entire application for proper label associations
+- Fixed missing label/htmlFor associations in multiple files:
+  - **Search page** (search/page.tsx): Added sr-only label for search input, htmlFor/id to location/owner/metadata key filter selects
+  - **Settings page** (settings/page.tsx): Added sr-only label and id for new metadata key input
+  - **Item detail page** (totes/[id]/items/[itemId]/page.tsx): Added htmlFor/id to edit item form (name, description, quantity), add metadata form (key, value), edit metadata form (key, value), move modal select, copy modal select
+- Added `.sr-only` CSS class to globals.css for visually-hidden but accessible labels
+- No changes needed for tote creation form, edit tote form, or add item form - these already had proper labels
+
+**Forms verified with proper label associations:**
+1. Tote creation form: name, location, size, color, owner (5 inputs) ✅
+2. Edit tote form: name, location, size, color, owner (5 inputs) ✅
+3. Add item form: name, description, quantity (3 inputs) ✅
+4. Edit item form: name, description, quantity (3 inputs) ✅ (FIXED)
+5. Settings page: hostname, upload size, default tote size/color/owner, new metadata key (6 inputs) ✅ (1 FIXED)
+6. Search page: search query, location filter, owner filter, metadata key filter (4 inputs) ✅ (ALL FIXED)
+7. Add metadata form: key, value (2 inputs) ✅ (FIXED)
+8. Edit metadata form: key, value (2 inputs) ✅ (FIXED)
+9. Move item modal: destination tote select (1 input) ✅ (FIXED)
+10. Copy item modal: destination tote select (1 input) ✅ (FIXED)
+11. Navigation search: global search input (uses aria-label) ✅
+
+**Verification (all 6 feature steps):**
+1. Navigated to tote creation form - name and location inputs have associated labels (textbox "Name *", textbox "Location *") ✅
+2. Verified name input has an associated label ✅
+3. Verified location input has a label ✅
+4. Navigated to item creation form - name, description, quantity inputs all have labels (textbox "Name *", textbox "Description", spinbutton "Quantity") ✅
+5. Verified name, description, quantity inputs all have labels ✅
+6. Navigated to settings page - all 6 inputs have labels (Base URL, Max File Size, Default Size/Color/Owner, New metadata key) ✅
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings; only HMR Fast Refresh logs)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- All test data cleaned up after verification
+
+**Current status:** 76/90 features passing (84.4%)
+
+---
+
 ## Session - Feature #76 - 2026-02-21
 
 ### Feature #76: Layout correct at mobile viewport 375px - PASSED
