@@ -1,5 +1,35 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #49 - 2026-02-21
+
+### Feature #49: Dashboard shows recently added items with tote links - PASSED
+
+**What was accomplished:**
+- Verified dashboard "Recently Added Items" section displays correctly
+- No code changes needed - functionality was already fully implemented
+- Dashboard API (GET /api/dashboard) returns recent items ordered by created_at DESC with tote_name via JOIN
+- Dashboard page renders each item as a link to `/totes/{tote_id}` with item name, date, and parent tote name in bold
+
+**Verification (all 8 feature steps):**
+1. Created test tote "DASHBOARD_RECENT_TEST_F49" via API
+2. Added 3 items with distinct names (Alpha, Beta, Gamma) with 1-second delays for different timestamps
+3. Navigated to dashboard - loaded correctly with metric cards and recently added items
+4. "Recently Added Items" section visible with all 3 test items
+5. Items listed in reverse chronological order: Gamma (newest) → Beta → Alpha (oldest)
+6. Each item shows its name (e.g., "F49_Third_Item_Gamma") and parent tote name ("in DASHBOARD_RECENT_TEST_F49" in bold)
+7. Clicked tote link on first item → navigated to /totes/RkdC2F (tote detail page) showing correct tote with breadcrumbs, metadata, QR code
+8. Cleaned up: deleted test tote (cascade deleted 3 items)
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence: server crashed and restarted mid-test; data persisted correctly - all 3 items still displayed on dashboard after restart
+- All test data cleaned up after verification
+
+**Current status:** 52/90 features passing (57.8%)
+
+---
+
 ## Session - Feature #47 - 2026-02-21
 
 ### Feature #47: Dashboard displays total tote count - PASSED
