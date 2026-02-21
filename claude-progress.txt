@@ -1,5 +1,37 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #33 - 2026-02-21
+
+### Feature #33: Placeholder icon shown when item has no photos - PASSED
+
+**What was accomplished:**
+- Verified existing implementation of placeholder icon in photo section when item has no photos
+- Item detail page (src/app/totes/[id]/items/[itemId]/page.tsx) already has complete placeholder:
+  - ImageIcon (48px) displayed in a dashed-border container
+  - "No photos yet" text shown below the icon
+  - "Click to upload a photo" hint text
+  - Entire container is clickable with cursor:pointer
+  - onClick handler triggers hidden file input (handleUploadClick)
+  - Hover effect changes border color to primary and adds subtle background
+- CSS styling in globals.css (.photo-empty-state, .photo-empty-hint) provides polished appearance
+
+**Verification (all 5 feature steps):**
+1. Created test tote "PLACEHOLDER_TEST_F33" and item "PLACEHOLDER_ITEM_F33" (no photos) via API
+2. Navigated to item detail page - page loaded with all item details
+3. Verified placeholder icon displayed in Photos (0/3) section - ImageIcon visible with "No photos yet" text
+4. Clicked placeholder - file chooser dialog appeared (confirmed by Playwright "[File chooser]: can be handled by upload")
+5. Cleaned up: deleted tote (cascade deleted item)
+
+**Quality checks:**
+- Screenshot verification: placeholder is clear, well-styled, with dashed border
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- No JS errors (only network-level resource 404s from Next.js dev HMR)
+- All test data cleaned up after verification
+
+**Current status:** 41/90 features passing (45.6%)
+
+---
+
 ## Session - Feature #32 - 2026-02-21
 
 ### Feature #32: Delete photo removes it from item - PASSED
