@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
+import ErrorDisplay from '@/components/ErrorDisplay';
 
 export default function ItemRedirectPage() {
   const params = useParams();
@@ -52,17 +53,22 @@ export default function ItemRedirectPage() {
   }
 
   if (error) {
+    const isNotFound = error === 'Item not found';
     return (
       <main className="page-container">
-        <div className="error-state">
-          <AlertTriangle size={48} className="error-icon" />
-          <h2>{error}</h2>
-          <p>The item you&rsquo;re looking for doesn&rsquo;t exist or may have been deleted.</p>
-          <Link href="/" className="btn btn-secondary">
-            <ArrowLeft size={16} />
-            Back to Dashboard
-          </Link>
-        </div>
+        {isNotFound ? (
+          <div className="error-state">
+            <AlertTriangle size={48} className="error-icon" />
+            <h2>Item Not Found</h2>
+            <p>The item you&rsquo;re looking for doesn&rsquo;t exist or may have been deleted.</p>
+            <Link href="/" className="btn btn-secondary">
+              <ArrowLeft size={16} />
+              Back to Dashboard
+            </Link>
+          </div>
+        ) : (
+          <ErrorDisplay error={error} onRetry={() => window.location.reload()} retryLabel="Retry" />
+        )}
       </main>
     );
   }

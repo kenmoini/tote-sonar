@@ -832,6 +832,23 @@ a {
   color: var(--text-muted, #6b7280);
   font-weight: 400;
   max-width: 400px;
+  margin: 0;
+}
+
+.error-state .error-suggestion {
+  color: var(--text-muted, #6b7280);
+  font-size: 0.875rem;
+  font-style: italic;
+  max-width: 400px;
+  margin: 0;
+  padding: 0.5rem 1rem;
+  background: var(--surface-hover, rgba(0, 0, 0, 0.03));
+  border-radius: 0.5rem;
+  border-left: 3px solid var(--primary, #4f46e5);
+}
+
+.error-state .btn {
+  margin-top: 0.5rem;
 }
 
 /* 404 Not Found page */

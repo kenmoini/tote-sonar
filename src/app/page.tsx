@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Box, Package, Plus, ArrowRight, Clock } from 'lucide-react';
+import ErrorDisplay from '@/components/ErrorDisplay';
 
 interface DashboardData {
   total_totes: number;
@@ -56,12 +57,7 @@ export default function DashboardPage() {
   if (error) {
     return (
       <div className="page-container">
-        <div className="error-state">
-          <p>{error}</p>
-          <button className="btn btn-primary" onClick={fetchDashboard}>
-            Retry
-          </button>
-        </div>
+        <ErrorDisplay error={error} onRetry={fetchDashboard} retryLabel="Retry" />
       </div>
     );
   }

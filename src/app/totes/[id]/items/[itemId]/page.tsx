@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Package, ArrowLeft, Hash, Calendar, FileText, Camera, Upload, X, Trash2, ImageIcon, AlertTriangle, Check, Tag, Plus, Pencil, ArrowRightLeft, Clock, MapPin, Copy } from 'lucide-react';
 import { Item, ItemPhoto, ItemMetadata, MovementHistory, Tote } from '@/types';
 import Breadcrumb from '@/components/Breadcrumb';
+import ErrorDisplay from '@/components/ErrorDisplay';
 
 interface ItemDetail extends Item {
   tote_name: string;
@@ -561,17 +562,22 @@ export default function ItemDetailPage() {
   }
 
   if (error || !item) {
+    const isNotFound = error === 'Item not found' || (!item && !error);
     return (
       <main className="page-container">
-        <div className="error-state">
-          <AlertTriangle size={48} className="error-icon" />
-          <h2>{error || 'Item not found'}</h2>
-          <p>The item you&rsquo;re looking for doesn&rsquo;t exist or may have been deleted.</p>
-          <Link href={`/totes/${toteId}`} className="btn btn-secondary">
-            <ArrowLeft size={16} />
-            Back to Tote
-          </Link>
-        </div>
+        {isNotFound ? (
+          <div className="error-state">
+            <AlertTriangle size={48} className="error-icon" />
+            <h2>Item Not Found</h2>
+            <p>The item you&rsquo;re looking for doesn&rsquo;t exist or may have been deleted.</p>
+            <Link href={`/totes/${toteId}`} className="btn btn-secondary">
+              <ArrowLeft size={16} />
+              Back to Tote
+            </Link>
+          </div>
+        ) : (
+          <ErrorDisplay error={error || 'Unknown error'} onRetry={fetchItem} retryLabel="Retry" />
+        )}
       </main>
     );
   }

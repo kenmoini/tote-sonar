@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, Box, MapPin, User, ArrowUpDown, X, Check, Printer, CheckSquare, Square } from 'lucide-react';
 import { Tote } from '@/types';
+import ErrorDisplay from '@/components/ErrorDisplay';
 
 interface ToteWithCount extends Tote {
   item_count: number;
@@ -456,10 +457,7 @@ export default function TotesPage() {
 
       {/* Error state */}
       {error && (
-        <div className="error-state">
-          <p>{error}</p>
-          <button className="btn btn-secondary" onClick={fetchTotes}>Retry</button>
-        </div>
+        <ErrorDisplay error={error} onRetry={fetchTotes} retryLabel="Retry" />
       )}
 
       {/* Empty state */}

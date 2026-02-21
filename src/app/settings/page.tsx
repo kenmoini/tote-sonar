@@ -16,6 +16,7 @@ import {
   Trash2,
   Loader2,
 } from 'lucide-react';
+import ErrorDisplay from '@/components/ErrorDisplay';
 
 interface SettingsData {
   server_hostname: string;
@@ -187,10 +188,7 @@ export default function SettingsPage() {
   if (error) {
     return (
       <main className="page-container">
-        <div className="error-state">
-          <p>{error}</p>
-          <button className="btn btn-secondary" onClick={fetchSettings}>Retry</button>
-        </div>
+        <ErrorDisplay error={error} onRetry={fetchSettings} retryLabel="Retry" />
       </main>
     );
   }
