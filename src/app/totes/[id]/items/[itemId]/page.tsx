@@ -45,6 +45,7 @@ export default function ItemDetailPage() {
   const [moveError, setMoveError] = useState<string | null>(null);
   const [loadingTotes, setLoadingTotes] = useState(false);
   const [duplicatingItem, setDuplicatingItem] = useState(false);
+  const [maxUploadSize, setMaxUploadSize] = useState<number>(5242880); // Default 5MB
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchItem = useCallback(async () => {
@@ -68,6 +69,28 @@ export default function ItemDetailPage() {
   useEffect(() => {
     if (itemId) fetchItem();
   }, [itemId, fetchItem]);
+
+  // Fetch max upload size from settings
+  useEffect(() => {
+    const fetchMaxUploadSize = async () => {
+      try {
+        const res = await fetch('/api/settings');
+        if (res.ok) {
+          const json = await res.json();
+          const sizeStr = json.settings?.max_upload_size;
+          if (sizeStr) {
+            const size = parseInt(sizeStr, 10);
+            if (!isNaN(size) && size > 0) {
+              setMaxUploadSize(size);
+            }
+          }
+        }
+      } catch {
+        // Fall back to default 5MB
+      }
+    };
+    fetchMaxUploadSize();
+  }, []);
 
   // Auto-dismiss toast
   useEffect(() => {
@@ -104,6 +127,13 @@ export default function ItemDetailPage() {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
       setUploadError('Invalid file type. Supported formats: JPEG, PNG, WebP');
+      return;
+    }
+
+    // Client-side file size validation
+    if (file.size > maxUploadSize) {
+      const maxSizeMB = (maxUploadSize / (1024 * 1024)).toFixed(1);
+      setUploadError(`File size (${(file.size / (1024 * 1024)).toFixed(1)}MB) exceeds maximum of ${maxSizeMB}MB. You can adjust this limit in Settings.`);
       return;
     }
 

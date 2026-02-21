@@ -1,5 +1,39 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #21 - 2026-02-21
+
+### Feature #21: Move item to a different tote - PASSED
+
+**What was accomplished:**
+- Verified the move item feature was already fully implemented:
+  - POST /api/items/:id/move API endpoint with validation (item exists, target tote exists, cannot move to same tote), atomic transaction updating tote_id + recording movement history
+  - Move button on item detail page opens modal with tote selection dropdown
+  - Dropdown filters out current tote, shows only other totes with name and location
+  - Move Item button disabled until destination selected
+  - On success: toast notification, redirect to item in new tote URL
+  - Movement history section on item detail page shows all moves with tote links and timestamps
+
+**Verification (all 11 feature steps):**
+1. Created two totes via API: F21_ALPHA (jMuHi6) and F21_BETA (wiLjOT)
+2. Created item F21_MOVE_ITEM (id:75) in F21_ALPHA via API with quantity=5
+3. Navigated to item detail page /totes/jMuHi6/items/75 - page loaded with correct data
+4. Clicked Move button - modal opened with "Move F21_MOVE_ITEM from F21_ALPHA to:" heading
+5. Selected F21_BETA (Workshop South) from destination tote dropdown
+6. Clicked "Move Item" button to confirm
+7. Page redirected to /totes/wiLjOT/items/75 - success feedback shown
+8. Navigated to Tote Alpha detail page - showed "Items (0)" (item no longer there)
+9. Navigated to Tote Beta detail page - showed "Items (1)" with F21_MOVE_ITEM listed
+10. GET /api/items/75 confirmed tote_id = wiLjOT (F21_BETA) with movement history entry
+11. Cleaned up: deleted both totes
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Step 5.7 server restart persistence test: item data + movement history persisted after server restart
+- All test data cleaned up after verification
+
+**Current status:** 23/90 features passing (25.6%)
+
 ## Session - Feature #45 - 2026-02-21
 
 ### Feature #45: Welcome screen displayed when no totes exist - PASSED
