@@ -1,5 +1,33 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #27 - 2026-02-21
+
+### Feature #27: Delete metadata tag from item - PASSED
+
+**What was accomplished:**
+- Verified metadata deletion works end-to-end through the UI
+- Feature was already fully implemented (API DELETE endpoint and UI remove buttons)
+- Tested complete workflow:
+  1. Created test tote, item, and 2 metadata tags (TestMaterial, TestColor) via API
+  2. Navigated to item detail page - both metadata tags displayed as styled pills
+  3. Clicked "Remove TestMaterial" (X button) - tag removed from UI instantly
+  4. Toast notification appeared: 'Metadata "TestMaterial" removed'
+  5. Only TestColor remained in UI
+  6. API GET /api/items/:id/metadata confirmed only TestColor returned
+  7. Deleted TestColor - UI shows empty state "No metadata tags"
+  8. API returned empty array after both deletions
+  9. Cleaned up test data by deleting the tote (cascade deleted item + metadata)
+
+**Verification checklist:**
+- Console: 0 JS errors, 0 warnings (only React DevTools info)
+- Step 5.6 mock data grep: no prohibited patterns in src/
+- All test data cleaned up after verification
+- No code changes needed - implementation was complete
+
+**Current status:** 35/90 features passing (38.9%)
+
+---
+
 ## Session - Feature #24 - 2026-02-21
 
 ### Feature #24: Copy item to different tote - PASSED
