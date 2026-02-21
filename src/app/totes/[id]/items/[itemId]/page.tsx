@@ -1020,6 +1020,13 @@ export default function ItemDetailPage() {
             <span className="meta-card-value">{formatDate(item.created_at)}</span>
           </div>
         </div>
+        <div className="tote-detail-meta-card">
+          <div className="meta-card-icon"><Calendar size={18} /></div>
+          <div>
+            <span className="meta-card-label">Updated</span>
+            <span className="meta-card-value">{formatDate(item.updated_at)}</span>
+          </div>
+        </div>
         {item.description && (
           <div className="tote-detail-meta-card item-desc-card">
             <div className="meta-card-icon"><FileText size={18} /></div>
