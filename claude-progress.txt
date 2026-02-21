@@ -1,5 +1,38 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #73 - 2026-02-21
+
+### Feature #73: Submit buttons disabled during API request - PASSED
+
+**What was accomplished:**
+- Enhanced all form submit buttons to show a visible loading state with spinner icon during API requests
+- Added Loader2 spinner icon from lucide-react to three submit buttons:
+  1. **Tote creation**: "Create Tote" → spinner + "Creating..." (disabled)
+  2. **Item creation**: "Add Item" → spinner + "Adding..." (disabled)
+  3. **Tote editing**: "Save Changes" → spinner + "Saving..." (disabled)
+- Added `.spinner-icon` CSS class with spin animation in globals.css
+- All buttons already had `disabled={state}` logic - this enhancement added the visual spinner icon
+
+**Verification (all 6 feature steps):**
+1. Navigated to tote creation form (/totes, clicked "Add Tote")
+2. Filled in required fields: name "LOADING_BTN_TEST", location "Test Location"
+3. Clicked submit - button immediately disabled (confirmed via screenshot during 2s API delay)
+4. Screenshot captured loading state: spinner icon + "Creating..." text, button in disabled purple appearance
+5. After request completed, modal closed, tote appeared in list with success toast, button re-enabled
+6. Repeated for item creation form: filled name "ITEM_LOADING_TEST_F73", clicked submit
+   - Screenshot captured: spinner icon + "Adding..." text, button disabled
+   - After completion: item appeared in tote, modal closed, button re-enabled
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings - only React DevTools info)
+- Step 5.6 mock data grep: no prohibited patterns (globalThis, mockDb, etc.) found in src/
+- All test data cleaned up after verification (deleted test totes and items)
+- No temporary API delays left in code (verified via grep)
+
+**Current status:** 72/90 features passing (80.0%)
+
+---
+
 ## Session - Feature #72 - 2026-02-21
 
 ### Feature #72: Success toast displayed after create update delete - PASSED
