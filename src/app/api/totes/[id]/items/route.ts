@@ -42,7 +42,24 @@ export async function POST(
   try {
     const db = getDb();
     const { id: toteId } = await params;
-    const body: CreateItemInput = await request.json();
+    // Parse JSON body - handle empty or invalid JSON
+    let body: CreateItemInput;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid or empty request body. JSON with at least a "name" field is required.' },
+        { status: 400 }
+      );
+    }
+
+    // Handle non-object body (e.g. null, string, number)
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json(
+        { error: 'Request body must be a JSON object with a "name" field.' },
+        { status: 400 }
+      );
+    }
 
     // Verify tote exists
     const tote = db.prepare('SELECT id FROM totes WHERE id = ?').get(toteId);
@@ -53,8 +70,14 @@ export async function POST(
       );
     }
 
-    // Validate required fields
-    if (!body.name || !body.name.trim()) {
+    // Validate required fields and types
+    if (!body.name || typeof body.name !== 'string') {
+      return NextResponse.json(
+        { error: 'Name is required and must be a string' },
+        { status: 400 }
+      );
+    }
+    if (!body.name.trim()) {
       return NextResponse.json(
         { error: 'Name is required' },
         { status: 400 }

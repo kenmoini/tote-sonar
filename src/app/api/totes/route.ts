@@ -57,16 +57,48 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate required fields
-    if (!body.name || !body.name.trim()) {
+    // Validate required fields and types
+    if (!body.name || (typeof body.name !== 'string')) {
+      return NextResponse.json(
+        { error: 'Name is required and must be a string' },
+        { status: 400 }
+      );
+    }
+    if (!body.name.trim()) {
       return NextResponse.json(
         { error: 'Name is required' },
         { status: 400 }
       );
     }
-    if (!body.location || !body.location.trim()) {
+    if (!body.location || (typeof body.location !== 'string')) {
+      return NextResponse.json(
+        { error: 'Location is required and must be a string' },
+        { status: 400 }
+      );
+    }
+    if (!body.location.trim()) {
       return NextResponse.json(
         { error: 'Location is required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate optional fields are strings if provided
+    if (body.size !== undefined && body.size !== null && typeof body.size !== 'string') {
+      return NextResponse.json(
+        { error: 'Size must be a string' },
+        { status: 400 }
+      );
+    }
+    if (body.color !== undefined && body.color !== null && typeof body.color !== 'string') {
+      return NextResponse.json(
+        { error: 'Color must be a string' },
+        { status: 400 }
+      );
+    }
+    if (body.owner !== undefined && body.owner !== null && typeof body.owner !== 'string') {
+      return NextResponse.json(
+        { error: 'Owner must be a string' },
         { status: 400 }
       );
     }

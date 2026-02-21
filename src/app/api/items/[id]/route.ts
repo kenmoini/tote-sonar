@@ -86,8 +86,26 @@ export async function PUT(
       );
     }
 
-    const body = await request.json();
-    const { name, description, quantity } = body;
+    // Parse JSON body - handle empty or invalid JSON
+    let body: Record<string, unknown>;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid or empty request body. JSON object is required.' },
+        { status: 400 }
+      );
+    }
+
+    // Handle non-object body (e.g. null, string, number)
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json(
+        { error: 'Request body must be a JSON object.' },
+        { status: 400 }
+      );
+    }
+
+    const { name, description, quantity } = body as { name?: string; description?: string; quantity?: unknown };
 
     // Validate name is required and non-empty
     if (name !== undefined && (!name || typeof name !== 'string' || !name.trim())) {

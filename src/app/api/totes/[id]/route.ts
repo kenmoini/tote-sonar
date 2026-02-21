@@ -106,7 +106,24 @@ export async function PUT(
       return invalidIdResponse();
     }
 
-    const body: UpdateToteInput = await request.json();
+    // Parse JSON body - handle empty or invalid JSON
+    let body: UpdateToteInput;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid or empty request body. JSON object is required.' },
+        { status: 400 }
+      );
+    }
+
+    // Handle non-object body (e.g. null, string, number)
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json(
+        { error: 'Request body must be a JSON object.' },
+        { status: 400 }
+      );
+    }
 
     // Check tote exists
     const existing = db.prepare('SELECT * FROM totes WHERE id = ?').get(id) as Tote | undefined;
@@ -117,29 +134,52 @@ export async function PUT(
       );
     }
 
+    // Validate field types before building update query
+    const stringFields = ['name', 'location', 'size', 'color', 'owner'] as const;
+    for (const field of stringFields) {
+      if (body[field] !== undefined && body[field] !== null && typeof body[field] !== 'string') {
+        return NextResponse.json(
+          { error: `${field.charAt(0).toUpperCase() + field.slice(1)} must be a string` },
+          { status: 400 }
+        );
+      }
+    }
+
     // Build update query dynamically based on provided fields
     const updates: string[] = [];
     const values: (string | null)[] = [];
 
     if (body.name !== undefined) {
+      if (!body.name || !(body.name as string).trim()) {
+        return NextResponse.json(
+          { error: 'Name cannot be empty' },
+          { status: 400 }
+        );
+      }
       updates.push('name = ?');
-      values.push(body.name.trim());
+      values.push((body.name as string).trim());
     }
     if (body.location !== undefined) {
+      if (!body.location || !(body.location as string).trim()) {
+        return NextResponse.json(
+          { error: 'Location cannot be empty' },
+          { status: 400 }
+        );
+      }
       updates.push('location = ?');
-      values.push(body.location.trim());
+      values.push((body.location as string).trim());
     }
     if (body.size !== undefined) {
       updates.push('size = ?');
-      values.push(body.size?.trim() || null);
+      values.push(body.size ? (body.size as string).trim() || null : null);
     }
     if (body.color !== undefined) {
       updates.push('color = ?');
-      values.push(body.color?.trim() || null);
+      values.push(body.color ? (body.color as string).trim() || null : null);
     }
     if (body.owner !== undefined) {
       updates.push('owner = ?');
-      values.push(body.owner?.trim() || null);
+      values.push(body.owner ? (body.owner as string).trim() || null : null);
     }
 
     if (updates.length === 0) {
