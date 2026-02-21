@@ -1,5 +1,39 @@
 # Tote Sonar - Progress Notes
 
+## Session - Feature #63 - 2026-02-21
+
+### Feature #63: API returns proper error for invalid tote ID format - PASSED
+
+**What was accomplished:**
+- Added tote ID format validation to `/api/totes/[id]` route (GET, PUT, DELETE)
+- `isValidToteId()` function validates 6-character alphanumeric format using regex `/^[a-zA-Z0-9]{6}$/`
+- Invalid IDs (special characters, too long, too short) return 400 with descriptive JSON error:
+  `{"error":"Invalid tote ID format. Tote IDs must be exactly 6 alphanumeric characters."}`
+- Valid-format but non-existent IDs continue to return 404 with `{"error":"Tote not found"}`
+- No server crashes or 500 errors for any invalid input
+
+**Verification (all 4 feature steps):**
+1. GET /api/totes/!@#$%^ → 400 with JSON error message ✓
+2. GET /api/totes/toolongidvalue123 → 400 with JSON error message ✓
+3. All error responses include JSON `error` field ✓
+4. No server crashes or 500 errors for any test case ✓
+
+**Additional tests:**
+- Too short ID ("ab") → 400 ✓
+- Dashes ("---") → 400 ✓
+- Spaces ("a b c") → 400 ✓
+- Valid format non-existent ("abc123") → 404 ✓
+- PUT with special chars → 400 ✓
+- DELETE with too-long ID → 400 ✓
+- UI handles 400 gracefully with "Failed to load tote" user-friendly message ✓
+
+**Quality checks:**
+- Zero JS console errors (0 errors, 0 warnings)
+- Step 5.6 mock data grep: no prohibited patterns found in src/
+- Frontend handles API errors gracefully with error state page
+
+**Current status:** 62/90 features passing (68.9%)
+
 ## Session - Feature #61 - 2026-02-21
 
 ### Feature #61: 404 page for non-existent routes - PASSED
