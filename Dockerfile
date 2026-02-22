@@ -1,4 +1,4 @@
-FROM node:24-alpine AS base
+FROM node:25-alpine AS base
 
 # Install dependencies for better-sqlite3 and sharp
 RUN apk add --no-cache python3 make g++ vips-dev
@@ -16,7 +16,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:24-alpine AS runner
+FROM node:25-alpine AS runner
 
 RUN apk add --no-cache vips-dev
 
