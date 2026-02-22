@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, Box, MapPin, User, ArrowUpDown, X, Check, Printer, CheckSquare, Square, Loader2, Trash2 } from 'lucide-react';
+import { Plus, Box, MapPin, User, ArrowUp, ArrowDown, X, Check, Printer, CheckSquare, Square, Loader2, Trash2 } from 'lucide-react';
 import { Tote } from '@/types';
 import ErrorDisplay from '@/components/ErrorDisplay';
 
@@ -546,7 +546,7 @@ function TotesPageContent() {
             >
               {field === 'created_at' ? 'Date' : field.charAt(0).toUpperCase() + field.slice(1)}
               {sortBy === field && (
-                <ArrowUpDown size={14} className={sortOrder === 'desc' ? 'sort-icon-desc' : 'sort-icon-asc'} />
+                sortOrder === 'desc' ? <ArrowDown size={14} /> : <ArrowUp size={14} />
               )}
             </button>
           ))}
