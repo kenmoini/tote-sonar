@@ -18,7 +18,7 @@
     "kemo-archiver": "^7.0.0",
     "adm-zip": "^0.5.0",
     "@ark-ui/react": "^4.0.0",
-    "lucide-react": "^0.500.0"
+    "lucide-react": "^0.575.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
