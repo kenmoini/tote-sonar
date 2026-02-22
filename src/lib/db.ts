@@ -125,7 +125,7 @@ function initializeSchema(): void {
 
 // Generate a 6-character alphanumeric ID
 export function generateToteId(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let id = '';
   for (let i = 0; i < 6; i++) {
     id += chars.charAt(Math.floor(Math.random() * chars.length));
