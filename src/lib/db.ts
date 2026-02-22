@@ -16,11 +16,12 @@ const thumbnailsDir = path.join(DATA_DIR, 'thumbnails');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 if (!fs.existsSync(thumbnailsDir)) fs.mkdirSync(thumbnailsDir, { recursive: true });
 
-let db: Database.Database;
+// Persist across Next.js HMR reloads in dev mode
+const globalForDb = globalThis as unknown as { __tote_sonar_db?: Database.Database };
 
 export function getDb(): Database.Database {
-  if (!db) {
-    db = new Database(DB_PATH);
+  if (!globalForDb.__tote_sonar_db) {
+    const db = new Database(DB_PATH);
     db.pragma('journal_mode = WAL');
     // Force checkpoint of any pending WAL data from previous unclean shutdowns (kill -9).
     // Without this, WAL data written before a crash may not be recovered properly.
@@ -32,13 +33,13 @@ export function getDb(): Database.Database {
     db.pragma('foreign_keys = ON');
     db.pragma('synchronous = FULL');
     console.log('Database connected:', DB_PATH);
-    initializeSchema();
+    globalForDb.__tote_sonar_db = db;
+    initializeSchema(db);
   }
-  return db;
+  return globalForDb.__tote_sonar_db;
 }
 
-function initializeSchema(): void {
-  const database = db;
+function initializeSchema(database: Database.Database): void {
 
   database.exec(`
     CREATE TABLE IF NOT EXISTS totes (

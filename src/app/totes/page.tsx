@@ -361,92 +361,94 @@ function TotesPageContent() {
                 <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleCreateTote} className="tote-form">
-              <div className="form-group">
-                <label htmlFor="tote-name" className="form-label">
-                  Name <span className="form-required">*</span>
-                </label>
-                <input
-                  id="tote-name"
-                  type="text"
-                  className={`form-input ${formErrors.name ? 'form-input-error' : ''}`}
-                  placeholder="e.g., Holiday Decorations"
-                  value={formName}
-                  onChange={(e) => { setFormName(e.target.value); setFormErrors(prev => ({ ...prev, name: undefined })); }}
-                  autoFocus
-                />
-                {formErrors.name && <span className="form-error-text">{formErrors.name}</span>}
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="tote-location" className="form-label">
-                  Location <span className="form-required">*</span>
-                </label>
-                <input
-                  id="tote-location"
-                  type="text"
-                  className={`form-input ${formErrors.location ? 'form-input-error' : ''}`}
-                  placeholder="e.g., Garage Shelf A"
-                  value={formLocation}
-                  onChange={(e) => { setFormLocation(e.target.value); setFormErrors(prev => ({ ...prev, location: undefined })); }}
-                />
-                {formErrors.location && <span className="form-error-text">{formErrors.location}</span>}
-              </div>
-
-              <div className="form-row">
+            <div className='modal-body'>
+              <form onSubmit={handleCreateTote} className="tote-form">
                 <div className="form-group">
-                  <label htmlFor="tote-size" className="form-label">Size</label>
+                  <label htmlFor="tote-name" className="form-label">
+                    Name <span className="form-required">*</span>
+                  </label>
                   <input
-                    id="tote-size"
+                    id="tote-name"
+                    type="text"
+                    className={`form-input ${formErrors.name ? 'form-input-error' : ''}`}
+                    placeholder="e.g., Holiday Decorations"
+                    value={formName}
+                    onChange={(e) => { setFormName(e.target.value); setFormErrors(prev => ({ ...prev, name: undefined })); }}
+                    autoFocus
+                  />
+                  {formErrors.name && <span className="form-error-text">{formErrors.name}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="tote-location" className="form-label">
+                    Location <span className="form-required">*</span>
+                  </label>
+                  <input
+                    id="tote-location"
+                    type="text"
+                    className={`form-input ${formErrors.location ? 'form-input-error' : ''}`}
+                    placeholder="e.g., Garage Shelf A"
+                    value={formLocation}
+                    onChange={(e) => { setFormLocation(e.target.value); setFormErrors(prev => ({ ...prev, location: undefined })); }}
+                  />
+                  {formErrors.location && <span className="form-error-text">{formErrors.location}</span>}
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="tote-size" className="form-label">Size</label>
+                    <input
+                      id="tote-size"
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g., Large"
+                      value={formSize}
+                      onChange={(e) => setFormSize(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="tote-color" className="form-label">Color</label>
+                    <input
+                      id="tote-color"
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g., Blue"
+                      value={formColor}
+                      onChange={(e) => setFormColor(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="tote-owner" className="form-label">Owner</label>
+                  <input
+                    id="tote-owner"
                     type="text"
                     className="form-input"
-                    placeholder="e.g., Large"
-                    value={formSize}
-                    onChange={(e) => setFormSize(e.target.value)}
+                    placeholder="e.g., John"
+                    value={formOwner}
+                    onChange={(e) => setFormOwner(e.target.value)}
                   />
                 </div>
-                <div className="form-group">
-                  <label htmlFor="tote-color" className="form-label">Color</label>
-                  <input
-                    id="tote-color"
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g., Blue"
-                    value={formColor}
-                    onChange={(e) => setFormColor(e.target.value)}
-                  />
+
+                <div className="form-actions">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => { setShowCreateForm(false); resetForm(); }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={creating}
+                  >
+                    {creating ? <><Loader2 size={16} className="spinner-icon" /> Creating...</> : 'Create Tote'}
+                  </button>
                 </div>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="tote-owner" className="form-label">Owner</label>
-                <input
-                  id="tote-owner"
-                  type="text"
-                  className="form-input"
-                  placeholder="e.g., John"
-                  value={formOwner}
-                  onChange={(e) => setFormOwner(e.target.value)}
-                />
-              </div>
-
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => { setShowCreateForm(false); resetForm(); }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={creating}
-                >
-                  {creating ? <><Loader2 size={16} className="spinner-icon" /> Creating...</> : 'Create Tote'}
-                </button>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       )}

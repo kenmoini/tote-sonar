@@ -697,6 +697,7 @@ export default function ItemDetailPage() {
                 placeholder="Item name"
                 disabled={editingItem}
                 autoFocus
+                data-1p-ignore
               />
             </div>
             <div className="form-group">

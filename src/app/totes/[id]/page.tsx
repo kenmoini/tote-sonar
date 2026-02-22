@@ -585,70 +585,6 @@ export default function ToteDetailPage() {
         )}
       </div>
 
-      {/* QR Code Section */}
-      <div className="tote-detail-section qr-code-section">
-        <div className="section-header">
-          <h2><QrCode size={20} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />QR Code</h2>
-          <button
-            className="btn btn-secondary"
-            onClick={handlePrintLabel}
-            title="Print QR label"
-          >
-            <Printer size={16} />
-            <span>Print Label</span>
-          </button>
-        </div>
-        <div className="qr-label-size-selector">
-          <span className="qr-size-label">Label Size:</span>
-          <div className="qr-size-options">
-            {(Object.keys(QR_SIZES) as QrLabelSize[]).map((size) => (
-              <button
-                key={size}
-                className={`qr-size-btn ${qrLabelSize === size ? 'qr-size-btn-active' : ''}`}
-                onClick={() => setQrLabelSize(size)}
-                title={`${QR_SIZES[size].label} QR label`}
-              >
-                {QR_SIZES[size].label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="qr-code-display">
-          <div className="qr-code-image-container">
-            <img
-              src={`/api/totes/${toteId}/qr`}
-              alt={`QR code for tote ${tote.id}`}
-              className="qr-code-image"
-              style={{
-                width: `${QR_SIZES[qrLabelSize].display}px`,
-                height: `${QR_SIZES[qrLabelSize].display}px`,
-              }}
-            />
-          </div>
-          <p className="qr-code-tote-id">{tote.id}</p>
-          <p className="qr-code-url-hint">Scan to open this tote&rsquo;s page</p>
-        </div>
-      </div>
-
-      {/* Print-only QR Label (hidden on screen, visible when printing) */}
-      <div className="print-label-container" aria-hidden="true">
-        <div className={`print-label print-label-${qrLabelSize}`}>
-          <div className="print-label-qr">
-            <img
-              src={`/api/totes/${toteId}/qr`}
-              alt={`QR code for tote ${tote.id}`}
-              style={{
-                width: `${QR_SIZES[qrLabelSize].print}px`,
-                height: `${QR_SIZES[qrLabelSize].print}px`,
-              }}
-            />
-          </div>
-          <div className="print-label-id">{tote.id}</div>
-          <div className="print-label-name">{tote.name}</div>
-          <div className="print-label-location">{tote.location}</div>
-        </div>
-      </div>
-
       {/* Edit Tote Modal */}
       {showEditForm && (
         <div className="modal-overlay" onClick={() => { if (!editingTote) { setShowEditForm(false); } }}>
@@ -664,98 +600,101 @@ export default function ToteDetailPage() {
                 <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleEditTote} className="tote-form">
-              <div className="form-group">
-                <label htmlFor="edit-tote-name" className="form-label">
-                  Name <span className="form-required">*</span>
-                </label>
-                <input
-                  id="edit-tote-name"
-                  type="text"
-                  className={`form-input ${editFormErrors.name ? 'form-input-error' : ''}`}
-                  placeholder="e.g., Holiday Decorations"
-                  value={editName}
-                  onChange={(e) => { setEditName(e.target.value); setEditFormErrors(prev => ({ ...prev, name: undefined })); }}
-                  autoFocus
-                />
-                {editFormErrors.name && <span className="form-error-text">{editFormErrors.name}</span>}
-              </div>
+            <div className="modal-body">
+              <form onSubmit={handleEditTote} className="tote-form">
+                <div className="form-group">
+                  <label htmlFor="edit-tote-name" className="form-label">
+                    Name <span className="form-required">*</span>
+                  </label>
+                  <input
+                    id="edit-tote-name"
+                    type="text"
+                    className={`form-input ${editFormErrors.name ? 'form-input-error' : ''}`}
+                    placeholder="e.g., Holiday Decorations"
+                    value={editName}
+                    onChange={(e) => { setEditName(e.target.value); setEditFormErrors(prev => ({ ...prev, name: undefined })); }}
+                    autoFocus
+                    data-1p-ignore
+                  />
+                  {editFormErrors.name && <span className="form-error-text">{editFormErrors.name}</span>}
+                </div>
 
-              <div className="form-group">
-                <label htmlFor="edit-tote-location" className="form-label">
-                  Location <span className="form-required">*</span>
-                </label>
-                <input
-                  id="edit-tote-location"
-                  type="text"
-                  className={`form-input ${editFormErrors.location ? 'form-input-error' : ''}`}
-                  placeholder="e.g., Garage Shelf A"
-                  value={editLocation}
-                  onChange={(e) => { setEditLocation(e.target.value); setEditFormErrors(prev => ({ ...prev, location: undefined })); }}
-                />
-                {editFormErrors.location && <span className="form-error-text">{editFormErrors.location}</span>}
-              </div>
+                <div className="form-group">
+                  <label htmlFor="edit-tote-location" className="form-label">
+                    Location <span className="form-required">*</span>
+                  </label>
+                  <input
+                    id="edit-tote-location"
+                    type="text"
+                    className={`form-input ${editFormErrors.location ? 'form-input-error' : ''}`}
+                    placeholder="e.g., Garage Shelf A"
+                    value={editLocation}
+                    onChange={(e) => { setEditLocation(e.target.value); setEditFormErrors(prev => ({ ...prev, location: undefined })); }}
+                  />
+                  {editFormErrors.location && <span className="form-error-text">{editFormErrors.location}</span>}
+                </div>
 
-              <div className="form-group">
-                <label htmlFor="edit-tote-size" className="form-label">
-                  Size
-                </label>
-                <input
-                  id="edit-tote-size"
-                  type="text"
-                  className="form-input"
-                  placeholder="e.g., Large, 50L"
-                  value={editSize}
-                  onChange={(e) => setEditSize(e.target.value)}
-                />
-              </div>
+                <div className="form-group">
+                  <label htmlFor="edit-tote-size" className="form-label">
+                    Size
+                  </label>
+                  <input
+                    id="edit-tote-size"
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g., Large, 50L"
+                    value={editSize}
+                    onChange={(e) => setEditSize(e.target.value)}
+                  />
+                </div>
 
-              <div className="form-group">
-                <label htmlFor="edit-tote-color" className="form-label">
-                  Color
-                </label>
-                <input
-                  id="edit-tote-color"
-                  type="text"
-                  className="form-input"
-                  placeholder="e.g., Blue, Red"
-                  value={editColor}
-                  onChange={(e) => setEditColor(e.target.value)}
-                />
-              </div>
+                <div className="form-group">
+                  <label htmlFor="edit-tote-color" className="form-label">
+                    Color
+                  </label>
+                  <input
+                    id="edit-tote-color"
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g., Blue, Red"
+                    value={editColor}
+                    onChange={(e) => setEditColor(e.target.value)}
+                  />
+                </div>
 
-              <div className="form-group">
-                <label htmlFor="edit-tote-owner" className="form-label">
-                  Owner
-                </label>
-                <input
-                  id="edit-tote-owner"
-                  type="text"
-                  className="form-input"
-                  placeholder="e.g., John, Family"
-                  value={editOwner}
-                  onChange={(e) => setEditOwner(e.target.value)}
-                />
-              </div>
+                <div className="form-group">
+                  <label htmlFor="edit-tote-owner" className="form-label">
+                    Owner
+                  </label>
+                  <input
+                    id="edit-tote-owner"
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g., John, Family"
+                    value={editOwner}
+                    onChange={(e) => setEditOwner(e.target.value)}
+                  />
+                </div>
 
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowEditForm(false)}
-                  disabled={editingTote}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={editingTote}
-                >
-                  {editingTote ? <><Loader2 size={16} className="spinner-icon" /> Saving...</> : 'Save Changes'}
-                </button>
-              </div>
-            </form>
+                <div className="form-actions">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setShowEditForm(false)}
+                    disabled={editingTote}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={editingTote}
+                  >
+                    {editingTote ? <><Loader2 size={16} className="spinner-icon" /> Saving...</> : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
@@ -774,70 +713,73 @@ export default function ToteDetailPage() {
                 <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleAddItem} className="tote-form" noValidate>
-              <div className="form-group">
-                <label htmlFor="item-name" className="form-label">
-                  Name <span className="form-required">*</span>
-                </label>
-                <input
-                  id="item-name"
-                  type="text"
-                  className={`form-input ${itemFormErrors.name ? 'form-input-error' : ''}`}
-                  placeholder="e.g., Christmas Lights"
-                  value={itemName}
-                  onChange={(e) => { setItemName(e.target.value); setItemFormErrors(prev => ({ ...prev, name: undefined })); }}
-                  autoFocus
-                />
-                {itemFormErrors.name && <span className="form-error-text">{itemFormErrors.name}</span>}
-              </div>
+            <div className="modal-body">
+              <form onSubmit={handleAddItem} className="tote-form" noValidate>
+                <div className="form-group">
+                  <label htmlFor="item-name" className="form-label">
+                    Name <span className="form-required">*</span>
+                  </label>
+                  <input
+                    id="item-name"
+                    type="text"
+                    className={`form-input ${itemFormErrors.name ? 'form-input-error' : ''}`}
+                    placeholder="e.g., Christmas Lights"
+                    value={itemName}
+                    onChange={(e) => { setItemName(e.target.value); setItemFormErrors(prev => ({ ...prev, name: undefined })); }}
+                    autoFocus
+                    data-1p-ignore
+                  />
+                  {itemFormErrors.name && <span className="form-error-text">{itemFormErrors.name}</span>}
+                </div>
 
-              <div className="form-group">
-                <label htmlFor="item-description" className="form-label">
-                  Description
-                </label>
-                <textarea
-                  id="item-description"
-                  className="form-input"
-                  placeholder="e.g., Multicolor LED string lights, 100ft"
-                  value={itemDescription}
-                  onChange={(e) => setItemDescription(e.target.value)}
-                  rows={3}
-                />
-              </div>
+                <div className="form-group">
+                  <label htmlFor="item-description" className="form-label">
+                    Description
+                  </label>
+                  <textarea
+                    id="item-description"
+                    className="form-input"
+                    placeholder="e.g., Multicolor LED string lights, 100ft"
+                    value={itemDescription}
+                    onChange={(e) => setItemDescription(e.target.value)}
+                    rows={3}
+                  />
+                </div>
 
-              <div className="form-group">
-                <label htmlFor="item-quantity" className="form-label">
-                  Quantity
-                </label>
-                <input
-                  id="item-quantity"
-                  type="number"
-                  className={`form-input ${itemFormErrors.quantity ? 'form-input-error' : ''}`}
-                  min="1"
-                  step="1"
-                  value={itemQuantity}
-                  onChange={(e) => { setItemQuantity(e.target.value); setItemFormErrors(prev => ({ ...prev, quantity: undefined })); }}
-                />
-                {itemFormErrors.quantity && <span className="form-error-text">{itemFormErrors.quantity}</span>}
-              </div>
+                <div className="form-group">
+                  <label htmlFor="item-quantity" className="form-label">
+                    Quantity
+                  </label>
+                  <input
+                    id="item-quantity"
+                    type="number"
+                    className={`form-input ${itemFormErrors.quantity ? 'form-input-error' : ''}`}
+                    min="1"
+                    step="1"
+                    value={itemQuantity}
+                    onChange={(e) => { setItemQuantity(e.target.value); setItemFormErrors(prev => ({ ...prev, quantity: undefined })); }}
+                  />
+                  {itemFormErrors.quantity && <span className="form-error-text">{itemFormErrors.quantity}</span>}
+                </div>
 
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => { setShowAddItemForm(false); resetItemForm(); }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={addingItem}
-                >
-                  {addingItem ? <><Loader2 size={16} className="spinner-icon" /> Adding...</> : 'Add Item'}
-                </button>
-              </div>
-            </form>
+                <div className="form-actions">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => { setShowAddItemForm(false); resetItemForm(); }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={addingItem}
+                  >
+                    {addingItem ? <><Loader2 size={16} className="spinner-icon" /> Adding...</> : 'Add Item'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
@@ -924,6 +866,70 @@ export default function ToteDetailPage() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* QR Code Section */}
+      <div className="tote-detail-section qr-code-section">
+        <div className="section-header">
+          <h2><QrCode size={20} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />QR Code</h2>
+          <button
+            className="btn btn-secondary"
+            onClick={handlePrintLabel}
+            title="Print QR label"
+          >
+            <Printer size={16} />
+            <span>Print Label</span>
+          </button>
+        </div>
+        <div className="qr-label-size-selector">
+          <span className="qr-size-label">Label Size:</span>
+          <div className="qr-size-options">
+            {(Object.keys(QR_SIZES) as QrLabelSize[]).map((size) => (
+              <button
+                key={size}
+                className={`qr-size-btn ${qrLabelSize === size ? 'qr-size-btn-active' : ''}`}
+                onClick={() => setQrLabelSize(size)}
+                title={`${QR_SIZES[size].label} QR label`}
+              >
+                {QR_SIZES[size].label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="qr-code-display">
+          <div className="qr-code-image-container">
+            <img
+              src={`/api/totes/${toteId}/qr`}
+              alt={`QR code for tote ${tote.id}`}
+              className="qr-code-image"
+              style={{
+                width: `${QR_SIZES[qrLabelSize].display}px`,
+                height: `${QR_SIZES[qrLabelSize].display}px`,
+              }}
+            />
+          </div>
+          <p className="qr-code-tote-id">{tote.id}</p>
+          <p className="qr-code-url-hint">Scan to open this tote&rsquo;s page</p>
+        </div>
+      </div>
+
+      {/* Print-only QR Label (hidden on screen, visible when printing) */}
+      <div className="print-label-container" aria-hidden="true">
+        <div className={`print-label print-label-${qrLabelSize}`}>
+          <div className="print-label-qr">
+            <img
+              src={`/api/totes/${toteId}/qr`}
+              alt={`QR code for tote ${tote.id}`}
+              style={{
+                width: `${QR_SIZES[qrLabelSize].print}px`,
+                height: `${QR_SIZES[qrLabelSize].print}px`,
+              }}
+            />
+          </div>
+          <div className="print-label-id">{tote.id}</div>
+          <div className="print-label-name">{tote.name}</div>
+          <div className="print-label-location">{tote.location}</div>
+        </div>
       </div>
     </main>
   );

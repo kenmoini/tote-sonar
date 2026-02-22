@@ -473,6 +473,13 @@ textarea:focus-visible,
   gap: 0.75rem;
 }
 
+.modal-body {
+  padding: 1rem 1.5rem;
+}
+.modal-footer {
+  padding: 1rem 1.5rem;
+}
+
 .confirm-icon-danger {
   display: flex;
   align-items: center;
@@ -734,7 +741,6 @@ textarea:focus-visible,
    ============================================ */
 
 .tote-form {
-  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -800,7 +806,7 @@ textarea:focus-visible,
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
-  margin-top: 0.5rem;
+  /* margin-top: 0.5rem; */
   padding-top: 1rem;
   border-top: 1px solid var(--card-border);
 }
@@ -814,6 +820,7 @@ textarea:focus-visible,
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
+  margin-bottom: 1rem;
 }
 
 .sort-label {
