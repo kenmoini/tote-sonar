@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, Box, MapPin, User, ArrowUpDown, X, Check, Printer, CheckSquare, Square, Loader2 } from 'lucide-react';
+import { Plus, Box, MapPin, User, ArrowUpDown, X, Check, Printer, CheckSquare, Square, Loader2, Trash2 } from 'lucide-react';
 import { Tote } from '@/types';
 import ErrorDisplay from '@/components/ErrorDisplay';
 
@@ -37,6 +37,8 @@ function TotesPageContent() {
   const [selectedTotes, setSelectedTotes] = useState<Set<string>>(new Set());
   const [bulkQrLabels, setBulkQrLabels] = useState<BulkQrLabel[]>([]);
   const [loadingBulkPrint, setLoadingBulkPrint] = useState(false);
+  const [loadingBulkDelete, setLoadingBulkDelete] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Auto-open create form when ?create=true is in the URL (from welcome screen)
   useEffect(() => {
@@ -249,6 +251,36 @@ function TotesPageContent() {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedTotes.size === 0) return;
+
+    setLoadingBulkDelete(true);
+    try {
+      const ids = Array.from(selectedTotes);
+      const results = await Promise.all(
+        ids.map(id => fetch(`/api/totes/${id}`, { method: 'DELETE' }))
+      );
+
+      const failed = results.filter(r => !r.ok).length;
+      const succeeded = results.length - failed;
+
+      if (failed > 0) {
+        showToast(`Deleted ${succeeded} tote${succeeded !== 1 ? 's' : ''}, ${failed} failed`, 'error');
+      } else {
+        showToast(`Deleted ${succeeded} tote${succeeded !== 1 ? 's' : ''} successfully`, 'success');
+      }
+
+      setSelectedTotes(new Set());
+      setShowDeleteConfirm(false);
+      setSelectMode(false);
+      await fetchTotes();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to delete totes', 'error');
+    } finally {
+      setLoadingBulkDelete(false);
+    }
+  };
+
   const handleBulkPrint = async () => {
     if (selectedTotes.size === 0) return;
 
@@ -336,14 +368,63 @@ function TotesPageContent() {
               {selectedTotes.size} of {totes.length} selected
             </span>
           </div>
-          <button
-            className="btn btn-primary"
-            onClick={handleBulkPrint}
-            disabled={selectedTotes.size === 0 || loadingBulkPrint}
-          >
-            <Printer size={18} />
-            <span>{loadingBulkPrint ? 'Generating...' : `Print ${selectedTotes.size} QR Label${selectedTotes.size !== 1 ? 's' : ''}`}</span>
-          </button>
+          <div className="bulk-action-buttons">
+            <button
+              className="btn btn-danger"
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={selectedTotes.size === 0 || loadingBulkDelete}
+            >
+              <Trash2 size={18} />
+              <span>Delete {selectedTotes.size} Tote{selectedTotes.size !== 1 ? 's' : ''}</span>
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={handleBulkPrint}
+              disabled={selectedTotes.size === 0 || loadingBulkPrint}
+            >
+              <Printer size={18} />
+              <span>{loadingBulkPrint ? 'Generating...' : `Print ${selectedTotes.size} QR Label${selectedTotes.size !== 1 ? 's' : ''}`}</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Delete {selectedTotes.size} Tote{selectedTotes.size !== 1 ? 's' : ''}?</h2>
+              <button
+                className="modal-close"
+                onClick={() => setShowDeleteConfirm(false)}
+                aria-label="Close"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>This will permanently delete the selected tote{selectedTotes.size !== 1 ? 's' : ''} and all of their items, photos, metadata, and movement history. This action cannot be undone.</p>
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={loadingBulkDelete}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleBulkDelete}
+                  disabled={loadingBulkDelete}
+                >
+                  {loadingBulkDelete ? <><Loader2 size={16} className="spinner-icon" /> Deleting...</> : `Delete ${selectedTotes.size} Tote${selectedTotes.size !== 1 ? 's' : ''}`}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

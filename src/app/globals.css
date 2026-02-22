@@ -1143,6 +1143,12 @@ textarea:focus-visible,
   gap: 0.75rem;
 }
 
+.bulk-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .bulk-selection-count {
   font-size: 0.875rem;
   color: var(--muted);
