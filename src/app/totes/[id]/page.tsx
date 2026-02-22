@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
-import { Box, MapPin, User, ArrowLeft, Package, Calendar, Plus, X, Check, Trash2, AlertTriangle, Pencil, QrCode, ArrowUpDown, ImageIcon, Printer, Loader2 } from 'lucide-react';
+import { Box, MapPin, User, ArrowLeft, Package, Calendar, Plus, X, Check, Trash2, AlertTriangle, Pencil, QrCode, ArrowUp, ArrowDown, ImageIcon, Printer, Loader2 } from 'lucide-react';
 import { Tote, Item, ItemPhoto } from '@/types';
 import Breadcrumb from '@/components/Breadcrumb';
 import ErrorDisplay from '@/components/ErrorDisplay';
@@ -811,7 +811,7 @@ export default function ToteDetailPage() {
               >
                 {label}
                 {itemSortBy === field && (
-                  <ArrowUpDown size={14} className={itemSortOrder === 'desc' ? 'sort-icon-desc' : 'sort-icon-asc'} />
+                  itemSortOrder === 'desc' ? <ArrowDown size={14} /> : <ArrowUp size={14} />
                 )}
               </button>
             ))}

@@ -686,65 +686,69 @@ export default function ItemDetailPage() {
                 <X size={20} />
               </button>
             </div>
-            <div className="form-group">
-              <label htmlFor="edit-item-name" className="form-label">Name <span className="form-required">*</span></label>
-              <input
-                id="edit-item-name"
-                type="text"
-                className={`form-input ${editError && !editName.trim() ? 'form-input-error' : ''}`}
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                placeholder="Item name"
-                disabled={editingItem}
-                autoFocus
-                data-1p-ignore
-              />
+            <div className="modal-body">
+              <div className="form-group">
+                <label htmlFor="edit-item-name" className="form-label">Name <span className="form-required">*</span></label>
+                <input
+                  id="edit-item-name"
+                  type="text"
+                  className={`form-input ${editError && !editName.trim() ? 'form-input-error' : ''}`}
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Item name"
+                  disabled={editingItem}
+                  autoFocus
+                  data-1p-ignore
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="edit-item-description" className="form-label">Description</label>
+                <textarea
+                  id="edit-item-description"
+                  className="form-input form-textarea"
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="Item description (optional)"
+                  disabled={editingItem}
+                  rows={3}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="edit-item-quantity" className="form-label">Quantity</label>
+                <input
+                  id="edit-item-quantity"
+                  type="number"
+                  className="form-input"
+                  value={editQuantity}
+                  onChange={(e) => setEditQuantity(Number(e.target.value))}
+                  min={1}
+                  step={1}
+                  disabled={editingItem}
+                />
+              </div>
+              {editError && (
+                <div className="form-error-text">{editError}</div>
+              )}
             </div>
-            <div className="form-group">
-              <label htmlFor="edit-item-description" className="form-label">Description</label>
-              <textarea
-                id="edit-item-description"
-                className="form-input form-textarea"
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-                placeholder="Item description (optional)"
-                disabled={editingItem}
-                rows={3}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="edit-item-quantity" className="form-label">Quantity</label>
-              <input
-                id="edit-item-quantity"
-                type="number"
-                className="form-input"
-                value={editQuantity}
-                onChange={(e) => setEditQuantity(Number(e.target.value))}
-                min={1}
-                step={1}
-                disabled={editingItem}
-              />
-            </div>
-            {editError && (
-              <div className="form-error-text">{editError}</div>
-            )}
-            <div className="form-actions">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setShowEditItem(false)}
-                disabled={editingItem}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleEditItem}
-                disabled={editingItem}
-              >
-                {editingItem ? 'Saving...' : 'Save Changes'}
-              </button>
+            <div className='modal-footer'>
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowEditItem(false)}
+                  disabled={editingItem}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleEditItem}
+                  disabled={editingItem}
+                >
+                  {editingItem ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
