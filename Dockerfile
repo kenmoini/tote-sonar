@@ -7,7 +7,7 @@ WORKDIR /app
 
 # Install dependencies
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm install node-addon-api node-gyp && npm install
 
 # Copy source code
 COPY . .
