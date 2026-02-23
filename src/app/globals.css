@@ -1749,7 +1749,7 @@ textarea:focus-visible,
 /* Tablet (768px) keeps 2-column grids; mobile (<768px) collapses to 1 column */
 @media (max-width: 767px) {
   .page-header {
-    flex-direction: column;
+    align-items: center;
   }
 
   .tote-grid {
