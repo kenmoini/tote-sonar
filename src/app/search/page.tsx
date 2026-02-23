@@ -242,6 +242,9 @@ function SearchContent() {
             autoFocus
           />
         </div>
+        <button type="submit" className="btn btn-primary" disabled={loading}>
+          {loading ? 'Searching...' : 'Search'}
+        </button>
         <button
           type="button"
           className={`btn btn-outline search-filter-toggle ${showFilters ? 'active' : ''} ${activeFilterCount > 0 ? 'has-filters' : ''}`}
@@ -253,9 +256,6 @@ function SearchContent() {
           {activeFilterCount > 0 && (
             <span className="filter-badge">{activeFilterCount}</span>
           )}
-        </button>
-        <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? 'Searching...' : 'Search'}
         </button>
       </form>
 
