@@ -87,7 +87,7 @@ export default function DashboardPage() {
       <div className="page-header">
         <div>
           <h1>Dashboard</h1>
-          <p>Overview of your totes and items</p>
+          <p>Overview &amp; Activity</p>
         </div>
         <Link href="/totes" className="btn btn-primary">
           <Plus size={18} />
