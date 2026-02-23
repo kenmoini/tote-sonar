@@ -132,7 +132,7 @@ export default function DashboardPage() {
             {data.recent_items.map((item) => (
               <Link
                 key={item.id}
-                href={`/totes/${item.tote_id}`}
+                href={`/totes/${item.tote_id}/items/${item.id}`}
                 className="item-row"
                 style={{ textDecoration: 'none', color: 'inherit' }}
               >

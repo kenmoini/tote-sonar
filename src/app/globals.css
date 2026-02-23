@@ -751,6 +751,7 @@ textarea:focus-visible,
   flex-direction: column;
   gap: 0.375rem;
   flex: 1;
+  margin-top: 0.5rem;
 }
 
 .form-label {
