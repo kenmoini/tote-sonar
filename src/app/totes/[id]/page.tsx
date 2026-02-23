@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
-import { Box, MapPin, User, ArrowLeft, Package, Calendar, Plus, X, Check, Trash2, AlertTriangle, Pencil, QrCode, ArrowUp, ArrowDown, ImageIcon, Printer, Loader2, Camera, Upload } from 'lucide-react';
+import { Box, MapPin, User, ArrowLeft, Package, Calendar, Plus, X, Check, Trash2, AlertTriangle, Pencil, QrCode, ArrowUp, ArrowDown, ImageIcon, Printer, Loader2, Camera, Upload, ChevronDown } from 'lucide-react';
 import { Tote, Item, ItemPhoto } from '@/types';
 import Breadcrumb from '@/components/Breadcrumb';
 import ErrorDisplay from '@/components/ErrorDisplay';
@@ -65,6 +65,10 @@ export default function ToteDetailPage() {
   const [deletingItemId, setDeletingItemId] = useState<number | null>(null);
   const [deletingItemName, setDeletingItemName] = useState('');
   const [deletingItemLoading, setDeletingItemLoading] = useState(false);
+
+  // Actions dropdown state
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const actionsRef = useRef<HTMLDivElement>(null);
 
   // QR label size state
   const [qrLabelSize, setQrLabelSize] = useState<QrLabelSize>('medium');
@@ -213,6 +217,19 @@ export default function ToteDetailPage() {
     };
     fetchMaxUploadSize();
   }, []);
+
+  // Close actions dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (actionsRef.current && !actionsRef.current.contains(e.target as Node)) {
+        setActionsOpen(false);
+      }
+    };
+    if (actionsOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [actionsOpen]);
 
   // Close modals on Escape key
   useEffect(() => {
@@ -586,23 +603,34 @@ export default function ToteDetailPage() {
             <span className="tote-detail-id">ID: {tote.id}</span>
           </div>
         </div>
-        <div className="tote-detail-actions">
+        <div className="actions-dropdown" ref={actionsRef}>
           <button
             className="btn btn-secondary"
-            onClick={openEditForm}
-            title="Edit tote"
+            onClick={() => setActionsOpen(!actionsOpen)}
+            aria-expanded={actionsOpen}
+            aria-haspopup="true"
           >
-            <Pencil size={16} />
-            <span>Edit Tote</span>
+            <ChevronDown size={18} />
+            <span>Actions</span>
           </button>
-          <button
-            className="btn btn-danger"
-            onClick={() => setShowDeleteConfirm(true)}
-            title="Delete tote"
-          >
-            <Trash2 size={16} />
-            <span>Delete Tote</span>
-          </button>
+          {actionsOpen && (
+            <div className="actions-dropdown-menu">
+              <button
+                className="actions-dropdown-item"
+                onClick={() => { setActionsOpen(false); openEditForm(); }}
+              >
+                <Pencil size={16} />
+                Edit Tote
+              </button>
+              <button
+                className="actions-dropdown-item actions-dropdown-item-danger"
+                onClick={() => { setActionsOpen(false); setShowDeleteConfirm(true); }}
+              >
+                <Trash2 size={16} />
+                Delete Tote
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
