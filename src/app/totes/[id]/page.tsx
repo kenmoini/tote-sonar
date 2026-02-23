@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
-import { Box, MapPin, User, ArrowLeft, Package, Calendar, Plus, X, Check, Trash2, AlertTriangle, Pencil, QrCode, ArrowUp, ArrowDown, ImageIcon, Printer, Loader2 } from 'lucide-react';
+import { Box, MapPin, User, ArrowLeft, Package, Calendar, Plus, X, Check, Trash2, AlertTriangle, Pencil, QrCode, ArrowUp, ArrowDown, ImageIcon, Printer, Loader2, Camera, Upload } from 'lucide-react';
 import { Tote, Item, ItemPhoto } from '@/types';
 import Breadcrumb from '@/components/Breadcrumb';
 import ErrorDisplay from '@/components/ErrorDisplay';
@@ -43,6 +43,11 @@ export default function ToteDetailPage() {
   const [itemQuantity, setItemQuantity] = useState('1');
   const [addingItem, setAddingItem] = useState(false);
   const [itemFormErrors, setItemFormErrors] = useState<{ name?: string; quantity?: string }>({});
+  const [itemPhoto, setItemPhoto] = useState<File | null>(null);
+  const [itemPhotoPreviewUrl, setItemPhotoPreviewUrl] = useState<string | null>(null);
+  const [itemPhotoError, setItemPhotoError] = useState<string | null>(null);
+  const [maxUploadSize, setMaxUploadSize] = useState<number>(5242880);
+  const addItemFileInputRef = useRef<HTMLInputElement>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Edit Tote form state
@@ -105,6 +110,12 @@ export default function ToteDetailPage() {
     setItemDescription('');
     setItemQuantity('1');
     setItemFormErrors({});
+    if (itemPhotoPreviewUrl) {
+      URL.revokeObjectURL(itemPhotoPreviewUrl);
+    }
+    setItemPhoto(null);
+    setItemPhotoPreviewUrl(null);
+    setItemPhotoError(null);
   };
 
   const openEditForm = () => {
@@ -183,6 +194,26 @@ export default function ToteDetailPage() {
     if (toteId) fetchTote();
   }, [toteId, fetchTote]);
 
+  // Fetch max upload size from settings
+  useEffect(() => {
+    const fetchMaxUploadSize = async () => {
+      try {
+        const res = await fetch('/api/settings');
+        if (res.ok) {
+          const json = await res.json();
+          const sizeStr = json.settings?.max_upload_size;
+          if (sizeStr) {
+            const size = parseInt(sizeStr, 10);
+            if (!isNaN(size) && size > 0) setMaxUploadSize(size);
+          }
+        }
+      } catch {
+        // Fall back to default
+      }
+    };
+    fetchMaxUploadSize();
+  }, []);
+
   // Close modals on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -203,6 +234,31 @@ export default function ToteDetailPage() {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [showDeleteConfirm, deleting, showDeleteItemConfirm, deletingItemLoading, showEditForm, editingTote, showAddItemForm]);
+
+  const handleAddItemFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setItemPhotoError('Invalid file type. Supported formats: JPEG, PNG, WebP');
+      return;
+    }
+
+    if (file.size > maxUploadSize) {
+      const maxSizeMB = (maxUploadSize / (1024 * 1024)).toFixed(1);
+      setItemPhotoError(`File size (${(file.size / (1024 * 1024)).toFixed(1)}MB) exceeds maximum of ${maxSizeMB}MB.`);
+      return;
+    }
+
+    if (itemPhotoPreviewUrl) {
+      URL.revokeObjectURL(itemPhotoPreviewUrl);
+    }
+    setItemPhoto(file);
+    setItemPhotoPreviewUrl(URL.createObjectURL(file));
+    setItemPhotoError(null);
+  };
 
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -249,7 +305,29 @@ export default function ToteDetailPage() {
       const json = await res.json();
       const newItem = json.data;
 
-      showToast(`Item "${newItem.name}" added successfully!`, 'success');
+      // Upload photo if one was selected
+      if (itemPhoto) {
+        const formData = new FormData();
+        formData.append('photo', itemPhoto);
+
+        const photoRes = await fetch(`/api/items/${newItem.id}/photos`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!photoRes.ok) {
+          const photoErr = await photoRes.json();
+          showToast(
+            `Item "${newItem.name}" added, but photo upload failed: ${photoErr.error || 'Unknown error'}. You can add a photo from the item page.`,
+            'error'
+          );
+        } else {
+          showToast(`Item "${newItem.name}" added with photo!`, 'success');
+        }
+      } else {
+        showToast(`Item "${newItem.name}" added successfully!`, 'success');
+      }
+
       resetItemForm();
       setShowAddItemForm(false);
       await fetchTote();
@@ -760,6 +838,71 @@ export default function ToteDetailPage() {
                     onChange={(e) => { setItemQuantity(e.target.value); setItemFormErrors(prev => ({ ...prev, quantity: undefined })); }}
                   />
                   {itemFormErrors.quantity && <span className="form-error-text">{itemFormErrors.quantity}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Photo (optional)</label>
+                  <input
+                    ref={addItemFileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleAddItemFileChange}
+                    style={{ display: 'none' }}
+                  />
+                  <div className="add-item-photo-buttons">
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => {
+                        if (addItemFileInputRef.current) {
+                          addItemFileInputRef.current.removeAttribute('capture');
+                          addItemFileInputRef.current.click();
+                        }
+                      }}
+                      disabled={addingItem}
+                    >
+                      <Upload size={16} />
+                      {itemPhoto ? 'Change Photo' : 'Upload Photo'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary add-item-camera-btn"
+                      onClick={() => {
+                        if (addItemFileInputRef.current) {
+                          addItemFileInputRef.current.setAttribute('capture', 'environment');
+                          addItemFileInputRef.current.click();
+                        }
+                      }}
+                      disabled={addingItem}
+                    >
+                      <Camera size={16} />
+                      Take Photo
+                    </button>
+                  </div>
+                  {itemPhotoError && <span className="form-error-text">{itemPhotoError}</span>}
+                  {itemPhotoPreviewUrl && (
+                    <div className="add-item-photo-preview">
+                      <img
+                        src={itemPhotoPreviewUrl}
+                        alt="Selected photo preview"
+                        className="add-item-photo-preview-img"
+                      />
+                      <button
+                        type="button"
+                        className="add-item-photo-remove"
+                        onClick={() => {
+                          if (itemPhotoPreviewUrl) URL.revokeObjectURL(itemPhotoPreviewUrl);
+                          setItemPhoto(null);
+                          setItemPhotoPreviewUrl(null);
+                          setItemPhotoError(null);
+                        }}
+                        aria-label="Remove selected photo"
+                        disabled={addingItem}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-actions">

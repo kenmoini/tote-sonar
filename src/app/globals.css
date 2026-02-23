@@ -2794,6 +2794,68 @@ textarea:focus-visible,
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
+/* Add Item Modal Photo Upload */
+
+.add-item-photo-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.add-item-camera-btn {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .add-item-camera-btn {
+    display: inline-flex;
+  }
+}
+
+.add-item-photo-preview {
+  position: relative;
+  display: inline-block;
+  margin-top: 0.5rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  width: 120px;
+  height: 120px;
+}
+
+.add-item-photo-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.add-item-photo-remove {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.add-item-photo-remove:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.add-item-photo-remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Lightbox */
 .photo-lightbox {
   position: fixed;
