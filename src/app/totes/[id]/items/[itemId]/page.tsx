@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
-import { Package, ArrowLeft, Hash, Calendar, FileText, Camera, Upload, X, Trash2, ImageIcon, AlertTriangle, Check, Tag, Plus, Pencil, ArrowRightLeft, Clock, MapPin, Copy } from 'lucide-react';
+import { Package, ArrowLeft, Hash, Calendar, FileText, Camera, Upload, X, Trash2, ImageIcon, AlertTriangle, Check, Tag, Plus, Pencil, ArrowRightLeft, Clock, MapPin, Copy, ChevronDown } from 'lucide-react';
 import { Item, ItemPhoto, ItemMetadata, MovementHistory, Tote } from '@/types';
 import Breadcrumb from '@/components/Breadcrumb';
 import ErrorDisplay from '@/components/ErrorDisplay';
@@ -61,6 +61,8 @@ export default function ItemDetailPage() {
   const [maxUploadSize, setMaxUploadSize] = useState<number>(5242880); // Default 5MB
   const [isDragging, setIsDragging] = useState(false);
   const dragCounter = useRef(0);
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const actionsRef = useRef<HTMLDivElement>(null);
   const [editingMetadataId, setEditingMetadataId] = useState<number | null>(null);
   const [editMetaKey, setEditMetaKey] = useState('');
   const [editMetaValue, setEditMetaValue] = useState('');
@@ -119,6 +121,19 @@ export default function ItemDetailPage() {
       return () => clearTimeout(timer);
     }
   }, [toast]);
+
+  // Close actions dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (actionsRef.current && !actionsRef.current.contains(e.target as Node)) {
+        setActionsOpen(false);
+      }
+    };
+    if (actionsOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [actionsOpen]);
 
   // Close modals on Escape key
   useEffect(() => {
@@ -1100,40 +1115,49 @@ export default function ItemDetailPage() {
             </span>
           </div>
         </div>
-        <div className="tote-detail-actions">
+        <div className="actions-dropdown" ref={actionsRef}>
           <button
             className="btn btn-secondary"
-            onClick={openEditModal}
-            title="Edit item"
+            onClick={() => setActionsOpen(!actionsOpen)}
+            aria-expanded={actionsOpen}
+            aria-haspopup="true"
           >
-            <Pencil size={16} />
-            <span>Edit Item</span>
+            <ChevronDown size={18} />
+            <span>Actions</span>
           </button>
-          <button
-            className="btn btn-secondary"
-            onClick={openMoveModal}
-            title="Move item to another tote"
-          >
-            <ArrowRightLeft size={16} />
-            <span>Move</span>
-          </button>
-          <button
-            className="btn btn-secondary"
-            onClick={openCopyModal}
-            disabled={duplicatingItem}
-            title="Copy item to same or different tote"
-          >
-            <Copy size={16} />
-            <span>{duplicatingItem ? 'Copying...' : 'Copy'}</span>
-          </button>
-          <button
-            className="btn btn-danger"
-            onClick={() => setShowDeleteConfirm(true)}
-            title="Delete item"
-          >
-            <Trash2 size={16} />
-            <span>Delete Item</span>
-          </button>
+          {actionsOpen && (
+            <div className="actions-dropdown-menu">
+              <button
+                className="actions-dropdown-item"
+                onClick={() => { setActionsOpen(false); openEditModal(); }}
+              >
+                <Pencil size={16} />
+                Edit Item
+              </button>
+              <button
+                className="actions-dropdown-item"
+                onClick={() => { setActionsOpen(false); openMoveModal(); }}
+              >
+                <ArrowRightLeft size={16} />
+                Move
+              </button>
+              <button
+                className="actions-dropdown-item"
+                onClick={() => { setActionsOpen(false); openCopyModal(); }}
+                disabled={duplicatingItem}
+              >
+                <Copy size={16} />
+                {duplicatingItem ? 'Copying...' : 'Copy'}
+              </button>
+              <button
+                className="actions-dropdown-item actions-dropdown-item-danger"
+                onClick={() => { setActionsOpen(false); setShowDeleteConfirm(true); }}
+              >
+                <Trash2 size={16} />
+                Delete Item
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
