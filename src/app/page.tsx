@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Box, Package, Plus, ArrowRight, Clock } from 'lucide-react';
+import { Box, Package, Plus, ArrowRight, Clock, ImageIcon } from 'lucide-react';
 import ErrorDisplay from '@/components/ErrorDisplay';
 
 interface DashboardData {
@@ -16,6 +16,7 @@ interface DashboardData {
     quantity: number;
     created_at: string;
     tote_name: string;
+    first_photo_id: number | null;
   }>;
 }
 
@@ -136,6 +137,19 @@ export default function DashboardPage() {
                 className="item-row"
                 style={{ textDecoration: 'none', color: 'inherit' }}
               >
+                <div className="item-row-thumbnail">
+                  {item.first_photo_id ? (
+                    <img
+                      src={`/api/photos/${item.first_photo_id}/thumbnail`}
+                      alt={`${item.name} thumbnail`}
+                      className="item-thumbnail-img"
+                    />
+                  ) : (
+                    <div className="item-thumbnail-placeholder">
+                      <ImageIcon size={20} />
+                    </div>
+                  )}
+                </div>
                 <div className="item-row-info">
                   <span className="item-name">{item.name}</span>
                   <span className="item-desc">

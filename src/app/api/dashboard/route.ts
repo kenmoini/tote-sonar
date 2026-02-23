@@ -13,14 +13,15 @@ export async function GET() {
     // Get total item count
     const itemCountRow = db.prepare('SELECT COUNT(*) as count FROM items').get() as { count: number };
 
-    // Get recently added items (last 10) with their tote names
+    // Get recently added items (last 10) with their tote names and first photo ID
     const recentItems = db.prepare(`
-      SELECT i.*, t.name as tote_name
+      SELECT i.*, t.name as tote_name,
+        (SELECT ip.id FROM item_photos ip WHERE ip.item_id = i.id ORDER BY ip.created_at ASC LIMIT 1) as first_photo_id
       FROM items i
       JOIN totes t ON t.id = i.tote_id
       ORDER BY i.created_at DESC
       LIMIT 10
-    `).all() as (Item & { tote_name: string })[];
+    `).all() as (Item & { tote_name: string; first_photo_id: number | null })[];
 
     const data: DashboardData = {
       total_totes: toteCountRow.count,
