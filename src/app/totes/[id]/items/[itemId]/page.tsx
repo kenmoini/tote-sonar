@@ -28,6 +28,8 @@ export default function ItemDetailPage() {
   const [viewingPhoto, setViewingPhoto] = useState<ItemPhoto | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingItem, setDeletingItem] = useState(false);
+  const [photoToDelete, setPhotoToDelete] = useState<ItemPhoto | null>(null);
+  const [deletingPhoto, setDeletingPhoto] = useState(false);
   const [showEditItem, setShowEditItem] = useState(false);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
@@ -57,6 +59,8 @@ export default function ItemDetailPage() {
   const [copyTotes, setCopyTotes] = useState<Tote[]>([]);
   const [loadingCopyTotes, setLoadingCopyTotes] = useState(false);
   const [maxUploadSize, setMaxUploadSize] = useState<number>(5242880); // Default 5MB
+  const [isDragging, setIsDragging] = useState(false);
+  const dragCounter = useRef(0);
   const [editingMetadataId, setEditingMetadataId] = useState<number | null>(null);
   const [editMetaKey, setEditMetaKey] = useState('');
   const [editMetaValue, setEditMetaValue] = useState('');
@@ -120,6 +124,7 @@ export default function ItemDetailPage() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        if (photoToDelete && !deletingPhoto) setPhotoToDelete(null);
         if (showDeleteConfirm && !deletingItem) setShowDeleteConfirm(false);
         if (showEditItem && !editingItem) setShowEditItem(false);
         if (showMoveModal && !movingItem) setShowMoveModal(false);
@@ -130,7 +135,7 @@ export default function ItemDetailPage() {
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [showDeleteConfirm, deletingItem, showEditItem, editingItem, showMoveModal, movingItem, showCopyModal, duplicatingItem, showAddMetadata, viewingPhoto]);
+  }, [photoToDelete, deletingPhoto, showDeleteConfirm, deletingItem, showEditItem, editingItem, showMoveModal, movingItem, showCopyModal, duplicatingItem, showAddMetadata, viewingPhoto]);
 
   // Fetch metadata keys for autocomplete when add form opens
   const fetchMetadataKeys = useCallback(async () => {
@@ -199,21 +204,13 @@ export default function ItemDetailPage() {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Reset input so same file can be re-selected
-    e.target.value = '';
-
-    // Client-side validation
+  const uploadFile = useCallback(async (file: File) => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
       setUploadError('Invalid file type. Supported formats: JPEG, PNG, WebP');
       return;
     }
 
-    // Client-side file size validation
     if (file.size > maxUploadSize) {
       const maxSizeMB = (maxUploadSize / (1024 * 1024)).toFixed(1);
       setUploadError(`File size (${(file.size / (1024 * 1024)).toFixed(1)}MB) exceeds maximum of ${maxSizeMB}MB. You can adjust this limit in Settings.`);
@@ -240,20 +237,68 @@ export default function ItemDetailPage() {
       }
 
       setToast({ message: 'Photo uploaded successfully!', type: 'success' });
-      // Refresh item data to show new photo
       await fetchItem();
-    } catch (err) {
+    } catch {
       setUploadError('Failed to upload photo. Please try again.');
     } finally {
       setUploading(false);
     }
+  }, [itemId, maxUploadSize, fetchItem]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    await uploadFile(file);
   };
 
-  const handleDeletePhoto = async (photoId: number) => {
-    if (!confirm('Delete this photo?')) return;
+  // Drag-and-drop handlers for photo upload
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current++;
+    if (e.dataTransfer.types.includes('Files')) {
+      setIsDragging(true);
+    }
+  }, []);
 
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current--;
+    if (dragCounter.current === 0) {
+      setIsDragging(false);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current = 0;
+    setIsDragging(false);
+
+    const photos = item?.photos || [];
+    if (photos.length >= 3) {
+      setUploadError('Photo limit reached (3 max). Delete a photo first.');
+      return;
+    }
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      uploadFile(file);
+    }
+  }, [uploadFile, item]);
+
+  const confirmDeletePhoto = async () => {
+    if (!photoToDelete) return;
+    setDeletingPhoto(true);
     try {
-      const res = await fetch(`/api/photos/${photoId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/photos/${photoToDelete.id}`, { method: 'DELETE' });
       if (!res.ok) {
         const json = await res.json();
         setToast({ message: json.error || 'Failed to delete photo', type: 'error' });
@@ -261,9 +306,12 @@ export default function ItemDetailPage() {
       }
       setToast({ message: 'Photo deleted', type: 'success' });
       setViewingPhoto(null);
+      setPhotoToDelete(null);
       await fetchItem();
     } catch {
       setToast({ message: 'Failed to delete photo', type: 'error' });
+    } finally {
+      setDeletingPhoto(false);
     }
   };
 
@@ -609,7 +657,33 @@ export default function ItemDetailPage() {
   ];
 
   return (
-    <main className="page-container">
+    <main
+      className="page-container"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {/* Drag-and-drop overlay */}
+      {isDragging && (
+        <div className="drag-overlay">
+          <div className="drag-overlay-content">
+            <Upload size={48} />
+            {canUpload ? (
+              <>
+                <p>Drop photo to upload</p>
+                <span>JPEG, PNG, or WebP</span>
+              </>
+            ) : (
+              <>
+                <p>Photo limit reached</p>
+                <span>Maximum 3 photos per item</span>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Toast */}
       {toast && (
         <div className={`toast toast-${toast.type}`} role="alert">
@@ -666,6 +740,54 @@ export default function ItemDetailPage() {
                   disabled={deletingItem}
                 >
                   {deletingItem ? 'Deleting...' : 'Delete Item'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Photo Confirmation Dialog */}
+      {photoToDelete && (
+        <div className="modal-overlay" onClick={() => { if (!deletingPhoto) setPhotoToDelete(null); }}>
+          <div className="modal modal-confirm" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header modal-header-danger">
+              <div className="modal-header-icon-title">
+                <div className="confirm-icon-danger">
+                  <AlertTriangle size={24} />
+                </div>
+                <h2>Delete Photo</h2>
+              </div>
+              <button
+                className="modal-close"
+                onClick={() => { if (!deletingPhoto) setPhotoToDelete(null); }}
+                aria-label="Close"
+                disabled={deletingPhoto}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="confirm-body modal-body">
+              <p>Are you sure you want to delete this photo?</p>
+              <p className="confirm-text-muted">This action cannot be undone.</p>
+            </div>
+            <div className="modal-footer">
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setPhotoToDelete(null)}
+                  disabled={deletingPhoto}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={confirmDeletePhoto}
+                  disabled={deletingPhoto}
+                >
+                  {deletingPhoto ? 'Deleting...' : 'Delete Photo'}
                 </button>
               </div>
             </div>
@@ -935,7 +1057,7 @@ export default function ItemDetailPage() {
               <div className="photo-lightbox-actions">
                 <button
                   className="btn btn-danger btn-sm"
-                  onClick={() => handleDeletePhoto(viewingPhoto.id)}
+                  onClick={() => setPhotoToDelete(viewingPhoto)}
                   title="Delete photo"
                   aria-label="Delete photo"
                 >
@@ -1103,7 +1225,7 @@ export default function ItemDetailPage() {
                 <div className="photo-thumbnail-actions">
                   <button
                     className="photo-delete-btn"
-                    onClick={() => handleDeletePhoto(photo.id)}
+                    onClick={() => setPhotoToDelete(photo)}
                     title="Delete photo"
                     aria-label="Delete photo"
                   >
@@ -1135,7 +1257,7 @@ export default function ItemDetailPage() {
           >
             <ImageIcon size={48} />
             <p>No photos yet</p>
-            <span className="photo-empty-hint">Click to upload a photo</span>
+            <span className="photo-empty-hint">Click or drag &amp; drop to upload a photo</span>
           </div>
         )}
       </div>

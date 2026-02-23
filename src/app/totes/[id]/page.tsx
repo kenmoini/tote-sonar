@@ -480,10 +480,7 @@ export default function ToteDetailPage() {
                 <X size={20} />
               </button>
             </div>
-            <div className="confirm-body">
-              <p>
-                Are you sure you want to delete <strong>&ldquo;{tote.name}&rdquo;</strong>?
-              </p>
+            <div className="modal-body confirm-body">
               {tote.item_count > 0 && (
                 <div className="confirm-warning">
                   <AlertTriangle size={16} />
@@ -492,25 +489,30 @@ export default function ToteDetailPage() {
                   </span>
                 </div>
               )}
+              <p>
+                Are you sure you want to delete <strong>&ldquo;{tote.name}&rdquo;</strong>?
+              </p>
               <p className="confirm-text-muted">This action cannot be undone.</p>
             </div>
-            <div className="form-actions">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setShowDeleteConfirm(false)}
-                disabled={deleting}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-danger"
-                onClick={handleDeleteTote}
-                disabled={deleting}
-              >
-                {deleting ? 'Deleting...' : 'Delete Tote'}
-              </button>
+            <div className='modal-footer'>
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={deleting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleDeleteTote}
+                  disabled={deleting}
+                >
+                  {deleting ? 'Deleting...' : 'Delete Tote'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -536,29 +538,31 @@ export default function ToteDetailPage() {
                 <X size={20} />
               </button>
             </div>
-            <div className="confirm-body">
+            <div className="modal-body confirm-body">
               <p>
                 Are you sure you want to delete <strong>&ldquo;{deletingItemName}&rdquo;</strong>?
               </p>
               <p className="confirm-text-muted">This will also remove all photos and metadata associated with this item. This action cannot be undone.</p>
             </div>
-            <div className="form-actions">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => { setShowDeleteItemConfirm(false); setDeletingItemId(null); setDeletingItemName(''); }}
-                disabled={deletingItemLoading}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-danger"
-                onClick={handleDeleteItem}
-                disabled={deletingItemLoading}
-              >
-                {deletingItemLoading ? 'Deleting...' : 'Delete Item'}
-              </button>
+            <div className='modal-footer'>
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => { setShowDeleteItemConfirm(false); setDeletingItemId(null); setDeletingItemName(''); }}
+                  disabled={deletingItemLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleDeleteItem}
+                  disabled={deletingItemLoading}
+                >
+                  {deletingItemLoading ? 'Deleting...' : 'Delete Item'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
