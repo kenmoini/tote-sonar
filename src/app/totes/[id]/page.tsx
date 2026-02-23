@@ -644,14 +644,14 @@ export default function ToteDetailPage() {
             <span className="meta-card-value">{tote.location}</span>
           </div>
         </div>
-        <div className="tote-detail-meta-card">
-          <div className="meta-card-icon"><Package size={18} /></div>
-          <div>
-            <span className="meta-card-label">Items</span>
-            <span className="meta-card-value">{tote.item_count}</span>
-          </div>
-        </div>
         <div className={`item-detail-extra ${showMoreDetails ? 'item-detail-extra-open' : ''}`}>
+          <div className="tote-detail-meta-card">
+            <div className="meta-card-icon"><Package size={18} /></div>
+            <div>
+              <span className="meta-card-label">Items</span>
+              <span className="meta-card-value">{tote.item_count}</span>
+            </div>
+          </div>
           {tote.owner && (
             <div className="tote-detail-meta-card">
               <div className="meta-card-icon"><User size={18} /></div>
