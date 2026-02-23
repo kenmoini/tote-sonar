@@ -80,7 +80,9 @@ export async function POST(
     fs.writeFileSync(originalPath, buffer);
 
     // Generate thumbnail with sharp
+    // .rotate() with no args auto-orients based on EXIF data (fixes mobile photo rotation)
     await sharp(buffer)
+      .rotate()
       .resize(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, { fit: 'cover', position: 'center' })
       .toFile(thumbnailPath);
 
