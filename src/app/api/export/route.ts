@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDb, getUploadDir, getThumbnailDir } from '@/lib/db';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { Archiver } = require('kemo-archiver');
+const { ZipArchive } = require('kemo-archiver');
 import path from 'path';
 import fs from 'fs';
 
@@ -35,7 +35,7 @@ export async function GET() {
     };
 
     // Create a ZIP archive using archiver
-    const archive = new Archiver('zip', { zlib: { level: 6 } });
+    const archive = new ZipArchive({ zlib: { level: 6 } });
 
     // Collect the archive into a buffer
     const chunks: Buffer[] = [];
