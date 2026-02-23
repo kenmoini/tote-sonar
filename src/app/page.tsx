@@ -109,7 +109,7 @@ export default function DashboardPage() {
           </div>
         </Link>
 
-        <div className="metric-card">
+        <Link href="/search" className="metric-card metric-card-clickable" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="metric-card-icon metric-card-icon-items">
             <Package size={24} />
           </div>
@@ -119,7 +119,7 @@ export default function DashboardPage() {
               {data?.total_items ?? 0}
             </span>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Recent Items */}
