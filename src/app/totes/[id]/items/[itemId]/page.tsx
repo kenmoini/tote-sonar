@@ -643,29 +643,31 @@ export default function ItemDetailPage() {
                 <X size={20} />
               </button>
             </div>
-            <div className="confirm-body">
+            <div className="confirm-body modal-body">
               <p>
                 Are you sure you want to delete <strong>&ldquo;{item.name}&rdquo;</strong>?
               </p>
               <p className="confirm-text-muted">This will also remove all photos and metadata associated with this item. This action cannot be undone.</p>
             </div>
-            <div className="form-actions">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setShowDeleteConfirm(false)}
-                disabled={deletingItem}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-danger"
-                onClick={handleDeleteItem}
-                disabled={deletingItem}
-              >
-                {deletingItem ? 'Deleting...' : 'Delete Item'}
-              </button>
+            <div className="modal-footer">
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={deletingItem}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleDeleteItem}
+                  disabled={deletingItem}
+                >
+                  {deletingItem ? 'Deleting...' : 'Delete Item'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -774,7 +776,7 @@ export default function ItemDetailPage() {
                 <X size={20} />
               </button>
             </div>
-            <div className="confirm-body">
+            <div className="modal-body">
               <p>
                 Move <strong>&ldquo;{item.name}&rdquo;</strong> from <strong>{item.tote_name}</strong> to:
               </p>
@@ -815,23 +817,25 @@ export default function ItemDetailPage() {
                 <div className="form-error-text" style={{ marginTop: '0.5rem' }}>{moveError}</div>
               )}
             </div>
-            <div className="form-actions">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setShowMoveModal(false)}
-                disabled={movingItem}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleMoveItem}
-                disabled={movingItem || !selectedToteId || loadingTotes}
-              >
-                {movingItem ? 'Moving...' : 'Move Item'}
-              </button>
+            <div className="modal-footer">
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowMoveModal(false)}
+                  disabled={movingItem}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleMoveItem}
+                  disabled={movingItem || !selectedToteId || loadingTotes}
+                >
+                  {movingItem ? 'Moving...' : 'Move Item'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -857,7 +861,7 @@ export default function ItemDetailPage() {
                 <X size={20} />
               </button>
             </div>
-            <div className="confirm-body">
+            <div className="modal-body">
               <p>
                 Copy <strong>&ldquo;{item.name}&rdquo;</strong> to:
               </p>
@@ -898,23 +902,25 @@ export default function ItemDetailPage() {
                 <div className="form-error-text" style={{ marginTop: '0.5rem' }}>{copyError}</div>
               )}
             </div>
-            <div className="form-actions">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setShowCopyModal(false)}
-                disabled={duplicatingItem}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleCopyItem}
-                disabled={duplicatingItem || !copyTargetToteId || loadingCopyTotes}
-              >
-                {duplicatingItem ? 'Copying...' : 'Copy Item'}
-              </button>
+            <div className='modal-footer'>
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowCopyModal(false)}
+                  disabled={duplicatingItem}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleCopyItem}
+                  disabled={duplicatingItem || !copyTargetToteId || loadingCopyTotes}
+                >
+                  {duplicatingItem ? 'Copying...' : 'Copy Item'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1047,7 +1053,7 @@ export default function ItemDetailPage() {
       <div className="tote-detail-section">
         <div className="section-header">
           <h2>
-            <Camera size={20} />
+            <Camera style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} size={20} />
             Photos ({photos.length}/3)
           </h2>
           {canUpload && (
@@ -1138,7 +1144,7 @@ export default function ItemDetailPage() {
       <div className="tote-detail-section">
         <div className="section-header">
           <h2>
-            <Tag size={20} />
+            <Tag style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} size={20} />
             Metadata Tags
           </h2>
           {!showAddMetadata && (
@@ -1373,7 +1379,7 @@ export default function ItemDetailPage() {
       <div className="tote-detail-section">
         <div className="section-header">
           <h2>
-            <Clock size={20} />
+            <Clock style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} size={20} />
             Movement History
           </h2>
         </div>

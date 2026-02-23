@@ -504,9 +504,9 @@ textarea:focus-visible,
   }
 }
 
-.confirm-body {
+/* .confirm-body {
   padding: 1rem 0;
-}
+} */
 
 .confirm-body p {
   font-size: 0.9375rem;
