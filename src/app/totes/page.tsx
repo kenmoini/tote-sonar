@@ -330,7 +330,7 @@ function TotesPageContent() {
       <div className="page-header">
         <div>
           <h1>Totes</h1>
-          <p>Manage your totes and their contents.</p>
+          <p>Manage your totes.</p>
         </div>
         <div className="page-header-actions">
           {totes.length > 0 && (
