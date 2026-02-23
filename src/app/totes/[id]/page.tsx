@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
-import { Box, MapPin, User, ArrowLeft, Package, Calendar, Plus, X, Check, Trash2, AlertTriangle, Pencil, QrCode, ArrowUp, ArrowDown, ImageIcon, Printer, Loader2, Camera, Upload, ChevronDown } from 'lucide-react';
+import { Box, MapPin, User, ArrowLeft, Package, Calendar, Plus, X, Check, Trash2, AlertTriangle, Pencil, QrCode, ArrowUp, ArrowDown, ImageIcon, Printer, Loader2, Camera, Upload, ChevronDown, ChevronUp } from 'lucide-react';
 import { Tote, Item, ItemPhoto } from '@/types';
 import Breadcrumb from '@/components/Breadcrumb';
 import ErrorDisplay from '@/components/ErrorDisplay';
@@ -69,6 +69,7 @@ export default function ToteDetailPage() {
   // Actions dropdown state
   const [actionsOpen, setActionsOpen] = useState(false);
   const actionsRef = useRef<HTMLDivElement>(null);
+  const [showMoreDetails, setShowMoreDetails] = useState(false);
 
   // QR label size state
   const [qrLabelSize, setQrLabelSize] = useState<QrLabelSize>('medium');
@@ -643,15 +644,6 @@ export default function ToteDetailPage() {
             <span className="meta-card-value">{tote.location}</span>
           </div>
         </div>
-        {tote.owner && (
-          <div className="tote-detail-meta-card">
-            <div className="meta-card-icon"><User size={18} /></div>
-            <div>
-              <span className="meta-card-label">Owner</span>
-              <span className="meta-card-value">{tote.owner}</span>
-            </div>
-          </div>
-        )}
         <div className="tote-detail-meta-card">
           <div className="meta-card-icon"><Package size={18} /></div>
           <div>
@@ -659,40 +651,58 @@ export default function ToteDetailPage() {
             <span className="meta-card-value">{tote.item_count}</span>
           </div>
         </div>
-        <div className="tote-detail-meta-card">
-          <div className="meta-card-icon"><Calendar size={18} /></div>
-          <div>
-            <span className="meta-card-label">Created</span>
-            <span className="meta-card-value">{formatDate(tote.created_at)}</span>
-          </div>
-        </div>
-        <div className="tote-detail-meta-card">
-          <div className="meta-card-icon"><Calendar size={18} /></div>
-          <div>
-            <span className="meta-card-label">Updated</span>
-            <span className="meta-card-value">{formatDate(tote.updated_at)}</span>
-          </div>
-        </div>
-        {tote.size && (
+        <div className={`item-detail-extra ${showMoreDetails ? 'item-detail-extra-open' : ''}`}>
+          {tote.owner && (
+            <div className="tote-detail-meta-card">
+              <div className="meta-card-icon"><User size={18} /></div>
+              <div>
+                <span className="meta-card-label">Owner</span>
+                <span className="meta-card-value">{tote.owner}</span>
+              </div>
+            </div>
+          )}
           <div className="tote-detail-meta-card">
-            <div className="meta-card-icon"><Box size={18} /></div>
+            <div className="meta-card-icon"><Calendar size={18} /></div>
             <div>
-              <span className="meta-card-label">Size</span>
-              <span className="meta-card-value">{tote.size}</span>
+              <span className="meta-card-label">Created</span>
+              <span className="meta-card-value">{formatDate(tote.created_at)}</span>
             </div>
           </div>
-        )}
-        {tote.color && (
           <div className="tote-detail-meta-card">
-            <div className="meta-card-icon">
-              <div className="color-swatch" style={{ background: tote.color.toLowerCase() }} />
-            </div>
+            <div className="meta-card-icon"><Calendar size={18} /></div>
             <div>
-              <span className="meta-card-label">Color</span>
-              <span className="meta-card-value">{tote.color}</span>
+              <span className="meta-card-label">Updated</span>
+              <span className="meta-card-value">{formatDate(tote.updated_at)}</span>
             </div>
           </div>
-        )}
+          {tote.size && (
+            <div className="tote-detail-meta-card">
+              <div className="meta-card-icon"><Box size={18} /></div>
+              <div>
+                <span className="meta-card-label">Size</span>
+                <span className="meta-card-value">{tote.size}</span>
+              </div>
+            </div>
+          )}
+          {tote.color && (
+            <div className="tote-detail-meta-card">
+              <div className="meta-card-icon">
+                <div className="color-swatch" style={{ background: tote.color.toLowerCase() }} />
+              </div>
+              <div>
+                <span className="meta-card-label">Color</span>
+                <span className="meta-card-value">{tote.color}</span>
+              </div>
+            </div>
+          )}
+        </div>
+        <button
+          className="item-detail-more-toggle"
+          onClick={() => setShowMoreDetails(!showMoreDetails)}
+        >
+          {showMoreDetails ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          {showMoreDetails ? 'Show less' : 'Show more details'}
+        </button>
       </div>
 
       {/* Edit Tote Modal */}
