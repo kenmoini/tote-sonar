@@ -97,7 +97,7 @@ export default function DashboardPage() {
 
       {/* Metric Cards */}
       <div className="dashboard-metrics">
-        <div className="metric-card">
+        <Link href="/totes" className="metric-card metric-card-clickable" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="metric-card-icon metric-card-icon-totes">
             <Box size={24} />
           </div>
@@ -107,7 +107,7 @@ export default function DashboardPage() {
               {data?.total_totes ?? 0}
             </span>
           </div>
-        </div>
+        </Link>
 
         <div className="metric-card">
           <div className="metric-card-icon metric-card-icon-items">

@@ -1840,6 +1840,10 @@ textarea:focus-visible,
   box-shadow: 0 2px 8px rgba(79, 70, 229, 0.08);
 }
 
+.metric-card-clickable {
+  cursor: pointer;
+}
+
 .metric-card-icon {
   display: flex;
   align-items: center;
