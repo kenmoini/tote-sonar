@@ -661,7 +661,7 @@ textarea:focus-visible,
 .modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 90;
+  z-index: 1100;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
