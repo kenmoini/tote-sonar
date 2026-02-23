@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
-import { Package, ArrowLeft, Hash, Calendar, FileText, Camera, Upload, X, Trash2, ImageIcon, AlertTriangle, Check, Tag, Plus, Pencil, ArrowRightLeft, Clock, MapPin, Copy, ChevronDown } from 'lucide-react';
+import { Package, ArrowLeft, Hash, Calendar, FileText, Camera, Upload, X, Trash2, ImageIcon, AlertTriangle, Check, Tag, Plus, Pencil, ArrowRightLeft, Clock, MapPin, Copy, ChevronDown, ChevronUp } from 'lucide-react';
 import { Item, ItemPhoto, ItemMetadata, MovementHistory, Tote } from '@/types';
 import Breadcrumb from '@/components/Breadcrumb';
 import ErrorDisplay from '@/components/ErrorDisplay';
@@ -63,6 +63,7 @@ export default function ItemDetailPage() {
   const dragCounter = useRef(0);
   const [actionsOpen, setActionsOpen] = useState(false);
   const actionsRef = useRef<HTMLDivElement>(null);
+  const [showMoreDetails, setShowMoreDetails] = useState(false);
   const [editingMetadataId, setEditingMetadataId] = useState<number | null>(null);
   const [editMetaKey, setEditMetaKey] = useState('');
   const [editMetaValue, setEditMetaValue] = useState('');
@@ -1170,29 +1171,38 @@ export default function ItemDetailPage() {
             <span className="meta-card-value">{item.quantity}</span>
           </div>
         </div>
-        <div className="tote-detail-meta-card">
-          <div className="meta-card-icon"><Calendar size={18} /></div>
-          <div>
-            <span className="meta-card-label">Added</span>
-            <span className="meta-card-value">{formatDate(item.created_at)}</span>
-          </div>
-        </div>
-        <div className="tote-detail-meta-card">
-          <div className="meta-card-icon"><Calendar size={18} /></div>
-          <div>
-            <span className="meta-card-label">Updated</span>
-            <span className="meta-card-value">{formatDate(item.updated_at)}</span>
-          </div>
-        </div>
-        {item.description && (
-          <div className="tote-detail-meta-card item-desc-card">
-            <div className="meta-card-icon"><FileText size={18} /></div>
+        <div className={`item-detail-extra ${showMoreDetails ? 'item-detail-extra-open' : ''}`}>
+          <div className="tote-detail-meta-card">
+            <div className="meta-card-icon"><Calendar size={18} /></div>
             <div>
-              <span className="meta-card-label">Description</span>
-              <span className="meta-card-value">{item.description}</span>
+              <span className="meta-card-label">Added</span>
+              <span className="meta-card-value">{formatDate(item.created_at)}</span>
             </div>
           </div>
-        )}
+          <div className="tote-detail-meta-card">
+            <div className="meta-card-icon"><Calendar size={18} /></div>
+            <div>
+              <span className="meta-card-label">Updated</span>
+              <span className="meta-card-value">{formatDate(item.updated_at)}</span>
+            </div>
+          </div>
+          {item.description && (
+            <div className="tote-detail-meta-card item-desc-card">
+              <div className="meta-card-icon"><FileText size={18} /></div>
+              <div>
+                <span className="meta-card-label">Description</span>
+                <span className="meta-card-value">{item.description}</span>
+              </div>
+            </div>
+          )}
+        </div>
+        <button
+          className="item-detail-more-toggle"
+          onClick={() => setShowMoreDetails(!showMoreDetails)}
+        >
+          {showMoreDetails ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          {showMoreDetails ? 'Show less' : 'Show more details'}
+        </button>
       </div>
 
       {/* Photos section */}
