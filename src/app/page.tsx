@@ -155,19 +155,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Quick Navigation */}
-      <div className="dashboard-quick-nav">
-        <Link href="/totes" className="quick-nav-card">
-          <Box size={20} />
-          <span>View All Totes</span>
-          <ArrowRight size={16} />
-        </Link>
-        <Link href="/search" className="quick-nav-card">
-          <Package size={20} />
-          <span>Search Items</span>
-          <ArrowRight size={16} />
-        </Link>
-      </div>
     </div>
   );
 }

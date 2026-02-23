@@ -405,6 +405,8 @@ function TotesPageContent() {
             </div>
             <div className="modal-body">
               <p>This will permanently delete the selected tote{selectedTotes.size !== 1 ? 's' : ''} and all of their items, photos, metadata, and movement history. This action cannot be undone.</p>
+            </div>
+            <div className='modal-footer'>
               <div className="form-actions">
                 <button
                   type="button"
