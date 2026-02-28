@@ -4,235 +4,322 @@
 
 ## Test Framework
 
-**Runner:**
-- Not detected - No testing framework configured
+**Status:** Not detected
 
-**Assertion Library:**
-- Not applicable - No tests found
+**Current State:**
+- No testing framework installed (jest, vitest, mocha, etc.)
+- No test files found in codebase (`*.test.ts`, `*.spec.ts`)
+- No test configuration files present (`jest.config.js`, `vitest.config.ts`, etc.)
+- `package.json` contains no test-related dependencies
 
-**Run Commands:**
-- No test commands available in `package.json`
-- Testing infrastructure is not set up
+**Development Dependencies:**
+- TypeScript (`^5.0.0`)
+- @types packages for type checking only
+- No testing libraries
 
-## Test File Organization
+## Manual Testing Approach
 
-**Location:**
-- No test files found in codebase (`src/**/*.test.*` and `src/**/*.spec.*` searches return no results)
+**What's Currently Tested:**
+- API endpoints accessed via development server
+- Components rendered in browser via Next.js dev server
+- Database functionality through application usage
 
-**Naming:**
-- Not applicable - No convention established
+**How to Test Manually:**
+```bash
+npm run dev          # Start Next.js development server
+# Test endpoints via:
+# - Browser navigation to pages (http://localhost:3000)
+# - curl/Postman for API endpoints (http://localhost:3000/api/*)
+# - Browser console for client-side errors
+```
 
-**Structure:**
-- Not applicable - No tests implemented
+## What Should Be Tested
 
-## Test Coverage
+### API Routes (High Priority)
 
-**Requirements:**
-- Not enforced - No testing framework configured
+**Location:** `src/app/api/**/*.ts`
 
-**Current Status:**
-- 0% coverage - No tests exist
+**Critical Endpoints to Test:**
+- `GET /api/totes` - List totes with sorting
+- `POST /api/totes` - Create tote with validation
+- `GET /api/items/[id]` - Get item details with related data
+- `POST /api/items/[id]/photos` - Upload photos with validation
+- `GET /api/search` - Search items with filters
+- `POST /api/export` - Export database
+- `POST /api/import` - Import database
 
-## Testing Strategy Observed in Code
+**What to Test:**
+- Happy path: Valid input returns correct response
+- Validation: Invalid input returns 400 with error message
+- Auth: Items/totes from different totes are isolated
+- Edge cases: Empty arrays, null values, boundary conditions
+- Error handling: Server errors return 500
 
-### Manual Testing Patterns
+### Component Rendering (Medium Priority)
 
-While formal tests are not implemented, the codebase shows practices compatible with eventual testing:
+**Location:** `src/components/**/*.tsx` and `src/app/**/*.tsx`
 
-**Type Safety:**
-- TypeScript strict mode enabled (`"strict": true` in `tsconfig.json`)
-- All function parameters have type annotations
-- Interfaces defined for all data structures (`src/types/index.ts`)
-- This provides compile-time validation and catches many errors before runtime
+**Critical Components:**
+- `Navigation.tsx` - Links, search, mobile menu toggle
+- `ErrorDisplay.tsx` - Different error types display correct icons/messages
+- `Breadcrumb.tsx` - Link generation and styling
+- `TotesPage` - List rendering, sorting, bulk selection, creation
+- `ToteDetailPage` - Item management, photos, editing
 
-**Error Handling:**
-- Comprehensive try-catch blocks in all async operations
-- Validation before database mutations (see `src/app/api/totes/route.ts`)
-- Form validation on client side before submission (see `src/app/totes/page.tsx`)
-- HTTP status codes correctly set for different error conditions (400, 404, 500)
+**What to Test:**
+- Component renders with given props
+- Event handlers fire correctly (button clicks, form submissions)
+- Conditional rendering (loading, error, empty states)
+- Props validation and defaults
 
-**Runtime Assertions:**
-- Input validation through explicit checks:
+### Client Logic (Medium Priority)
+
+**Key Functions:**
+- `isNetworkError()` in `ErrorDisplay.tsx` - Pattern matching for network errors
+- `formatDate()` in `TotesPage` - Date formatting consistency
+- `generateToteId()` in `db.ts` - ID generation uniqueness
+- State management and hooks behavior
+
+### Database Integration (High Priority)
+
+**Location:** `src/lib/db.ts`
+
+**What to Test:**
+- Database initialization creates all tables
+- Schema constraints (foreign keys, unique fields)
+- Data persistence across application restarts
+- Transaction behavior (bulk operations)
+- Edge cases: Large datasets, concurrent access
+
+## Validation Patterns Currently in Code
+
+### Client-Side Validation (Forms)
+
+**Pattern from `src/app/totes/page.tsx`:**
 ```typescript
-// From src/app/api/totes/route.ts
-if (!body.name || (typeof body.name !== 'string')) {
+const handleCreateTote = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  // Validate
+  const errors: { name?: string; location?: string } = {};
+  if (!formName.trim()) errors.name = 'Name is required';
+  if (!formLocation.trim()) errors.location = 'Location is required';
+  if (Object.keys(errors).length > 0) {
+    setFormErrors(errors);
+    return;
+  }
+
+  // Proceed with API call
+  try {
+    const res = await fetch('/api/totes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: formName.trim(),
+        location: formLocation.trim(),
+        // ...
+      }),
+    });
+
+    if (!res.ok) {
+      const errData = await res.json();
+      throw new Error(errData.error || 'Failed to create tote');
+    }
+    // Handle success
+  } catch (err) {
+    showToast(err instanceof Error ? err.message : 'Failed to create tote', 'error');
+  }
+};
+```
+
+### Server-Side Validation (API Routes)
+
+**Pattern from `src/app/api/totes/route.ts` (POST handler):**
+```typescript
+try {
+  let body: CreateToteInput;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: 'Invalid or empty request body. JSON with at least "name" and "location" fields is required.' },
+      { status: 400 }
+    );
+  }
+
+  // Handle non-object body
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return NextResponse.json(
+      { error: 'Request body must be a JSON object with "name" and "location" fields.' },
+      { status: 400 }
+    );
+  }
+
+  // Validate required fields
+  if (!body.name || typeof body.name !== 'string') {
+    return NextResponse.json(
+      { error: 'Name is required and must be a string' },
+      { status: 400 }
+    );
+  }
+
+  if (!body.name.trim()) {
+    return NextResponse.json(
+      { error: 'Name is required' },
+      { status: 400 }
+    );
+  }
+
+  // Similar for other fields...
+
+  // Proceed with database insert
+} catch (error) {
+  console.error('Error creating tote:', error);
   return NextResponse.json(
-    { error: 'Name is required and must be a string' },
+    { error: 'Failed to create tote' },
+    { status: 500 }
+  );
+}
+```
+
+### Photo Upload Validation
+
+**Pattern from `src/app/api/items/[id]/photos/route.ts`:**
+```typescript
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const THUMBNAIL_WIDTH = 200;
+
+// Validate file type
+if (!ALLOWED_TYPES.includes(file.type)) {
+  return NextResponse.json(
+    { error: `Invalid file type: ${file.type}. Supported formats: JPEG, PNG, WebP` },
+    { status: 400 }
+  );
+}
+
+// Validate file size
+if (file.size > maxSize) {
+  const maxSizeMB = (maxSize / (1024 * 1024)).toFixed(1);
+  return NextResponse.json(
+    { error: `File size exceeds maximum of ${maxSizeMB}MB` },
     { status: 400 }
   );
 }
 ```
 
-- Type checks for optional fields:
+## Error Handling Patterns in Code
+
+**Network Error Detection:**
+From `src/components/ErrorDisplay.tsx`:
 ```typescript
-if (body.size !== undefined && body.size !== null && typeof body.size !== 'string') {
-  return NextResponse.json(
-    { error: 'Size must be a string' },
-    { status: 400 }
-  );
+function isNetworkError(error: string): boolean {
+  const networkPatterns = [
+    'failed to fetch',
+    'network error',
+    'networkerror',
+    'load failed',
+    'fetch failed',
+    'err_connection_refused',
+    'econnrefused',
+    'net::err_',
+    'typeerror: failed to fetch',
+    'the network connection was lost',
+    'the internet connection appears to be offline',
+    'a network error occurred',
+    'unable to connect',
+  ];
+  const lowerError = error.toLowerCase();
+  return networkPatterns.some(pattern => lowerError.includes(pattern));
 }
 ```
 
-- Quantity validation:
+**Error State Management:**
 ```typescript
-const qty = Number(quantity);
-if (isNaN(qty) || qty < 1 || !Number.isInteger(qty)) {
-  return NextResponse.json(
-    { error: 'Quantity must be a positive integer' },
-    { status: 400 }
-  );
-}
+const [error, setError] = useState<string | null>(null);
+
+const fetchData = useCallback(async () => {
+  try {
+    setLoading(true);
+    const res = await fetch('/api/endpoint');
+    if (!res.ok) throw new Error('Failed to fetch');
+    const json = await res.json();
+    setError(null);
+    // Update data...
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Unknown error');
+  } finally {
+    setLoading(false);
+  }
+}, []);
 ```
 
-**SQL Injection Prevention:**
-- Parameterized queries used exclusively:
-```typescript
-db.prepare('SELECT * FROM items WHERE id = ?').get(itemId)
+## Recommended Testing Framework Setup
+
+**If implementing tests, recommend:**
+
+1. **Testing Framework:** Vitest
+   - Modern, fast, ESM-native
+   - Better TypeScript support than Jest
+   - Works well with Next.js
+   ```bash
+   npm install -D vitest @vitest/ui happy-dom
+   ```
+
+2. **Component Testing:** React Testing Library
+   ```bash
+   npm install -D @testing-library/react @testing-library/user-event
+   ```
+
+3. **API Testing:** msw (Mock Service Worker) for intercepting fetch calls
+   ```bash
+   npm install -D msw
+   ```
+
+4. **Database Testing:** Use in-memory SQLite for unit tests
+   ```bash
+   npm install -D sqlite3  # Or use better-sqlite3 in memory mode
+   ```
+
+## Test File Organization Pattern
+
+**Recommended structure:**
+```
+src/
+├── app/
+│   ├── api/
+│   │   └── totes/
+│   │       ├── route.ts
+│   │       └── route.test.ts
+│   └── page.tsx
+├── components/
+│   ├── Navigation.tsx
+│   └── Navigation.test.tsx
+└── lib/
+    ├── db.ts
+    └── db.test.ts
 ```
 
-- Whitelist validation for sort columns:
-```typescript
-const allowedSorts = ['name', 'location', 'owner', 'created_at', 'updated_at'];
-const safeSortBy = allowedSorts.includes(sortBy) ? sortBy : 'created_at';
-```
+**Convention:** Co-located test files with `.test.ts` suffix next to source files
 
-## Areas Ready for Testing
+## Coverage Gaps
 
-**Unit Test Candidates:**
-- `src/lib/db.ts` - Database utility functions:
-  - `getDb()` - Connection pooling and initialization
-  - `generateToteId()` - ID generation and uniqueness
-  - `getUploadDir()` and `getThumbnailDir()` - Directory path resolution
+**Critical areas without tests:**
+1. API validation logic - Direct user input handling
+2. Database transactions - Concurrent operations, rollback
+3. Photo upload processing - Sharp image transformations
+4. Export/Import functionality - Data serialization/deserialization
+5. QR code generation - Multiple endpoints
+6. Search filters - Complex query building
 
-- `src/types/index.ts` - Type definitions (compile-time only, but can validate interface contracts)
+## Performance Testing
 
-**Component Test Candidates (Would require Jest + React Testing Library):**
-- `src/components/ErrorDisplay.tsx`:
-  - `isNetworkError()` function - Different error message for network vs server errors
-  - `getErrorInfo()` function - Error classification and messaging
-  - Component rendering with different error types
+**Not currently implemented.**
 
-- `src/components/Navigation.tsx`:
-  - Navigation link active state logic
-  - Mobile menu toggle
-  - Search form submission
-
-- `src/app/page.tsx` (Dashboard):
-  - Data loading states
-  - Empty state rendering
-  - Recent items display
-
-**API Route Test Candidates (Would require MSW or similar):**
-- `src/app/api/totes/route.ts`:
-  - GET: Sorting and filtering
-  - POST: Tote creation with validation
-  - Duplicate ID collision handling
-
-- `src/app/api/items/[id]/route.ts`:
-  - GET: Item details with related data
-  - PUT: Item updates with validation
-  - DELETE: Item and file cleanup
-
-- `src/app/api/search/route.ts`:
-  - Query parameter parsing
-  - Multiple filter combinations
-  - SQL query construction
-
-**Integration Test Candidates:**
-- Tote creation flow (form submission → API → list refresh)
-- Item management workflow (add, edit, delete, fetch details)
-- Search functionality with multiple filters
-- File upload and photo handling
-- Bulk operations (QR code generation, bulk delete)
-
-## Common Testing Patterns (Not Yet Implemented)
-
-### Recommended Test Structure for Future Implementation
-
-**API Route Tests:**
-```typescript
-// Would test error handling, validation, database operations
-describe('GET /api/totes', () => {
-  it('should return totes sorted by created_at descending by default', async () => {
-    // Test implementation
-  });
-
-  it('should validate sort column against whitelist', async () => {
-    // Test SQL injection prevention
-  });
-});
-```
-
-**Component Tests:**
-```typescript
-// Would test rendering, state management, user interactions
-describe('ErrorDisplay', () => {
-  it('should display network error icon for network errors', () => {
-    // Test implementation
-  });
-
-  it('should show retry button when onRetry callback provided', () => {
-    // Test implementation
-  });
-});
-```
-
-**Utility Function Tests:**
-```typescript
-// Would test ID generation, error detection, data transformation
-describe('generateToteId', () => {
-  it('should generate 6-character alphanumeric IDs', () => {
-    // Test implementation
-  });
-
-  it('should generate unique IDs', () => {
-    // Test implementation
-  });
-});
-```
-
-## Testing Infrastructure Recommendations
-
-**Framework Setup (Priority Order):**
-1. **Jest** - Unit and API testing
-   - Configure in `jest.config.js`
-   - Add `@testing-library/react` for component testing
-   - Add `@testing-library/jest-dom` for assertions
-
-2. **MSW (Mock Service Worker)** - API mocking for tests
-   - Mock all `fetch` calls in tests
-   - Simulate different API responses
-
-3. **Playwright** - E2E testing (optional for future)
-   - Test full user workflows
-   - Test QR code generation, bulk operations
-
-**Test Files to Create:**
-- `src/lib/db.test.ts` - Utility functions
-- `src/components/ErrorDisplay.test.tsx` - Component and helper functions
-- `src/components/Navigation.test.tsx` - Navigation logic
-- `src/app/api/totes/route.test.ts` - API endpoint testing
-- `src/app/api/items/[id]/route.test.ts` - Item operations
-
-**Configuration Files Needed:**
-- `jest.config.js` - Jest configuration
-- `jest.setup.js` - Test environment setup
-- Test utilities/helpers directory
-
-## Current Test Approach
-
-**Manual Testing Indicators:**
-- Data attributes for accessibility testing: `data-testid="total-totes"`, `data-testid="total-items"` (found in `src/app/page.tsx`)
-- Error states handled and displayed for manual verification
-- Console logging for debugging: `console.error()` calls throughout
-- Try-catch blocks in all async operations provide runtime error detection
-
-**Gaps:**
-- No automated regression testing
-- No CI/CD integration for tests
-- Manual testing required for all changes
-- No coverage requirements or reports
-- Complex client-side state management not validated by tests
+**Should test:**
+- Bulk operations (50+ QR code generation)
+- Large import files (size limits)
+- Search performance with large datasets
+- Database query performance with indexes
 
 ---
 

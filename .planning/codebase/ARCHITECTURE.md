@@ -4,192 +4,194 @@
 
 ## Pattern Overview
 
-**Overall:** Next.js 16 full-stack application with Server and Client Components using a RESTful API pattern with SQLite as the persistent data store.
+**Overall:** Next.js full-stack monolith with client-server separation using Next.js App Router, Server Components, and Server-side Routes (API Layer)
 
 **Key Characteristics:**
-- Next.js App Router with dynamic route segments for nested resources
-- Client-side state management using React hooks (useState, useCallback, useEffect)
-- Server-side data persistence via SQLite with better-sqlite3
-- API routes follow REST conventions with Next.js route handlers
-- File uploads for photos with thumbnail generation via Sharp
-- QR code generation for physical tote labeling
+- **Frontend:** React 19 with `'use client'` boundary for client-side interactivity
+- **Backend:** Node.js with Next.js Server Functions for API routes (Route Handlers)
+- **Database:** SQLite with better-sqlite3 ORM, file-based persistence in `data/` directory
+- **File Storage:** Local filesystem for photos and thumbnails in `data/uploads/` and `data/thumbnails/`
+- **Type Safety:** Full TypeScript implementation with centralized type definitions
 
 ## Layers
 
-**Presentation Layer:**
-- Purpose: Renders UI components and manages user interactions
-- Location: `src/app/` (page files) and `src/components/`
-- Contains: React components using 'use client' directive, forms, modals, list views
-- Depends on: API layer via fetch calls
-- Used by: Browser client
+**Presentation Layer (Pages & Components):**
+- Purpose: Server-rendered or client-rendered UI using React components
+- Location: `src/app/` (pages) and `src/components/` (shared components)
+- Contains: Next.js page components (`page.tsx`), client components with `'use client'` directive, UI logic
+- Depends on: API Layer via fetch(), Navigation, type definitions from `src/types/`
+- Used by: Browser/End User
 
-**API Layer:**
-- Purpose: Handles HTTP requests and implements business logic
-- Location: `src/app/api/`
-- Contains: Next.js route handlers (route.ts files)
-- Depends on: Database layer via getDb()
-- Used by: Presentation layer via fetch, external integrations
+**API Layer (Route Handlers):**
+- Purpose: Expose REST API endpoints for CRUD operations and specialized functions
+- Location: `src/app/api/` organized by resource (totes, items, photos, search, settings, etc.)
+- Contains: Next.js Route Handlers (`route.ts` files), request/response handling, validation, database queries
+- Depends on: Database Layer (`src/lib/db.ts`), Type definitions
+- Used by: Presentation Layer via fetch(), external clients
 
-**Database Layer:**
-- Purpose: Manages SQLite database connection, initialization, and file storage paths
+**Data Access Layer:**
+- Purpose: Database initialization, schema management, singleton connection, utility functions
 - Location: `src/lib/db.ts`
-- Contains: Database initialization, schema creation, utility functions
-- Depends on: better-sqlite3, file system operations
-- Used by: All API routes via getDb()
+- Contains: Database initialization, table schema (CREATE TABLE), transaction management, file path utilities
+- Depends on: `better-sqlite3` package, Node.js `fs` and `path` modules
+- Used by: API Layer for all database operations
 
-**Type System:**
-- Purpose: Defines shared TypeScript interfaces across all layers
+**Type Definitions:**
+- Purpose: Centralized TypeScript interfaces for type safety across frontend and backend
 - Location: `src/types/index.ts`
-- Contains: Domain models (Tote, Item, ItemMetadata, ItemPhoto, MovementHistory, Settings)
-- Depends on: Nothing
-- Used by: All layers
+- Contains: Tote, Item, ItemMetadata, ItemPhoto, MovementHistory, Setting, DashboardData, SearchResult, ApiResponse interfaces
+- Used by: All layers (pages, components, API routes)
+
+**Shared Components:**
+- Purpose: Reusable UI elements shared across pages
+- Location: `src/components/`
+- Contains: Navigation (header with search), Breadcrumb (nav trail), ErrorDisplay (error state UI)
+- Used by: Page components
 
 ## Data Flow
 
 **Create Tote Flow:**
 
-1. User fills form in `src/app/totes/page.tsx`
-2. Form submits to `POST /api/totes` with CreateToteInput
-3. Route handler in `src/app/api/totes/route.ts` validates input and generates unique ID
-4. Database record inserted via prepared statement from `src/lib/db.ts`
-5. Response returned with created Tote object
-6. Component updates local state and refetches tote list
+1. User submits form in `/totes` page (client-side `'use client'`)
+2. Form handler calls `POST /api/totes` with JSON body
+3. API route in `src/app/api/totes/route.ts` validates input (name, location required; optional size, color, owner)
+4. Route generates 6-character alphanumeric ID via `generateToteId()`
+5. Route inserts record into `totes` table via `getDb().prepare().run()`
+6. Route returns created tote (201 status) to client
+7. Client updates local state and refetches totes list
 
-**Search Items Flow:**
+**Get Item Details Flow:**
 
-1. User enters search query in Navigation component
-2. Routes to `src/app/search/page.tsx` with `?q=` parameter
-3. SearchContent component fetches filters from `GET /api/search/filters`
-4. User can refine with location, owner, metadata_key filters
-5. `performSearch()` calls `GET /api/search?q=...&location=...&owner=...&metadata_key=...`
-6. Route handler in `src/app/api/search/route.ts` builds dynamic SQL with conditions
-7. Results joined with tote data and returned
-8. Component renders matched items with tote context
+1. User navigates to `/totes/[id]/items/[itemId]`
+2. Page fetches from `GET /api/items/[id]` in `src/app/api/items/[id]/route.ts`
+3. API route joins `items` + `totes` tables, fetches related metadata, photos, and movement history
+4. Returns composite object with item, metadata, photos, movement_history
+5. Client displays full item view with related data
+
+**Search Flow:**
+
+1. User enters query in global search bar (Navigation component)
+2. Routes to `/search?q={query}`
+3. Page fetches from `GET /api/search/route.ts` with query params (q, location, owner, metadata_key)
+4. API builds dynamic WHERE clause with parameterized queries (prevents SQL injection)
+5. Searches across item name, description, and metadata values
+6. Returns items with tote context (tote_name, tote_id, tote_location)
 
 **Photo Upload Flow:**
 
-1. User clicks photo upload in item detail view
-2. FormData sent to `POST /api/items/:id/photos`
-3. Route handler in `src/app/api/items/[id]/photos/route.ts` validates:
-   - File type (JPEG, PNG, WebP only)
-   - File size against max_upload_size setting
-   - Photo count (max 3 per item)
-4. Sharp library rotates image based on EXIF, generates 200x200 thumbnail
-5. Original and thumbnail written to filesystem via `getUploadDir()` and `getThumbnailDir()`
-6. Database record created in item_photos table
-7. Response with photo metadata returned to client
-
-**Dashboard Data Flow:**
-
-1. Dashboard page renders in `src/app/page.tsx`
-2. Calls `GET /api/dashboard` on mount
-3. Handler in `src/app/api/dashboard/route.ts` aggregates:
-   - COUNT(*) from totes
-   - COUNT(*) from items
-   - Last 10 items with tote_name and first_photo_id via LEFT JOIN
-4. Returns DashboardData object
-5. Component displays metrics and recent items list with thumbnails
+1. User uploads photo in item detail page via form with file input
+2. Frontend reads file and sends multipart FormData to `POST /api/items/[id]/photos`
+3. API validates file type (JPEG, PNG, WebP), file size (against max_upload_size setting)
+4. Generates unique filename via `crypto.randomBytes(16).toString('hex')`
+5. Writes original to `data/uploads/`, generates thumbnail via `sharp` library
+6. Writes thumbnail to `data/thumbnails/`
+7. Inserts photo record into `item_photos` table with paths
+8. Returns photo metadata (201 status)
 
 **State Management:**
 
-- Form state in pages uses useState for controlled inputs
-- Loading/error states per async operation
-- URL search params used for filter persistence (useSearchParams hook)
-- Photo data fetched on-demand, not pre-cached
-- Settings cached in form defaults via fetchDefaults()
-- No global state management library (Context API not used)
+- **Client State:** React hooks (useState) for form state, loading/error states, UI toggles, modal visibility
+- **Database State:** SQLite at `data/tote-sonar.db` with WAL mode for durability
+- **Settings Persistence:** Settings table for configuration (server_hostname, max_upload_size, default_tote_fields, default_metadata_keys, theme)
+- **Movement History:** Tracks item transfers between totes via `item_movement_history` table with foreign keys
 
 ## Key Abstractions
 
 **Tote (Container):**
-- Purpose: Physical container for organizing items
-- Examples: `src/types/index.ts` (Tote interface), `src/app/api/totes/route.ts`, `src/app/totes/page.tsx`
-- Pattern: 6-character alphanumeric ID generated via `generateToteId()`, supports metadata fields (size, color, owner, location)
+- Purpose: Represents a physical container to organize items
+- Examples: `src/app/totes/[id]/page.tsx`, `src/app/api/totes/[id]/route.ts`, `src/types/index.ts` (Tote interface)
+- Pattern: RESTful resource with properties (name, location, size, color, owner), unique 6-char ID, timestamps
 
-**Item (Inventory Unit):**
-- Purpose: Physical object stored in a tote
-- Examples: `src/types/index.ts` (Item interface), `src/app/api/totes/[id]/items/route.ts`
-- Pattern: Auto-incrementing integer ID, quantity tracking, movement history
+**Item (Contents):**
+- Purpose: Represents an object stored in a tote
+- Examples: `src/app/items/[id]/page.tsx`, `src/app/api/items/[id]/route.ts`, `src/types/index.ts` (Item interface)
+- Pattern: AUTOINCREMENT integer ID, linked to tote via tote_id foreign key, supports metadata and photos
 
-**ItemMetadata (Flexible Attributes):**
-- Purpose: User-defined key-value pairs for custom item attributes
-- Examples: `src/types/index.ts` (ItemMetadata interface), `src/app/api/items/[id]/metadata/route.ts`
-- Pattern: Allows extensible tagging without schema changes
+**ItemMetadata (Extensible Attributes):**
+- Purpose: Key-value pairs for flexible item properties (e.g., color, material, brand)
+- Examples: `src/app/api/items/[id]/metadata/route.ts`, `item_metadata` table
+- Pattern: Many-to-one from items, unique key names tracked in `metadata_keys` table for autocomplete
 
-**ItemPhoto (Visual Documentation):**
-- Purpose: Store images of items with optimized thumbnails
-- Examples: `src/types/index.ts` (ItemPhoto interface), `src/app/api/items/[id]/photos/route.ts`
-- Pattern: Dual file storage (original + thumbnail), MIME type tracking, file size validation
+**ItemPhoto (Visual Evidence):**
+- Purpose: Photos of items with auto-generated thumbnails
+- Examples: `src/app/api/items/[id]/photos/route.ts`, `item_photos` table
+- Pattern: Original + thumbnail files on disk, max 3 per item, EXIF auto-rotation via sharp
 
-**MovementHistory (Audit Trail):**
-- Purpose: Track which tote an item came from and moved to
-- Examples: `src/types/index.ts` (MovementHistory interface), `src/app/api/items/[id]/move/route.ts`
-- Pattern: Immutable record with from_tote_id and to_tote_id, timestamps
+**QR Code Labels:**
+- Purpose: Printable QR codes linking to tote detail pages
+- Examples: `src/app/api/totes/[id]/qr/route.ts`, `src/app/api/totes/qr/bulk/route.ts`
+- Pattern: Generated on-demand via `qrcode` library, data URL embedded in page for printing
 
 ## Entry Points
 
-**Homepage/Dashboard:**
+**Web Application:**
 - Location: `src/app/page.tsx`
-- Triggers: Navigation to `/` or app load
-- Responsibilities: Display overview metrics (total totes, total items), show recently added items with thumbnails, provide quick navigation to create first tote
+- Triggers: User navigates to `/` (root)
+- Responsibilities: Renders dashboard with metric cards (total totes, total items), recently added items list, welcome screen when empty
 
-**Totes List:**
+**Dashboard API:**
+- Location: `src/app/api/dashboard/route.ts`
+- Triggers: GET request to `/api/dashboard`
+- Responsibilities: Aggregates tote count, item count, and recent items (last 10) with tote names
+
+**Totes Management:**
 - Location: `src/app/totes/page.tsx`
-- Triggers: Navigation to `/totes`
-- Responsibilities: List all totes with filtering/sorting, create form modal, bulk selection for QR printing, bulk deletion with confirmation
+- Triggers: User navigates to `/totes` or clicks "Totes" in nav
+- Responsibilities: Lists all totes as cards, supports create/edit/delete, bulk selection for QR printing, sorting
 
-**Item Detail:**
-- Location: `src/app/totes/[id]/items/[itemId]/page.tsx`
-- Triggers: Navigation to `/totes/:toteId/items/:itemId`
-- Responsibilities: Display item details, manage metadata key-value pairs, upload/view photos, track movement history
+**Tote Detail View:**
+- Location: `src/app/totes/[id]/page.tsx`
+- Triggers: User clicks tote card
+- Responsibilities: Shows tote properties, item list, allows add/edit/delete items, print QR, edit tote metadata
 
-**Search:**
+**Item Detail View:**
+- Location: `src/app/totes/[id]/items/[itemId]/page.tsx` and `/app/items/[id]/page.tsx`
+- Triggers: User clicks item in tote or from dashboard
+- Responsibilities: Full item view with metadata, photos, movement history; edit/delete item
+
+**Global Search:**
 - Location: `src/app/search/page.tsx`
-- Triggers: Navigation to `/search` or search form submission
-- Responsibilities: Text search across item names/descriptions and metadata values, filter by location/owner/metadata key, display results with tote context
+- Triggers: User submits search bar or navigates to `/search?q=query`
+- Responsibilities: Search items by name, description, location, owner, metadata; display results with tote context
 
 **Settings:**
 - Location: `src/app/settings/page.tsx`
-- Triggers: Navigation to `/settings`
-- Responsibilities: Configure defaults for tote creation, set max upload size, manage custom metadata keys
+- Triggers: User clicks "Settings" in nav
+- Responsibilities: Edit application settings (server hostname, upload size, default tote fields, default metadata keys, theme)
+
+**Import/Export:**
+- Location: `src/app/import-export/page.tsx`
+- Triggers: User clicks "Import/Export" in nav
+- Responsibilities: Bulk import totes and items from JSON, export all data to JSON/ZIP
 
 ## Error Handling
 
-**Strategy:** Consistent HTTP status codes with JSON error responses, client-side toast notifications, ErrorDisplay component for user-facing errors
+**Strategy:** Layered try-catch with user-facing error messages, server logs, and ErrorDisplay component
 
 **Patterns:**
-
-- **Validation Errors (400):** Request body validation in all POST/PUT handlers. Examples: `src/app/api/totes/route.ts` validates name and location required, `src/app/api/items/[id]/photos/route.ts` validates file type and size
-- **Not Found (404):** Resource lookup failures. Example: `src/app/api/items/[id]/route.ts` returns 404 if item doesn't exist
-- **Internal Errors (500):** Try-catch blocks log to console and return generic error message. Never expose internal details in response
-- **Client-Side:** useCallback hooks wrap fetch in try-catch, set error state, display ErrorDisplay component from `src/components/ErrorDisplay.tsx`
+- API routes wrap database operations in try-catch, return 500 on unexpected errors with generic message
+- Client pages fetch with error state, display ErrorDisplay component with retry button
+- Form validation errors show field-level error text
+- Unrecognized paths show `/src/app/not-found.tsx` (404 page)
+- API validation returns 400 with descriptive error message (e.g., "Name is required")
 
 ## Cross-Cutting Concerns
 
-**Logging:**
-- Server-side: console.error() on all catch blocks in route handlers and db.ts
-- Examples: `src/lib/db.ts` logs "Database connected" and "Database schema initialized", route handlers log operation failures
-- No structured logging library (console only)
+**Logging:** Console logging for database connection, schema initialization, and server-side errors; prefixed by operation type
 
 **Validation:**
-- Server-side mandatory: All route handlers validate input types and required fields
-- Pattern: Check non-null, type check with typeof, trim strings, range check numbers
-- Examples: `src/app/api/totes/route.ts` validates body is object (not array), name/location required and trimmed, optional fields type-checked
+- Input validation at API layer (type checking, required fields, string trimming)
+- SQL injection prevention via parameterized queries (db.prepare().all(...params))
+- File upload validation (MIME type whitelist, size limits, max photos per item)
 
-**Authentication:**
-- Not implemented - no auth layer present
-- App is single-user/local deployment model
-- Database and file access are unrestricted
+**Authentication:** Not implemented; assumes single-user/private environment
 
-**CORS:**
-- Default Next.js CORS (same-origin only)
-- No CORS headers configured in route handlers
-- Suitable for same-domain frontend consumption
+**File Cleanup:** Cascade delete via foreign keys; manual file system cleanup in item deletion route (orphaned uploads/thumbnails deleted)
 
-**Database Transactions:**
-- Pragma settings: `foreign_keys = ON`, `synchronous = FULL`, `journal_mode = WAL`
-- Cascading deletes configured: Deleting a tote cascades to items, metadata, photos, movement history
-- No explicit transaction blocks - single-statement operations rely on foreign key constraints
+**Database Consistency:**
+- Foreign key constraints enabled (`PRAGMA foreign_keys = ON`)
+- Cascade delete on tote/item deletion
+- WAL mode for durability across crashes
 
 ---
 

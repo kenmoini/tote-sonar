@@ -4,240 +4,244 @@
 
 ## Tech Debt
 
-**Bloated UI Components:**
-- Issue: Single-file UI components exceed 1500 lines with multiple concerns (state management, form handling, modals, sorting, deletion) mixed together
-- Files: `src/app/totes/[id]/items/[itemId]/page.tsx` (1581 lines), `src/app/totes/[id]/page.tsx` (1121 lines)
-- Impact: Difficult to test, maintain, and debug. High cognitive complexity. Risk of introducing bugs during modifications. Component reloading slow during development.
-- Fix approach: Extract modal dialogs into separate components (DeleteConfirm, EditForm, AddItemForm), extract form logic into custom hooks (useFormValidation, usePhotoUpload), create shared state management for UI state (open/close states), separate concerns into smaller files (~300 lines max each)
+**Weak Tote ID Generation:**
+- Issue: Tote ID generation uses `Math.random()` which is not cryptographically secure
+- Files: `src/lib/db.ts` (lines 127-135)
+- Impact: IDs are predictable and could theoretically be guessed or brute-forced to discover other users' totes if exposed to multiple parties
+- Fix approach: Replace `Math.random()` with `crypto.randomBytes()` for cryptographic randomness, similar to photo ID generation in `src/app/api/items/[id]/photos/route.ts` (line 65)
 
-**No Automated Testing:**
-- Issue: No test files present in codebase
-- Files: All files in `src/`
-- Impact: Changes risk breaking existing functionality undetected. No confidence for refactoring. No documentation of expected behavior through tests. Regression bugs likely to be discovered in production.
-- Fix approach: Establish testing framework (Jest/Vitest), start with critical path tests (API routes for CRUD operations, search/import/export), add component tests for complex UI components
+**Duplicate Tote ID Collision Check:**
+- Issue: Collision checking uses synchronous loop that could theoretically generate many IDs if storage grows
+- Files: `src/app/api/totes/route.ts` (lines 107-111)
+- Impact: Unlikely in practice but collision probability increases as table grows; no collision detection strategy at scale
+- Fix approach: Use proper UUID v4 or implement exponential backoff with max retries; add index on tote_id for faster lookups
 
-**Insufficient Error Handling in Import/Export:**
-- Issue: Import route clears all existing data before transaction starts. If ZIP extraction fails mid-way, database is cleared but photos may not be restored
-- Files: `src/app/api/import/route.ts` (lines 265-277)
-- Impact: Data loss risk if import fails during file extraction phase. Photos cleared before validation complete.
-- Fix approach: Validate entire ZIP and extract files to temporary directory before touching database. Only clear old data after new data is fully validated and prepared.
+**Weak File Path Security in Photo Routes:**
+- Issue: Photo paths are stored in database and reconstructed with `path.basename()` to prevent traversal, but stored paths should never be trusted input
+- Files: `src/app/api/photos/[id]/route.ts` (lines 22), `src/app/api/photos/[id]/thumbnail/route.ts` (line 22)
+- Impact: If database is corrupted or compromised, path traversal is still possible; relies on basename safety rather than strict path validation
+- Fix approach: Store only filename (not path) in database; validate that reconstructed path stays within upload/thumbnail directories using `path.resolve()` and directory containment checks
 
-**Missing Rollback on Partial Import Failure:**
-- Issue: File extraction happens AFTER transaction (lines 279-295), outside database transaction atomicity. Files may be written but DB import fails, or vice versa.
-- Files: `src/app/api/import/route.ts` (lines 258-295)
-- Impact: Inconsistent state between database and filesystem. Photos referenced in DB may not exist on disk, or vice versa.
-- Fix approach: Include file extraction in transaction scope or implement two-phase commit pattern with cleanup handlers
+**Hard-coded Default Upload Limit:**
+- Issue: Default max upload size (5MB) is hard-coded in multiple places and stored in settings
+- Files: `src/app/api/items/[id]/photos/route.ts` (line 36), `src/lib/db.ts` (line 119)
+- Impact: Changing the default requires database migration; inconsistent defaults if one location is updated
+- Fix approach: Define max upload size as constant in `src/lib/db.ts` and always reference it; remove from default settings or keep only for override
 
-**Unvalidated Archive Entry Names:**
-- Issue: `path.basename()` is used to extract filenames from ZIP, which provides basic protection but entries could potentially have path traversal attempts
-- Files: `src/app/api/import/route.ts` (lines 285, 290)
-- Impact: Theoretical path traversal vulnerability if malicious ZIP contains entries like `uploads/../../../evil.jpg`. Though mitigated by basename(), explicit validation recommended.
-- Fix approach: Validate extracted filenames match expected pattern (alphanumeric with safe extensions), reject any entries with parent directory references or unusual characters
+**Unsafe JSON Parsing in Move/Duplicate Routes:**
+- Issue: Some routes silently ignore JSON parse failures while others handle them with error responses
+- Files: `src/app/api/items/[id]/move/route.ts` (line 23), `src/app/api/items/[id]/duplicate/route.ts` (lines 32-48)
+- Impact: Inconsistent error handling; move route doesn't catch `request.json()` errors, could crash; duplicate route silently defaults to same tote
+- Fix approach: Standardize JSON parsing with try-catch and explicit error handling in all routes
+
+---
 
 ## Known Bugs
 
-**Object URL Memory Leak on Modal Close:**
-- Symptoms: Blob URLs created via `URL.createObjectURL()` may accumulate in memory if modal dismissed without cleanup
-- Files: `src/app/totes/[id]/page.tsx` (lines 277, 936-937), `src/app/import-export/page.tsx` (lines 56, 72)
-- Trigger: Upload photo -> dismiss modal without submitting -> repeat multiple times
-- Workaround: Currently code does revoke URLs in form reset and cleanup, but dependency tracking in useEffect could miss edge cases if modal unmounts abnormally
-- Fix approach: Add useEffect cleanup handler for all preview URLs, ensure revocation in modal overlay click handler
+**Import Transaction Foreign Key Re-enable Not Guaranteed:**
+- Symptoms: If import transaction fails after disabling foreign keys, they remain disabled for that database session
+- Files: `src/app/api/import/route.ts` (lines 121-256)
+- Trigger: Unhandled error during import (e.g., disk full, malformed data) that escapes try-catch at line 257
+- Workaround: Database will re-enable foreign keys on next connection; graceful for multi-process but dangerous in single-process dev
 
-**Toast Timer Doesn't Persist Across Route Changes:**
-- Symptoms: Toast notification may disappear if user navigates away while toast is showing (4-second timer continues)
-- Files: `src/app/totes/[id]/page.tsx` (line 110), multiple other pages
-- Trigger: Submit form, immediately navigate without waiting for toast
-- Impact: User misses success/error message. Low severity but poor UX.
-- Fix approach: Clear toast timeout on component unmount, or use global toast service
+**Photo Files Can Become Orphaned After DB Deletion:**
+- Symptoms: Delete item/tote, then database query for photos fails; files remain on disk
+- Files: `src/app/api/items/[id]/route.ts` (lines 187-200), `src/app/api/totes/[id]/route.ts` (lines 251-264)
+- Trigger: File deletion fails silently (permissions, concurrent access) or database record deleted but file deletion throws unhandled error
+- Workaround: None; requires manual disk cleanup; database record is already deleted via CASCADE
 
-**Metadata Search Query Fragility:**
-- Symptoms: Complex metadata search construction modifies conditions array mid-operation, parameterization order can become confused
+**Search Metadata Condition Construction Error:**
+- Symptoms: Complex metadata search condition may build incorrect SQL when both name/description and metadata filters are used
 - Files: `src/app/api/search/route.ts` (lines 48-59)
-- Trigger: Search with query + metadata_key filter simultaneously
-- Impact: Search results may be incomplete or incorrect when multiple filters are combined
-- Fix approach: Refactor to build SQL conditions more clearly, use parameterized named placeholders or array-based approach that's easier to track
+- Trigger: Query with both search term AND metadata key filter; condition splice logic (line 57) may insert at wrong index if conditions array structure changes
+- Workaround: Use only name search OR metadata filter, not both; logic is fragile
+
+---
 
 ## Security Considerations
 
-**Type Safety Gaps in API Route Parameters:**
-- Risk: Route parameters assumed to be strings without runtime validation in some endpoints. Type assertions cast unknown values.
-- Files: `src/app/api/items/[id]/photos/route.ts` (line 19 `Number(id)`), multiple routes assume numeric IDs
-- Current mitigation: Some routes validate format (e.g., `src/app/api/totes/[id]/route.ts` lines 15-24), others don't
-- Recommendations: Create shared validation middleware for all numeric ID parameters. Validate before casting with Number(). Add 'use strict' or stricter TypeScript settings.
+**Missing Input Validation on Some User Inputs:**
+- Risk: Settings API accepts arbitrary key-value pairs without validation
+- Files: `src/app/api/settings/route.ts` (lines 31-55)
+- Current mitigation: Settings are only read back on client; no code execution on setting values
+- Recommendations: Whitelist allowed setting keys; validate max_upload_size is numeric and within reasonable bounds; sanitize hostname setting
 
-**Settings SQL Injection Risk:**
-- Risk: Setting keys read from query params without type checking in some places
-- Files: `src/app/api/settings/route.ts`, `src/app/api/items/[id]/photos/route.ts` (line 35)
-- Current mitigation: Prepared statements used for queries, but key names should be validated against whitelist
-- Recommendations: Create constants for valid setting keys, validate against whitelist before database access
+**No Rate Limiting on Upload Endpoint:**
+- Risk: Users can upload unlimited photos or repeatedly upload large files
+- Files: `src/app/api/items/[id]/photos/route.ts` (lines 13-117)
+- Current mitigation: Hard limit of 3 photos per item; max 5MB default size
+- Recommendations: Add per-IP rate limiting; log upload attempts; consider per-user upload quotas
 
-**File Upload MIME Type Spoofing:**
-- Risk: File type validation relies on `file.type` which is provided by client and can be spoofed
-- Files: `src/app/api/items/[id]/photos/route.ts` (line 47), `src/app/totes/[id]/page.tsx` (line 261)
-- Current mitigation: File is written to disk and processed by sharp, which validates magic bytes for thumbnails
-- Recommendations: Add magic byte verification before saving files. Use file-type library to validate actual file content, not just MIME type
+**No Authentication/Authorization:**
+- Risk: All endpoints are public; anyone with network access can read/modify/delete all totes and items
+- Files: All files in `src/app/api/`
+- Current mitigation: None
+- Recommendations: Implement authentication (session/JWT) before production use; add role-based access control; consider encrypted local-only mode for single-user
 
-**Path Traversal in Photo Retrieval:**
-- Risk: Photo ID used directly in file path without validation
-- Files: `src/app/api/photos/[id]/route.ts`, `src/app/api/photos/[id]/thumbnail/route.ts`
-- Current mitigation: Checking database for photo record before serving should prevent direct path access
-- Recommendations: Verify full path is within allowed directories, never allow symlinks
+**Unvalidated Photo MIME Type Storage:**
+- Risk: MIME type from File object (browser-controlled) is stored and served back as Content-Type header
+- Files: `src/app/api/items/[id]/photos/route.ts` (line 100), `src/app/api/photos/[id]/route.ts` (line 30)
+- Current mitigation: MIME type validation only checks whitelist of allowed types on upload; browser can lie
+- Recommendations: Re-validate MIME type when serving; use file magic bytes to confirm actual file type
+
+**Export Contains All Data Without Access Control:**
+- Risk: Full database export including all totes/items available to anyone
+- Files: `src/app/api/export/route.ts` (lines 8-40)
+- Current mitigation: No selective export; all or nothing
+- Recommendations: Add per-user data segregation; consider encryption in export file; require authentication
+
+---
 
 ## Performance Bottlenecks
 
-**Export Loads Entire Database Into Memory:**
-- Problem: All tables loaded with `SELECT *` and JSON stringified before streaming
-- Files: `src/app/api/export/route.ts` (lines 13-19, 66)
-- Cause: No pagination or streaming of large result sets
-- Improvement path: Stream export file generation, fetch data in chunks, write directly to archive without intermediate JSON object. Use database query streaming if supported.
-- Scalability limit: Expected to fail or be very slow with >100k items or >1GB of photos
+**Search Limited to 100 Results Hard-Coded:**
+- Problem: Search results are truncated at 100 items with no pagination
+- Files: `src/app/api/search/route.ts` (line 69)
+- Cause: Fixed LIMIT 100 with no offset/pagination parameters
+- Improvement path: Implement pagination (LIMIT + OFFSET); expose page size as query param; add total count in response
 
-**Search Queries Use Multiple Subqueries for Metadata:**
-- Problem: Metadata filtering uses nested SELECT for each filter condition
-- Files: `src/app/api/search/route.ts` (lines 43, 55)
-- Cause: IN (SELECT...) pattern repeated for metadata checks
-- Improvement path: Use single JOIN to item_metadata with GROUP BY or use FTS (Full Text Search) index for better performance
-- Scalability limit: Search may slow down significantly with 10k+ items and complex metadata
+**Dashboard Query Fetches All Item Photos:**
+- Problem: Dashboard may load slowly if many items with many photos
+- Files: `src/app/api/dashboard/route.ts` (likely fetching all items; not fully reviewed)
+- Cause: No limit on scope of items/photos loaded for recent items display
+- Improvement path: Fetch only recent N items; fetch only first photo per item; implement lazy loading
 
-**Dashboard Loads All Recently Added Items:**
-- Problem: Fetches "most recently added items" without limit in some scenarios
-- Files: `src/app/api/dashboard/route.ts` (lines 23-25)
-- Impact: Loading all recent items, then sorting in memory
-- Improvement path: Add LIMIT clause, use indexed queries, implement pagination
+**Photo Generation Creates Both Original and Thumbnail Sequentially:**
+- Problem: Sharp image processing blocks request while generating thumbnail
+- Files: `src/app/api/items/[id]/photos/route.ts` (lines 79-87)
+- Cause: Synchronous sharp operations in request handler
+- Improvement path: Queue thumbnail generation as background job; store original immediately; notify client when thumbnail ready
 
-**Full Table Scans on Settings Queries:**
-- Problem: Settings loaded with `SELECT *` or entire settings table each time
-- Files: `src/app/api/settings/route.ts` (lines 8, 58)
-- Impact: Adds overhead for every settings read. Should be cached.
-- Improvement path: Cache settings in-memory singleton, invalidate on updates
+**Database WAL Checkpoint on Every Connection:**
+- Problem: Every new database connection runs WAL checkpoint which can lock database
+- Files: `src/lib/db.ts` (lines 28-32)
+- Cause: WAL checkpoint called to recover from crashes; appropriate for reliability but may cause latency spikes
+- Improvement path: Checkpoint only on startup; add configurable checkpoint interval; monitor lock contention
+
+**Full Table Scan in Import for Photo File Extraction:**
+- Problem: Import iterates all zip entries multiple times (once for uploads, once for thumbnails)
+- Files: `src/app/api/import/route.ts` (lines 280-295)
+- Cause: Zip entries iterated twice with string matching; no batching
+- Improvement path: Single pass through zip entries with type-based routing; pre-allocate file write buffers
+
+---
 
 ## Fragile Areas
 
-**Import Transaction Assumes Clean State:**
-- Files: `src/app/api/import/route.ts` (lines 121-260)
-- Why fragile: Transaction disables foreign keys temporarily (line 123), relies on correct order of DELETE statements (lines 127-133). If schema changes, deletion order becomes critical and easy to break. No cascade validation.
-- Safe modification: Document exact deletion order as schema constraint, add schema migration tests, consider soft-delete pattern instead
-- Test coverage: No tests for import rollback scenario or partial failure
+**Item Detail Page Component:**
+- Files: `src/app/totes/[id]/items/[itemId]/page.tsx` (1581 lines)
+- Why fragile: Monolithic component with 40+ state variables managing forms, modals, uploads, metadata, movement, copying; complex conditional rendering
+- Safe modification: Refactor into sub-components (ItemForm, PhotoUpload, MetadataManager, MoveModal, CopyModal); extract state management logic; add comprehensive error boundaries
+- Test coverage: Needs unit tests for each modal flow; integration tests for item update/delete/move interactions; photo upload error handling
 
-**Tote ID Generation Using Weak Randomness:**
-- Files: `src/lib/db.ts` (lines 128-135)
-- Why fragile: Simple Math.random() approach for ID generation. While IDs are 6-char alphanumeric (36^6 = 2.1B combinations), no collision detection or retry logic
-- Safe modification: Add uniqueness check and retry loop, consider UUID or cryptographically stronger randomness
-- Test coverage: No collision tests
+**Import/Export Transaction Logic:**
+- Files: `src/app/api/import/route.ts` (318 lines), `src/app/api/export/route.ts` (105 lines)
+- Why fragile: Import disables foreign keys during transaction; if any operation fails, state is inconsistent; export has no error recovery for archive streaming
+- Safe modification: Wrap entire import in try-finally to re-enable foreign keys; add rollback on error; test with corrupted ZIP files; add pre-import validation
+- Test coverage: Test import with missing tables; test with constraint violations; test ZIP file with missing entries; test disk full scenarios
 
-**Photo Thumbnail Generation Failure Silent:**
-- Files: `src/app/api/items/[id]/photos/route.ts` (lines 84-87)
-- Why fragile: If sharp fails during thumbnail generation (corrupted image, unsupported format), original file already written to disk. Error handling doesn't clean up partial files.
-- Safe modification: Generate thumbnail first or in temporary location, validate before committing original file
-- Test coverage: No error case tests for corrupted images
+**Search Query Builder:**
+- Files: `src/app/api/search/route.ts` (97 lines)
+- Why fragile: Manual conditions array and params array splicing (line 57); easy to lose sync between conditions and params; metadata search logic is complex
+- Safe modification: Use parameterized query builder library; refactor to build objects that validate structure; add unit tests for SQL output
+- Test coverage: Test search with all filter combinations; test with special characters in search terms; test empty results; test boundary cases (name vs metadata)
 
-**Metadata Search Parameter Order Fragile:**
-- Files: `src/app/api/search/route.ts` (lines 48-59)
-- Why fragile: Complex manipulation of conditions array and params array with splice() operations. Adding new filters could break parameter ordering
-- Safe modification: Use object-based condition builder pattern instead of arrays
-- Test coverage: No tests for complex filter combinations
+**Photo File Cleanup on Cascade Delete:**
+- Files: `src/app/api/items/[id]/route.ts` (lines 187-200), `src/app/api/totes/[id]/route.ts` (lines 251-264), `src/app/api/items/[id]/photos/route.ts` (implied)
+- Why fragile: Database and filesystem operations are not atomic; file deletion errors are silently ignored; photos can be orphaned
+- Safe modification: Implement transactional file cleanup using a cleanup queue; add background job to detect orphaned files; log all file deletion errors; test failure scenarios
+- Test coverage: Test item delete with missing photo files; test tote delete with permission errors; test concurrent deletes; verify no orphaned files remain
 
-**Event Listener Cleanup Incomplete in Large Components:**
-- Files: `src/app/totes/[id]/page.tsx` (lines 223-254), similar in other pages
-- Why fragile: Multiple useEffect hooks add/remove event listeners. If dependency array is incorrect or component unmounts unexpectedly, listeners could remain attached
-- Safe modification: Consolidate event listener logic, extract to custom hook, ensure all cleanup functions properly registered
-- Test coverage: No cleanup verification tests
+---
 
 ## Scaling Limits
 
-**SQLite Single-File Database:**
-- Current capacity: File-based SQLite adequate for single-user/small team. WAL mode handles concurrent writes better.
-- Limit: Degradation expected with >1 million items or sustained concurrent access from many users. Single writer bottleneck.
-- Scaling path: Migrate to PostgreSQL/MySQL if multi-user concurrent writes needed. Consider read replicas. Implement connection pooling.
+**SQLite Single-Writer Limit:**
+- Current capacity: Single concurrent write due to WAL mode locking
+- Limit: Application will become unresponsive under heavy concurrent write load (multiple uploads, edits, deletes simultaneously)
+- Scaling path: Consider PostgreSQL or MySQL for multi-user deployments; add connection pooling; implement queue for write operations
 
-**File System Storage for Photos:**
-- Current capacity: All photos stored as individual files on disk. Works fine for <10k photos.
-- Limit: Directory operations slow down with large numbers of files. No deduplication. Manual cleanup needed for orphaned files.
-- Scaling path: Migrate to blob storage (S3, Cloud Storage), implement object deduplication by hash, add cleanup job for orphaned files
+**In-Memory Database Connection Singleton:**
+- Current capacity: Single global database connection per Node process
+- Limit: All requests share one connection; statement queue will grow under load; no connection pooling
+- Scaling path: Implement connection pool; consider dedicated database server; add metrics for connection queue depth
 
-**In-Memory QR Code Generation:**
-- Current capacity: QR codes generated per-request, cached only in HTTP response
-- Limit: No caching, re-generates for every view
-- Scaling path: Cache rendered QR codes, use CDN, generate at write-time instead of read-time
+**Local File Storage for Photos:**
+- Current capacity: Limited by disk space and file descriptor limits
+- Limit: Cannot scale beyond single machine; no backup strategy; photo files not replicated
+- Scaling path: Move to cloud storage (S3, GCS, Azure Blob); implement backup policy; add CDN for photo delivery
 
-**Export Archive Held in Memory:**
-- Current capacity: Works for typical databases (<100MB)
-- Limit: Large databases will exhaust Node.js heap memory during export
-- Scaling path: Stream archive to disk first, then serve; implement incremental export chunks
+**Fixed 100-Item Search Result Limit:**
+- Current capacity: 100 items per search query
+- Limit: Large inventory (10k+ items) cannot be fully searched; must use exact filters to narrow results
+- Scaling path: Implement pagination; add search result refinement; consider full-text search engine (Meilisearch, Elasticsearch)
+
+**No Database Indexes Beyond Primary Keys:**
+- Current capacity: Acceptable for <10k items
+- Limit: Queries on tote_location, owner, metadata_key will full-table scan
+- Scaling path: Add indexes on frequently filtered columns; add composite indexes for common search patterns
+
+---
 
 ## Dependencies at Risk
 
-**better-sqlite3 Native Binding:**
-- Risk: Requires compilation at install time. Version compatibility with Node.js/OS matters. Breaking changes in major versions.
-- Current: ^12.0.0
-- Impact: Build failures on new OS/Node versions, difficult upgrades
-- Migration plan: Monitor for updates, test major version upgrades in CI before deploying. Consider migration to pure-JS SQLite library (sql.js) if native binding becomes problematic
+**kemo-archiver Package:**
+- Risk: Custom/fork of archiver library; may not receive security updates; require import suppression
+- Files: `src/app/api/export/route.ts` (line 4 - eslint-disable for require)
+- Impact: ZIP export fails or corrupts if package has bugs; security issues in compression won't be patched
+- Migration plan: Switch to community-maintained `archiver` package; remove require suppression; use import instead
 
-**sharp Image Processing:**
-- Risk: Complex native dependency. HEIC/AVIF support varies by OS. Breaking API changes.
-- Current: ^0.34.0
-- Impact: Image processing failures on some systems, thumbnail generation hangs
-- Migration plan: Add timeout for sharp operations, implement fallback image server, test with variety of image formats in CI
+**No Version Locking on Non-Pinned Dependencies:**
+- Risk: package.json uses `^` caret ranges (e.g., `^16.0.0` for Next.js); minor version updates could introduce breaking changes
+- Files: `package.json` (all dependencies)
+- Impact: Unexpected behavior after install; builds may fail silently
+- Migration plan: Evaluate each dependency update before upgrading; consider using `yarn --exact` or npm lockfile only; add test coverage to catch regressions
 
-**kemo-archiver Custom Package:**
-- Risk: Custom archiver package with fewer users and less maintenance than industry-standard archiver library
-- Current: ^7.0.0
-- Impact: Bugs may not be discovered, no security patches guaranteed, limited community support
-- Migration plan: Consider switching to npm `archiver` package (more popular), verify export/import still works
+**better-sqlite3 Requires Native Compilation:**
+- Risk: Requires build tools; may fail in CI/CD or different architectures
+- Files: `src/lib/db.ts` (import), `package.json` (dependency)
+- Impact: Deployment fails on platforms without build tools; Docker builds must include compiler
+- Migration plan: Use pre-built binaries or Docker base images with build tools; consider SQL.js (pure JS) for browser support
 
-## Missing Critical Features
-
-**No Audit Logging:**
-- Problem: No record of who did what when. Import/export happens silently. Item modifications don't track who changed it.
-- Blocks: Compliance requirements, security investigation, undo functionality
-- Solution: Add audit table with user ID (once auth added), action type, timestamp, before/after snapshots
-
-**No Concurrent User Session Management:**
-- Problem: If multiple users/tabs access same tote, last-write-wins on updates. No locking, no conflict resolution.
-- Blocks: Multi-user collaboration, data consistency
-- Solution: Add optimistic locking with version numbers, or pessimistic locking with transaction coordination
-
-**No Data Validation on Import:**
-- Problem: Foreign keys disabled during import (line 123), so invalid references could be imported
-- Blocks: Data integrity, referential consistency
-- Solution: Add pre-import validation that checks all FKs resolve before committing
-
-**No Rate Limiting on API:**
-- Problem: No throttling on API endpoints. Bulk operations (import) unbounded.
-- Blocks: DOS protection, fair resource usage
-- Solution: Implement rate limiting middleware per endpoint, especially import/export/upload
+---
 
 ## Test Coverage Gaps
 
-**API Route Error Handling Not Tested:**
-- What's not tested: What happens when database connection fails mid-transaction, when file system is full, when uploaded file is corrupted
-- Files: All files in `src/app/api/**/*.ts`
-- Risk: Error paths untested, unhandled exceptions could crash server, error messages to users may not be informative
-- Priority: High - critical paths (CRUD, import/export) should have error case tests
+**Untested Area: Photo Upload Validation:**
+- What's not tested: File type validation, file size validation, MIME type handling, corrupt file handling
+- Files: `src/app/api/items/[id]/photos/route.ts` (lines 46-61)
+- Risk: Invalid files could cause crashes; malformed images could break thumbnail generation
+- Priority: **High** - directly handles user input
 
-**Import/Export Round-trip Integrity:**
-- What's not tested: Export data, modify database, re-import, verify data identical. Partial file corruption scenarios. Large dataset export.
+**Untested Area: Import/Export Data Integrity:**
+- What's not tested: Round-trip export->import preserves all data; ZIP file corruption handling; partial import failure scenarios
 - Files: `src/app/api/export/route.ts`, `src/app/api/import/route.ts`
-- Risk: Data corruption undetected until customer tries to use exported backup. File extraction failures silent.
-- Priority: High - data integrity is critical
+- Risk: Data loss on export/import cycle; corrupted backups not detected
+- Priority: **High** - core backup functionality
 
-**UI Component State Transitions:**
-- What's not tested: Modal dialogs, form validation, async operation sequences (upload then submit form)
-- Files: `src/app/totes/[id]/page.tsx`, `src/app/totes/[id]/items/[itemId]/page.tsx`
-- Risk: UI bugs, broken workflows, race conditions in async operations
-- Priority: Medium - affects user experience
+**Untested Area: Database Schema Validation:**
+- What's not tested: Schema check endpoint accuracy; missing table handling; schema version migration
+- Files: `src/app/api/schema-check/route.ts` (not fully reviewed)
+- Risk: Schema mismatches not detected; migrations could fail silently
+- Priority: **Medium** - affects data consistency
 
-**Search Query Combinations:**
-- What's not tested: Different combinations of search filters (metadata + owner + location), boundary conditions (empty results, special characters), SQL injection attempts
-- Files: `src/app/api/search/route.ts`
-- Risk: Incorrect results, potential injection vulnerabilities
-- Priority: Medium - search accuracy critical for usability
+**Untested Area: Search Query Generation:**
+- What's not tested: SQL injection resistance; complex filter combinations; special characters in search terms
+- Files: `src/app/api/search/route.ts` (lines 6-97)
+- Risk: Malformed queries could expose data or cause crashes
+- Priority: **High** - public search endpoint
 
-**Database Transaction Rollback Scenarios:**
-- What's not tested: What happens when transaction fails mid-way, constraint violations, locking scenarios
-- Files: `src/lib/db.ts`, all API routes with transactions
-- Risk: Data inconsistency, orphaned records
-- Priority: High - affects data integrity
+**Untested Area: Concurrent Operations:**
+- What's not tested: Simultaneous photo uploads to same item; concurrent item edits; concurrent exports
+- Files: All API routes
+- Risk: Race conditions, data corruption, WAL lock contention
+- Priority: **High** - multi-user scenarios
+
+**Untested Area: Error Recovery:**
+- What's not tested: Handling of corrupted database; recovery from disk full; permission denied on file operations
+- Files: All API routes and `src/lib/db.ts`
+- Risk: Silent failures, orphaned data, inconsistent state
+- Priority: **Medium** - operational resilience
 
 ---
 

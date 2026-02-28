@@ -5,271 +5,201 @@
 ## Directory Layout
 
 ```
-tote-sonar/
-├── src/
-│   ├── app/                          # Next.js App Router - pages and API routes
-│   │   ├── api/                      # RESTful API route handlers
-│   │   │   ├── dashboard/            # Dashboard metrics
-│   │   │   ├── export/               # Data export to ZIP
-│   │   │   ├── health/               # Health check status
-│   │   │   ├── import/               # Data import from ZIP
-│   │   │   ├── items/                # Item resource operations
-│   │   │   │   └── [id]/             # Individual item detail and updates
-│   │   │   │       ├── metadata/     # Item metadata operations
-│   │   │   │       ├── photos/       # Photo upload and listing
-│   │   │   │       ├── move/         # Move item between totes
-│   │   │   │       └── duplicate/    # Duplicate item
-│   │   │   ├── metadata-keys/        # Available metadata key suggestions
-│   │   │   ├── photos/               # Photo retrieval and deletion
-│   │   │   │   └── [id]/
-│   │   │   │       └── thumbnail/    # Thumbnail serving
-│   │   │   ├── schema-check/         # Database schema validation
-│   │   │   ├── search/               # Search items and get filters
-│   │   │   │   └── filters/          # Available location, owner, metadata keys
-│   │   │   ├── settings/             # App settings CRUD
-│   │   │   └── totes/                # Tote resource operations
-│   │   │       ├── qr/               # QR code generation
-│   │   │       └── [id]/             # Individual tote detail and updates
-│   │   │           ├── items/        # Items in specific tote
-│   │   │           └── qr/           # QR for specific tote
-│   │   │
-│   │   ├── (public pages)/           # User-facing routes
-│   │   │   ├── page.tsx              # Dashboard homepage
-│   │   │   ├── import-export/        # Import/export UI
-│   │   │   ├── search/               # Search UI with filters
-│   │   │   ├── settings/             # Settings UI
-│   │   │   ├── totes/                # Totes list and detail
-│   │   │   │   ├── page.tsx          # List all totes
-│   │   │   │   ├── [id]/             # Tote detail page
-│   │   │   │   │   └── items/        # Items in tote
-│   │   │   │   │       └── [itemId]/ # Item detail page
-│   │   │   │   └── items/            # Redirect container
-│   │   │   │       └── [id]/         # Item detail (alt route)
-│   │   │   ├── layout.tsx            # Root layout with Navigation
-│   │   │   ├── globals.css           # Global styles
-│   │   │   └── not-found.tsx         # 404 page
-│   │   │
-│   │   ├── layout.tsx                # Root layout wrapper
-│   │   └── page.tsx                  # Homepage/Dashboard
-│   │
-│   ├── components/                   # Reusable React components
-│   │   ├── Navigation.tsx            # Top navigation bar with search
-│   │   ├── Breadcrumb.tsx            # Breadcrumb navigation
-│   │   └── ErrorDisplay.tsx          # Error state component with retry
-│   │
-│   ├── lib/                          # Utility functions and helpers
-│   │   └── db.ts                     # SQLite connection, schema, initialization
-│   │
-│   └── types/                        # TypeScript type definitions
-│       └── index.ts                  # All domain models and interfaces
+/Users/kenmoini/Development/tote-sonar/
+├── src/                          # Application source code
+│   ├── app/                       # Next.js App Router pages and API routes
+│   │   ├── page.tsx               # Dashboard page (/)
+│   │   ├── layout.tsx             # Root layout with Navigation wrapper
+│   │   ├── globals.css            # Global styles
+│   │   ├── not-found.tsx          # 404 page
+│   │   ├── api/                   # REST API routes
+│   │   │   ├── dashboard/         # Dashboard data endpoint
+│   │   │   ├── totes/             # Tote CRUD and QR generation
+│   │   │   ├── items/             # Item CRUD, move, duplicate
+│   │   │   ├── photos/            # Photo serving (thumbnail/original)
+│   │   │   ├── search/            # Search items with filters
+│   │   │   ├── settings/          # Get/update application settings
+│   │   │   ├── metadata-keys/     # Fetch unique metadata key names
+│   │   │   ├── import/            # Bulk import JSON data
+│   │   │   ├── export/            # Export all data as JSON/ZIP
+│   │   │   ├── health/            # Health check endpoint
+│   │   │   └── schema-check/      # Database schema verification
+│   │   ├── totes/                 # Tote pages
+│   │   │   ├── page.tsx           # Totes list and create form
+│   │   │   └── [id]/              # Tote detail view
+│   │   │       ├── page.tsx       # Tote detail with items list
+│   │   │       └── items/[itemId]/ # Item detail view
+│   │   ├── items/[id]/            # Item detail alternate route
+│   │   │   └── page.tsx
+│   │   ├── search/                # Search results page
+│   │   │   └── page.tsx
+│   │   ├── import-export/         # Import/export UI
+│   │   │   └── page.tsx
+│   │   └── settings/              # Settings page
+│   │       └── page.tsx
+│   ├── components/                # Reusable React components
+│   │   ├── Navigation.tsx         # Top nav bar with logo, links, search
+│   │   ├── Breadcrumb.tsx         # Navigation breadcrumb trail
+│   │   └── ErrorDisplay.tsx       # Error state UI with retry button
+│   ├── lib/                       # Utility modules
+│   │   └── db.ts                  # Database connection, schema, helpers
+│   └── types/                     # TypeScript type definitions
+│       └── index.ts               # Centralized interfaces (Tote, Item, etc.)
 │
-├── data/                             # Runtime data directory (generated)
-│   ├── tote-sonar.db                 # SQLite database file
-│   ├── uploads/                      # Full-size uploaded photos
-│   └── thumbnails/                   # Generated thumbnail images
+├── data/                          # Runtime data directory (created if missing)
+│   ├── tote-sonar.db              # SQLite database file (created at startup)
+│   ├── uploads/                   # Original uploaded photos
+│   └── thumbnails/                # Generated thumbnail images
 │
-├── .github/
-│   └── workflows/                    # GitHub Actions CI/CD
+├── node_modules/                  # Dependencies (115 packages at build time)
+├── .next/                         # Next.js build output
 │
-├── public/                           # Static assets (if any)
-│
-├── .planning/
-│   └── codebase/                     # This analysis output
-│
-├── node_modules/                     # Dependencies (generated)
-│
-├── .next/                            # Next.js build output (generated)
-│
-├── package.json                      # Dependencies and scripts
-├── tsconfig.json                     # TypeScript configuration
-├── next.config.mjs                   # Next.js configuration
-├── Dockerfile                        # Container image definition
-├── init.sh                           # Database initialization script
-└── README.md                         # Project documentation
+├── package.json                   # Dependencies and scripts
+├── package-lock.json              # Locked dependency versions
+├── tsconfig.json                  # TypeScript configuration
+├── next.config.mjs                # Next.js configuration
+├── renovate.json                  # Dependency update config
+├── Dockerfile                     # Docker image definition
+├── init.sh                        # Startup script for initialization
+├── setup-test-data.js             # Script to populate test data
+├── README.md                      # Project documentation
+├── LICENSE                        # License file
+└── .gitignore                     # Git ignore rules
 ```
 
 ## Directory Purposes
 
-**src/app:**
-- Purpose: Next.js App Router pages and API routes
-- Contains: Page components, layout wrappers, route handlers (route.ts)
-- Key files: `layout.tsx` (root layout), `page.tsx` (homepage), `globals.css` (styling)
+**`src/app/`:**
+- Purpose: Next.js App Router directory; defines all pages and API routes
+- Contains: Page components (`.tsx` with `export default`), layout wrappers, API route handlers (`route.ts`)
+- Key files: `page.tsx` (entry pages), `layout.tsx` (layout component), `route.ts` (API handlers)
 
-**src/app/api:**
-- Purpose: RESTful API endpoints
-- Contains: Next.js route handlers responding to HTTP requests
-- Key files: Each subdirectory has `route.ts` implementing GET, POST, PUT, DELETE
-- Pattern: Organized by resource (totes, items, photos, search, settings)
+**`src/app/api/`:**
+- Purpose: REST API endpoint definitions
+- Contains: Route handlers (POST, GET, PUT, DELETE) for each resource
+- Organization: Subdirectories by resource type (totes, items, photos, search, etc.); `[id]` denotes dynamic segments
 
-**src/components:**
-- Purpose: Reusable UI components
-- Contains: React functional components (all using 'use client')
-- Key files: `Navigation.tsx` (main nav bar), `ErrorDisplay.tsx` (error states)
+**`src/components/`:**
+- Purpose: Reusable React components shared across pages
+- Contains: Navigation header, breadcrumb nav, error display
+- Pattern: Each component is a `.tsx` file exporting a React component
 
-**src/lib:**
-- Purpose: Core utility functions and configuration
-- Contains: Database initialization, schema, helper functions
-- Key files: `db.ts` (SQLite initialization, getDb, generateToteId)
+**`src/lib/`:**
+- Purpose: Utility modules for shared logic
+- Contains: Database operations, helpers, constants
+- Key file: `db.ts` (singleton database connection, schema initialization, ID generation)
 
-**src/types:**
-- Purpose: Centralized TypeScript type definitions
-- Contains: Domain interfaces (Tote, Item, ItemPhoto, etc.)
-- Key files: `index.ts` (all types)
+**`src/types/`:**
+- Purpose: TypeScript interface definitions for type safety
+- Contains: Data models (Tote, Item, ItemMetadata, etc.), API response shapes, enums
+- Key file: `index.ts` (all types exported from single module)
 
-**data/:**
-- Purpose: Runtime data storage (generated at startup)
-- Contains: SQLite database, uploaded photos, thumbnails
-- Not committed to git, created automatically
+**`data/`:**
+- Purpose: Runtime data storage (created automatically on startup)
+- Contains: SQLite database file, photo uploads, thumbnail images
+- Ignored in git; persists between restarts if using Docker volume mount
 
 ## Key File Locations
 
 **Entry Points:**
-
-- `src/app/layout.tsx`: Root HTML layout, imports Navigation component
-- `src/app/page.tsx`: Dashboard homepage (/), shows metrics and recent items
-- `src/app/totes/page.tsx`: List all totes (/totes), create modal, bulk selection
-- `src/app/search/page.tsx`: Search interface (/search)
-- `src/app/items/[id]/page.tsx`: Item detail view (/items/:id)
-
-**API Endpoints:**
-
-- `src/app/api/totes/route.ts`: GET (list all), POST (create tote)
-- `src/app/api/totes/[id]/route.ts`: GET (detail), PUT (update), DELETE (remove)
-- `src/app/api/totes/[id]/items/route.ts`: GET (list items in tote), POST (add item)
-- `src/app/api/items/[id]/route.ts`: GET (detail), PUT (update), DELETE (remove)
-- `src/app/api/items/[id]/photos/route.ts`: POST (upload photo), GET (list photos)
-- `src/app/api/items/[id]/metadata/route.ts`: POST (add metadata), GET (list metadata)
-- `src/app/api/search/route.ts`: GET (search items by query/filters)
-- `src/app/api/search/filters/route.ts`: GET (available location/owner/metadata keys)
-- `src/app/api/dashboard/route.ts`: GET (dashboard metrics)
-- `src/app/api/export/route.ts`: GET (download ZIP with all data and photos)
-- `src/app/api/import/route.ts`: POST (upload ZIP to restore data)
-- `src/app/api/health/route.ts`: GET (database connectivity check)
-- `src/app/api/settings/route.ts`: GET (read all settings), POST (update setting)
+- `src/app/page.tsx`: Dashboard landing page
+- `src/app/layout.tsx`: Root layout with Navigation component
+- `src/app/api/dashboard/route.ts`: Dashboard data API endpoint
 
 **Configuration:**
-
-- `src/lib/db.ts`: Database initialization, schema creation, utility exports
-- `src/types/index.ts`: All TypeScript interfaces for data models
-- `tsconfig.json`: TypeScript compiler options, path aliases (@/*)
-- `package.json`: Dependencies, scripts, version info
-- `next.config.mjs`: Next.js runtime configuration
+- `package.json`: Dependencies (Next.js, React, better-sqlite3, sharp, qrcode, etc.)
+- `tsconfig.json`: TypeScript compiler options and path aliases
+- `next.config.mjs`: Next.js configuration (minimal setup)
+- `src/lib/db.ts`: Database path configuration via `DATA_DIR` env var
 
 **Core Logic:**
-
-- `src/components/Navigation.tsx`: Top nav bar with search input, mobile menu, navigation links
-- `src/components/ErrorDisplay.tsx`: Reusable error display with retry button
-- `src/app/totes/page.tsx`: Tote listing with sorting, filtering, bulk operations
+- `src/lib/db.ts`: Database initialization, schema, utilities (generateToteId, getUploadDir, getThumbnailDir)
+- `src/app/api/totes/route.ts`: GET all totes, POST create tote
+- `src/app/api/items/[id]/route.ts`: GET item with metadata/photos, PUT update, DELETE item
+- `src/app/api/items/[id]/photos/route.ts`: POST photo upload, GET photo list
+- `src/app/api/search/route.ts`: Search items across name, description, metadata
 
 **Testing:**
-
-- No test files present in codebase
-- No test runner configured (Jest, Vitest not installed)
+- `setup-test-data.js`: Script to populate database with test data
+- No automated test files detected (manual testing assumed)
 
 ## Naming Conventions
 
 **Files:**
-
-- Page components: `page.tsx` (in Next.js route directories)
-- API route handlers: `route.ts` (in Next.js api route directories)
-- Components: PascalCase.tsx (e.g., `Navigation.tsx`, `ErrorDisplay.tsx`)
-- Utilities: camelCase.ts (e.g., `db.ts`)
-- Types: `index.ts` in types/ directory
-- Database: `tote-sonar.db`
-- Image files: UUID-based hex strings with extension (e.g., `a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6.jpg`)
-- Thumbnails: `thumb_` prefixed (e.g., `thumb_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6.jpg`)
+- Page components: `page.tsx` (lowercase, no export function name needed)
+- API routes: `route.ts` (lowercase, exports GET/POST/PUT/DELETE functions)
+- Components: PascalCase (e.g., `Navigation.tsx`, `ErrorDisplay.tsx`)
+- Types: `index.ts` in `types/` directory
+- Styles: `globals.css` for global styles; scoped CSS via component-level classes
 
 **Directories:**
-
-- API routes: Lowercase with optional [param] for dynamic segments (e.g., `totes/[id]/items`)
-- Pages: Lowercase or [param] for dynamic routes (e.g., `search`, `settings`, `totes`)
-- Components: PascalCase grouping (e.g., `components/`)
-- Utilities: `lib/` for core functions, `types/` for TypeScript definitions
-- Data: `data/` for runtime storage (uploads, thumbnails, database)
+- Dynamic segments: `[id]`, `[itemId]` (square brackets for URL parameters)
+- Grouping: Flat structure under `api/` with subdirectories per resource
+- No `pages/` directory (uses Next.js 13+ App Router structure)
 
 **Functions:**
-
-- camelCase for all function names
-- Examples: `getDb()`, `generateToteId()`, `handleCreateTote()`, `performSearch()`, `fetchDashboard()`
-- Async functions follow same convention (no Async suffix)
+- API handlers: Named exports (GET, POST, PUT, DELETE)
+- Database utilities: camelCase (getDb, generateToteId, getUploadDir)
+- Components: Default export of React component with PascalCase name
 
 **Variables:**
+- State: camelCase (e.g., `totes`, `showCreateForm`, `selectedTotes`)
+- Types: PascalCase (e.g., `Tote`, `Item`, `DashboardData`)
+- Constants: UPPER_SNAKE_CASE (e.g., `ALLOWED_TYPES`, `THUMBNAIL_WIDTH`)
 
-- camelCase for all variables and state
-- Examples: `formName`, `selectedTotes`, `bulkQrLabels`, `sortBy`, `metadataKeyFilter`
-- Boolean prefixes: `is*`, `has*`, `show*` (e.g., `isSelected`, `hasSearched`, `showCreateForm`)
-
-**Type Names:**
-
-- PascalCase for all interfaces (e.g., `Tote`, `Item`, `ItemPhoto`, `CreateToteInput`)
-- Input types suffix: `Input` (e.g., `CreateToteInput`, `UpdateItemInput`)
-- Derived types inherit pattern: `ToteWithCount`, `SearchResult`, `DashboardData`
+**Database:**
+- Tables: snake_case (totes, items, item_photos, item_metadata, item_movement_history, metadata_keys, settings)
+- Columns: snake_case (id, created_at, updated_at, tote_id, file_size, mime_type)
+- Foreign keys: follow column name (e.g., `tote_id` references `totes.id`)
 
 ## Where to Add New Code
 
-**New Feature (e.g., add tags to items):**
+**New Feature (e.g., "Add comments to items"):**
+- Primary code:
+  - Add `comments` table to schema in `src/lib/db.ts`
+  - Create API route `src/app/api/items/[id]/comments/route.ts`
+  - Add Comment interface to `src/types/index.ts`
+  - Create/update page component in `src/app/totes/[id]/items/[itemId]/page.tsx` or `src/app/items/[id]/page.tsx`
+- Tests: Create test data in `setup-test-data.js` if needed
 
-1. **Define types:** Add to `src/types/index.ts` (e.g., `ItemTag` interface, `CreateTagInput`)
-2. **Create API endpoints:**
-   - List tags: `src/app/api/items/[id]/tags/route.ts` with GET handler
-   - Create tag: `src/app/api/items/[id]/tags/route.ts` POST handler
-   - Delete tag: `src/app/api/items/[id]/tags/[tagId]/route.ts` DELETE handler
-3. **Update database:** Modify schema in `src/lib/db.ts` initializeSchema() function to create tags table with foreign keys
-4. **Update pages:** Modify relevant page (e.g., `src/app/items/[id]/page.tsx`) to fetch tags and render tag UI
-5. **Add components:** Create `src/components/TagInput.tsx` if complex tag input needed
-6. **Test:** Add manual testing notes to code comments
+**New Component/Module:**
+- Implementation: `src/components/YourComponent.tsx` (reusable across pages)
+- Or: Create component inline in page if only used once
+- Import: Use path alias `@/components/YourComponent`
 
-**New Page/Section:**
+**New API Endpoint:**
+- Location: `src/app/api/{resource}/route.ts` (if top-level) or `src/app/api/{resource}/[id]/route.ts` (if sub-resource)
+- Pattern:
+  1. Define handler function (GET, POST, PUT, DELETE)
+  2. Extract params via `params: Promise<{ id }>` if dynamic
+  3. Validate input (required fields, types)
+  4. Query database via `getDb().prepare(sql).run/get/all()`
+  5. Return `NextResponse.json()` with data or error
 
-1. Create directory under `src/app/` (e.g., `src/app/analytics/`)
-2. Add `page.tsx` with 'use client' directive
-3. Fetch data from appropriate API endpoint (create if needed)
-4. Import and use shared components (Navigation via layout inheritance)
-5. Add styling via CSS classes (global stylesheet in `src/app/globals.css`)
+**Utilities:**
+- Shared helpers: `src/lib/` directory (e.g., `src/lib/format.ts` for date formatting)
+- Database operations: Keep in `src/lib/db.ts` or create separate `src/lib/queries.ts`
 
-**New Component:**
-
-1. Create file in `src/components/YourComponent.tsx`
-2. Use 'use client' directive at top (all components are client components)
-3. Import icons from lucide-react as needed
-4. Export as default function
-5. Import in pages where needed
-
-**Utility Function:**
-
-1. Add to `src/lib/db.ts` if database-related (e.g., query helpers)
-2. Create new file `src/lib/yourUtility.ts` if general purpose
-3. Export named functions or default export
-4. Import in components/pages with `import { func } from '@/lib/yourUtility'`
-
-**New API Endpoint (e.g., statistics):**
-
-1. Create directory: `src/app/api/statistics/`
-2. Create `route.ts` with handler function: `export async function GET(request: NextRequest)`
-3. Retrieve data via `getDb()` prepared statements
-4. Return `NextResponse.json({ data: {...} })` or error responses
-5. Update types in `src/types/index.ts` if returning new data shapes
-6. Call from page via `fetch('/api/statistics')`
+**Type Definitions:**
+- New types: Add to `src/types/index.ts`
+- Use consistent naming: `{Entity}`, `Create{Entity}Input`, `Update{Entity}Input`
 
 ## Special Directories
 
-**data/:**
-- Purpose: Runtime storage for database and uploaded files
-- Generated: Yes - created at first startup by `src/lib/db.ts`
-- Committed: No - in .gitignore
-- Cleanup: Delete entire directory to reset application state
+**`src/app/api/[id]/` dynamic segments:**
+- Purpose: Handle parameterized API routes
+- Generated: No, manually created with square bracket names
+- Committed: Yes, part of source code
 
-**.next/:**
-- Purpose: Next.js build output and cache
-- Generated: Yes - created by `npm run build`
-- Committed: No - in .gitignore
-- Cleanup: Safe to delete, regenerated on build
+**`data/` directory:**
+- Purpose: Runtime data storage
+- Generated: Yes, created at startup if missing
+- Committed: No, ignored via `.gitignore`
 
-**node_modules/:**
-- Purpose: Installed npm dependencies
-- Generated: Yes - created by `npm install`
-- Committed: No - in .gitignore
-- Cleanup: Safe to delete, reinstall with `npm install`
+**`.next/` build directory:**
+- Purpose: Next.js build artifacts
+- Generated: Yes, created via `npm run build`
+- Committed: No, ignored via `.gitignore`
 
 ---
 

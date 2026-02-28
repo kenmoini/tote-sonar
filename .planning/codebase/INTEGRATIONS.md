@@ -4,142 +4,133 @@
 
 ## APIs & External Services
 
-**QR Code Generation:**
-- qrcode library - Generates QR codes for tote identification
-  - SDK/Client: `qrcode` package v1.5.0
-  - No external API - local generation only
-  - Output formats: PNG images or data URLs
-  - Routes: `src/app/api/totes/[id]/qr/route.ts`, `src/app/api/totes/qr/bulk/route.ts`
+**None configured.**
 
-**Image Processing:**
-- sharp library - Processes uploaded images
-  - SDK/Client: `sharp` package v0.34.0
-  - No external API - local processing only
-  - Features: EXIF auto-rotation, thumbnail generation (200x200px)
-  - Route: `src/app/api/items/[id]/photos/route.ts`
+The application is fully self-contained and does not integrate with third-party APIs or external services.
 
 ## Data Storage
 
 **Databases:**
 - SQLite 3 (file-based)
-  - Connection: File path at `[DATA_DIR]/tote-sonar.db`
-  - Client: better-sqlite3 (synchronous, native binding)
-  - Implementation file: `src/lib/db.ts`
-  - Pragmas: WAL mode, foreign keys ON, synchronous FULL
-  - Schema auto-initialized on connection
+  - Connection: Local file at `{DATA_DIR}/tote-sonar.db` (defaults to `./data/tote-sonar.db`)
+  - Client: better-sqlite3 (synchronous embedded database)
+  - Location: `src/lib/db.ts` - database initialization and schema
+  - Access pattern: Synchronous queries with prepared statements
 
 **File Storage:**
 - Local filesystem only
-  - Original photo uploads: `[DATA_DIR]/uploads/`
-  - Generated thumbnails: `[DATA_DIR]/thumbnails/`
-  - No cloud storage integration
-  - File management: Node.js `fs` module direct access
+  - Uploads: `{DATA_DIR}/uploads/` - Original images uploaded by users
+  - Thumbnails: `{DATA_DIR}/thumbnails/` - Generated 200x200px thumbnails
+  - Both directories created automatically by `getDb()` in `src/lib/db.ts`
+  - File management: Handled by standard Node.js `fs` module
 
 **Caching:**
-- None - Direct database queries on each request
-- Next.js does not cache API routes with dynamic parameters
+- In-memory database connection cached globally via `globalThis.__tote_sonar_db`
+  - Located in: `src/lib/db.ts`
+  - Persists across Next.js HMR reloads in development
 
 ## Authentication & Identity
 
 **Auth Provider:**
-- None - Application is unauthenticated
-- No user sessions, login, or permission layers
-- Direct access to all data via API endpoints
+- None - Application has no authentication or user isolation
+  - Single-user or shared-access model only
+  - No login system or API authentication required
+  - All endpoints accept requests without credentials
 
 ## Monitoring & Observability
 
 **Error Tracking:**
-- None detected - No integration with error tracking services (Sentry, etc.)
-- All errors logged to console via `console.error()`
+- None configured
 
 **Logs:**
-- stdout/stderr only
-  - Database connection status logged on `getDb()` initialization
-  - Export/import operation errors logged
-  - Photo upload errors logged
-  - QR generation errors logged
-  - No structured logging or log aggregation
+- Console logging only via `console.log()` and `console.error()`
+  - Database connection status logged on init
+  - Schema initialization status logged on init
+  - Error messages logged to console in API routes
+  - No persistent logging or log aggregation
 
 ## CI/CD & Deployment
 
 **Hosting:**
-- Containerized via Docker (Dockerfile at project root)
-- Standalone Next.js application (output: 'standalone')
-- Runs as non-root user `tote-sonar` (uid 1001) in production
-- Exposes port 3000
+- Docker (self-hosted or container registry compatible)
+- Multi-stage Docker build: base (build) and runner (production)
+- Standalone Next.js output for minimal dependencies in production container
+- Non-root user execution (uid 1001, gid 1001)
+- Data volume mount at `/app/data` for persistence
 
 **CI Pipeline:**
-- Renovate bot configured for dependency updates (`renovate.json`)
-  - Schedule: daily
-  - Auto-merges minor/patch updates for npm and GitHub Actions
-  - npm v8 constraint enforced
-  - NVM and npm managers configured
-
-**Deployment Model:**
-- Docker multi-stage build:
-  1. Base stage: Installs build dependencies (python3, make, g++, vips-dev)
-  2. Build stage: Compiles Next.js to standalone output
-  3. Runner stage: Copies only necessary artifacts to clean Alpine image
+- None detected - no GitHub Actions, GitLab CI, or similar configured
+- Renovate.json present for automated dependency updates (configuration in `/Users/kenmoini/Development/tote-sonar/renovate.json`)
 
 ## Environment Configuration
 
 **Required env vars:**
-- `DATA_DIR` - Path to persistent data directory (optional, defaults to `./data`)
-- `PORT` - HTTP server port (optional, defaults to 3000)
-- `HOSTNAME` - HTTP server bind address (optional, defaults to 0.0.0.0)
-- `NODE_ENV` - Set to `production` in Docker image
-- `NEXT_TELEMETRY_DISABLED` - Set to 1 in Docker image to disable Next.js telemetry
+- `DATA_DIR` - Optional, defaults to `./data` (directory path for database and uploads)
 
-**Application-level configuration:**
-- Stored in SQLite `settings` table, not environment variables
-- Configurable via `/api/settings` endpoint:
-  - `server_hostname` - Base URL for QR codes (defaults to `http://localhost:3000`)
-  - `max_upload_size` - Maximum file upload size in bytes (defaults to 5242880 = 5MB)
-  - `default_tote_fields` - JSON array of default tote fields
-  - `default_metadata_keys` - JSON array of default metadata keys
-  - `theme` - UI theme preference (defaults to `light`)
+**Optional env vars:**
+- `NODE_ENV` - Set to "production" in Docker
+- `NEXT_TELEMETRY_DISABLED` - Set to 1 in Docker to disable telemetry
+- `PORT` - Server port (defaults to 3000)
+- `HOSTNAME` - Bind address (defaults to 0.0.0.0 in Docker)
+
+**No secrets stored in env vars:**
+- Application stores configuration in SQLite settings table
+- Server hostname, upload size limits, theme preferences, metadata keys stored in database
+- See `src/lib/db.ts` lines 114-122 for default settings initialization
 
 **Secrets location:**
-- No secrets management - application is self-contained
-- No API keys, database credentials, or authentication tokens
-- Suitable for single-user or trusted-network deployments
-
-## Data Import/Export
-
-**Export Endpoint:**
-- `GET /api/export` - Downloads complete backup as ZIP
-  - Contains: `tote-sonar-data.json` (all database tables), `/uploads/` (photos), `/thumbnails/` (thumbnails)
-  - Format: kemo-archiver ZIP with zlib compression level 6
-  - Filename format: `tote-sonar-export-YYYY-MM-DD.zip`
-
-**Import Endpoint:**
-- `POST /api/import` - Restores complete backup from ZIP
-  - Accepts: ZIP files in export format
-  - Validation: Checks for required JSON structure and data tables
-  - Transaction model: Atomic - all-or-nothing import
-  - Photo extraction: Files copied from ZIP to `uploads/` and `thumbnails/` directories
+- No external secrets management - all data stored in local SQLite database
+- Database file (`tote-sonar.db`) contains all persistent application state
 
 ## Webhooks & Callbacks
 
 **Incoming:**
-- None detected
+- None - Application receives no webhooks
 
 **Outgoing:**
-- None detected
+- None - Application makes no external webhook calls
 
-## File Upload Constraints
+## File Format & Export
 
-**Photo Uploads:**
-- Endpoint: `POST /api/items/[id]/photos`
-- Allowed MIME types: `image/jpeg`, `image/png`, `image/webp`
-- Max file size: Configurable via settings (default 5MB)
-- Photo limit: Maximum 3 photos per item
-- Validation: Content-type check, file size check, item existence check
+**Export Format:**
+- ZIP archive containing:
+  - `tote-sonar-data.json` - Full JSON export of all database tables
+  - `uploads/` - Directory with original uploaded images
+  - `thumbnails/` - Directory with generated thumbnail images
+- Generated by: `src/app/api/export/route.ts`
+- Uses: kemo-archiver library with zlib compression level 6
 
-**Generated Files:**
-- Thumbnails: 200x200px, `cover` fit with center position crop
-- Filename generation: Crypto random hex (16 bytes) + extension
-- EXIF handling: Auto-rotation applied before resizing
+**Import Format:**
+- ZIP archive in same structure as export
+- Validates: JSON structure, required tables, file type
+- Restores: Complete database state via transaction with foreign key constraints temporarily disabled
+- Processed by: `src/app/api/import/route.ts`
+- Uses: adm-zip library
+
+## QR Code Generation
+
+**Service:**
+- Local server-side generation via qrcode library
+- No external QR code service API calls
+- Generated formats:
+  - PNG binary image: `src/app/api/totes/[id]/qr/route.ts`
+  - Data URL (base64 embedded): Query param `format=dataurl`
+- Configuration:
+  - Size: 300x300px
+  - Margin: 2 modules
+  - Error correction: Level M
+  - Colors: Black (#000000) on white (#ffffff)
+
+## Image Processing
+
+**Library:**
+- sharp (libvips-based image processor)
+- Processes:
+  - Auto-rotation based on EXIF data (fixes mobile photos)
+  - Thumbnail generation: 200x200px, cover crop, center position
+  - Supported formats: JPEG, PNG, WebP
+  - Max upload size: 5MB (configurable via settings)
+- Location: `src/app/api/items/[id]/photos/route.ts` lines 84-87
 
 ---
 
