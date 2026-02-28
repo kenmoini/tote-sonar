@@ -84,7 +84,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Correctness and Safety | 0/2 | Planning complete | - |
+| 1. Correctness and Safety | 1/2 | In Progress | - |
 | 2. Tote Photos | 0/0 | Not started | - |
 | 3. Page Decomposition | 0/0 | Not started | - |
 | 4. Performance | 0/0 | Not started | - |

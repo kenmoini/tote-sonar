@@ -19,9 +19,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Bug Fixes
 
-- [ ] **BUGS-01**: Search with both name/description and metadata filters produces correct SQL
-- [ ] **BUGS-02**: Import failure re-enables foreign keys regardless of error state
-- [ ] **BUGS-03**: Photo file deletion failures are handled gracefully (no orphaned files on item/tote delete)
+- [x] **BUGS-01**: Search with both name/description and metadata filters produces correct SQL
+- [x] **BUGS-02**: Import failure re-enables foreign keys regardless of error state
+- [x] **BUGS-03**: Photo file deletion failures are handled gracefully (no orphaned files on item/tote delete)
 
 ### Input Validation
 
@@ -85,9 +85,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BUGS-01 | Phase 1 | Pending |
-| BUGS-02 | Phase 1 | Pending |
-| BUGS-03 | Phase 1 | Pending |
+| BUGS-01 | Phase 1 | Complete |
+| BUGS-02 | Phase 1 | Complete |
+| BUGS-03 | Phase 1 | Complete |
 | VALID-01 | Phase 1 | Pending |
 | VALID-02 | Phase 1 | Pending |
 | VALID-03 | Phase 1 | Pending |
