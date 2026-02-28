@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
+import { parseJsonBody, validateBody, IdParam, DuplicateItemSchema } from '@/lib/validation';
 
 // POST /api/items/:id/duplicate - Duplicate item within same or different tote
 export async function POST(
@@ -9,7 +10,16 @@ export async function POST(
   try {
     const { id } = await params;
     const db = getDb();
-    const itemId = Number(id);
+
+    // Validate ID is a positive integer
+    const idResult = IdParam.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid item ID. Must be a positive integer.' },
+        { status: 400 }
+      );
+    }
+    const itemId = idResult.data;
 
     // Check item exists
     const item = db.prepare(`
@@ -29,10 +39,15 @@ export async function POST(
     // Optionally accept a target_tote_id; default to the same tote
     let targetToteId = item.tote_id as string;
 
-    try {
-      const body = await request.json();
-      if (body.target_tote_id && typeof body.target_tote_id === 'string' && body.target_tote_id.trim()) {
-        const candidateId = body.target_tote_id.trim();
+    // Parse body - empty body or invalid JSON is fine (duplicate in same tote)
+    const parsed = await parseJsonBody(request);
+    if (parsed.data !== undefined) {
+      // Validate with Zod schema (only if we got valid JSON)
+      const validated = validateBody(parsed.data, DuplicateItemSchema);
+      if (validated.response) return validated.response;
+
+      if (validated.data.target_tote_id) {
+        const candidateId = validated.data.target_tote_id.trim();
         // Verify the target tote exists
         const targetTote = db.prepare('SELECT id FROM totes WHERE id = ?').get(candidateId);
         if (!targetTote) {
@@ -43,9 +58,9 @@ export async function POST(
         }
         targetToteId = candidateId;
       }
-    } catch {
-      // No body or invalid JSON is fine - duplicate in same tote
     }
+    // If parseJsonBody returned a response (invalid JSON), that's ok for duplicate -
+    // just duplicate in same tote with no body
 
     const now = new Date().toISOString().replace('T', ' ').replace('Z', '');
 

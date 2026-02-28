@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
+import { parseJsonBody, validateBody, UpdateSettingsSchema } from '@/lib/validation';
 
 // GET /api/settings - Get all settings
 export async function GET() {
@@ -30,15 +31,15 @@ export async function GET() {
 // PUT /api/settings - Update settings
 export async function PUT(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { settings } = body;
+    // Parse JSON body safely
+    const parsed = await parseJsonBody(request);
+    if (parsed.response) return parsed.response;
 
-    if (!settings || typeof settings !== 'object') {
-      return NextResponse.json(
-        { error: 'Settings object is required' },
-        { status: 400 }
-      );
-    }
+    // Validate with Zod schema
+    const validated = validateBody(parsed.data, UpdateSettingsSchema);
+    if (validated.response) return validated.response;
+
+    const { settings } = validated.data;
 
     const db = getDb();
     const updateStmt = db.prepare(

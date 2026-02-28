@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
+import { parseJsonBody, validateBody, IdParam, CreateMetadataSchema } from '@/lib/validation';
 
 // GET /api/items/:id/metadata - Get all metadata for an item
 export async function GET(
@@ -10,8 +11,18 @@ export async function GET(
     const { id } = await params;
     const db = getDb();
 
+    // Validate ID is a positive integer
+    const idResult = IdParam.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid item ID. Must be a positive integer.' },
+        { status: 400 }
+      );
+    }
+    const itemId = idResult.data;
+
     // Verify item exists
-    const item = db.prepare('SELECT id FROM items WHERE id = ?').get(Number(id));
+    const item = db.prepare('SELECT id FROM items WHERE id = ?').get(itemId);
     if (!item) {
       return NextResponse.json(
         { error: 'Item not found' },
@@ -21,7 +32,7 @@ export async function GET(
 
     const metadata = db.prepare(
       'SELECT * FROM item_metadata WHERE item_id = ? ORDER BY created_at DESC'
-    ).all(Number(id));
+    ).all(itemId);
 
     return NextResponse.json({ data: metadata });
   } catch (error) {
@@ -41,27 +52,29 @@ export async function POST(
   try {
     const { id } = await params;
     const db = getDb();
-    const body = await request.json();
 
-    const { key, value } = body;
-
-    // Validate required fields
-    if (!key || typeof key !== 'string' || key.trim() === '') {
+    // Validate ID is a positive integer
+    const idResult = IdParam.safeParse(id);
+    if (!idResult.success) {
       return NextResponse.json(
-        { error: 'Metadata key is required' },
+        { error: 'Invalid item ID. Must be a positive integer.' },
         { status: 400 }
       );
     }
+    const itemId = idResult.data;
 
-    if (!value || typeof value !== 'string' || value.trim() === '') {
-      return NextResponse.json(
-        { error: 'Metadata value is required' },
-        { status: 400 }
-      );
-    }
+    // Parse JSON body safely
+    const parsed = await parseJsonBody(request);
+    if (parsed.response) return parsed.response;
+
+    // Validate with Zod schema
+    const validated = validateBody(parsed.data, CreateMetadataSchema);
+    if (validated.response) return validated.response;
+
+    const body = validated.data;
 
     // Verify item exists
-    const item = db.prepare('SELECT id FROM items WHERE id = ?').get(Number(id));
+    const item = db.prepare('SELECT id FROM items WHERE id = ?').get(itemId);
     if (!item) {
       return NextResponse.json(
         { error: 'Item not found' },
@@ -69,13 +82,13 @@ export async function POST(
       );
     }
 
-    const trimmedKey = key.trim();
-    const trimmedValue = value.trim();
+    const trimmedKey = body.key.trim();
+    const trimmedValue = body.value.trim();
 
     // Insert the metadata entry
     const result = db.prepare(
       'INSERT INTO item_metadata (item_id, key, value) VALUES (?, ?, ?)'
-    ).run(Number(id), trimmedKey, trimmedValue);
+    ).run(itemId, trimmedKey, trimmedValue);
 
     // Also add the key to the metadata_keys table for autocomplete
     db.prepare(

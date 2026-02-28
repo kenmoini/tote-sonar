@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
+import { parseJsonBody, validateBody, IdParam, UpdateMetadataSchema } from '@/lib/validation';
 
 // PUT /api/items/:id/metadata/:metadataId - Update a metadata entry
 export async function PUT(
@@ -9,14 +10,39 @@ export async function PUT(
   try {
     const { id, metadataId } = await params;
     const db = getDb();
-    const body = await request.json();
 
-    const { key, value } = body;
+    // Validate both IDs are positive integers
+    const idResult = IdParam.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid item ID. Must be a positive integer.' },
+        { status: 400 }
+      );
+    }
+    const metaIdResult = IdParam.safeParse(metadataId);
+    if (!metaIdResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid metadata ID. Must be a positive integer.' },
+        { status: 400 }
+      );
+    }
+    const itemId = idResult.data;
+    const metaId = metaIdResult.data;
+
+    // Parse JSON body safely
+    const parsed = await parseJsonBody(request);
+    if (parsed.response) return parsed.response;
+
+    // Validate with Zod schema
+    const validated = validateBody(parsed.data, UpdateMetadataSchema);
+    if (validated.response) return validated.response;
+
+    const body = validated.data;
 
     // Verify the metadata entry exists and belongs to this item
     const existing = db.prepare(
       'SELECT * FROM item_metadata WHERE id = ? AND item_id = ?'
-    ).get(Number(metadataId), Number(id));
+    ).get(metaId, itemId);
 
     if (!existing) {
       return NextResponse.json(
@@ -29,19 +55,19 @@ export async function PUT(
     const updates: string[] = [];
     const values: (string | number)[] = [];
 
-    if (key !== undefined && typeof key === 'string' && key.trim() !== '') {
+    if (body.key !== undefined) {
       updates.push('key = ?');
-      values.push(key.trim());
+      values.push(body.key.trim());
 
       // Also add key to metadata_keys for autocomplete
       db.prepare(
         'INSERT OR IGNORE INTO metadata_keys (key_name) VALUES (?)'
-      ).run(key.trim());
+      ).run(body.key.trim());
     }
 
-    if (value !== undefined && typeof value === 'string' && value.trim() !== '') {
+    if (body.value !== undefined) {
       updates.push('value = ?');
-      values.push(value.trim());
+      values.push(body.value.trim());
     }
 
     if (updates.length === 0) {
@@ -52,7 +78,7 @@ export async function PUT(
     }
 
     updates.push("updated_at = datetime('now')");
-    values.push(Number(metadataId), Number(id));
+    values.push(metaId, itemId);
 
     db.prepare(
       `UPDATE item_metadata SET ${updates.join(', ')} WHERE id = ? AND item_id = ?`
@@ -60,7 +86,7 @@ export async function PUT(
 
     const updated = db.prepare(
       'SELECT * FROM item_metadata WHERE id = ?'
-    ).get(Number(metadataId));
+    ).get(metaId);
 
     return NextResponse.json({
       data: updated,
@@ -84,10 +110,26 @@ export async function DELETE(
     const { id, metadataId } = await params;
     const db = getDb();
 
+    // Validate both IDs are positive integers
+    const idResult = IdParam.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid item ID. Must be a positive integer.' },
+        { status: 400 }
+      );
+    }
+    const metaIdResult = IdParam.safeParse(metadataId);
+    if (!metaIdResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid metadata ID. Must be a positive integer.' },
+        { status: 400 }
+      );
+    }
+
     // Verify the metadata entry exists and belongs to this item
     const existing = db.prepare(
       'SELECT * FROM item_metadata WHERE id = ? AND item_id = ?'
-    ).get(Number(metadataId), Number(id));
+    ).get(metaIdResult.data, idResult.data);
 
     if (!existing) {
       return NextResponse.json(
@@ -98,7 +140,7 @@ export async function DELETE(
 
     db.prepare(
       'DELETE FROM item_metadata WHERE id = ? AND item_id = ?'
-    ).run(Number(metadataId), Number(id));
+    ).run(metaIdResult.data, idResult.data);
 
     return NextResponse.json({
       message: 'Metadata deleted successfully'

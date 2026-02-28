@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
+import { IdParam } from '@/lib/validation';
 import path from 'path';
 import fs from 'fs';
 
@@ -14,7 +15,17 @@ export async function GET(
     const { id } = await params;
     const db = getDb();
 
-    const photo = db.prepare('SELECT * FROM item_photos WHERE id = ?').get(Number(id)) as Record<string, unknown> | undefined;
+    // Validate ID is a positive integer
+    const idResult = IdParam.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid photo ID. Must be a positive integer.' },
+        { status: 400 }
+      );
+    }
+    const photoId = idResult.data;
+
+    const photo = db.prepare('SELECT * FROM item_photos WHERE id = ?').get(photoId) as Record<string, unknown> | undefined;
     if (!photo) {
       return NextResponse.json({ error: 'Photo not found' }, { status: 404 });
     }

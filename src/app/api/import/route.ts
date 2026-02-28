@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb, getUploadDir, getThumbnailDir } from '@/lib/db';
+import { safePath } from '@/lib/validation';
 import AdmZip from 'adm-zip';
 import path from 'path';
 import fs from 'fs';
@@ -306,9 +307,8 @@ export async function POST(request: NextRequest) {
         if (entry.entryName.startsWith('uploads/')) {
           const entryFileName = path.basename(entry.entryName);
           if (entryFileName) {
-            const targetPath = path.resolve(uploadsDir, entryFileName);
-            // Path traversal check: resolved path must stay within target directory
-            if (!targetPath.startsWith(uploadsDir + path.sep) && targetPath !== uploadsDir) {
+            const targetPath = safePath(uploadsDir, entryFileName);
+            if (!targetPath) {
               console.warn('Skipping ZIP entry with path traversal attempt:', entry.entryName);
               continue;
             }
@@ -318,9 +318,8 @@ export async function POST(request: NextRequest) {
         } else if (entry.entryName.startsWith('thumbnails/')) {
           const entryFileName = path.basename(entry.entryName);
           if (entryFileName) {
-            const targetPath = path.resolve(thumbnailsDir, entryFileName);
-            // Path traversal check: resolved path must stay within target directory
-            if (!targetPath.startsWith(thumbnailsDir + path.sep) && targetPath !== thumbnailsDir) {
+            const targetPath = safePath(thumbnailsDir, entryFileName);
+            if (!targetPath) {
               console.warn('Skipping ZIP entry with path traversal attempt:', entry.entryName);
               continue;
             }

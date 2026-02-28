@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb, getUploadDir, getThumbnailDir } from '@/lib/db';
+import { parseJsonBody, validateBody, IdParam, UpdateItemSchema } from '@/lib/validation';
 import fs from 'fs';
 import path from 'path';
 
@@ -12,13 +13,23 @@ export async function GET(
     const { id } = await params;
     const db = getDb();
 
+    // Validate ID is a positive integer
+    const idResult = IdParam.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid item ID. Must be a positive integer.' },
+        { status: 400 }
+      );
+    }
+    const itemId = idResult.data;
+
     // Get item with tote info
     const item = db.prepare(`
       SELECT i.*, t.name as tote_name, t.location as tote_location
       FROM items i
       JOIN totes t ON i.tote_id = t.id
       WHERE i.id = ?
-    `).get(Number(id)) as Record<string, unknown> | undefined;
+    `).get(itemId) as Record<string, unknown> | undefined;
 
     if (!item) {
       return NextResponse.json(
@@ -30,12 +41,12 @@ export async function GET(
     // Get metadata
     const metadata = db.prepare(`
       SELECT * FROM item_metadata WHERE item_id = ? ORDER BY created_at DESC
-    `).all(Number(id));
+    `).all(itemId);
 
     // Get photos
     const photos = db.prepare(`
       SELECT * FROM item_photos WHERE item_id = ? ORDER BY created_at DESC
-    `).all(Number(id));
+    `).all(itemId);
 
     // Get movement history with tote names
     const movementHistory = db.prepare(`
@@ -48,7 +59,7 @@ export async function GET(
       JOIN totes tt ON imh.to_tote_id = tt.id
       WHERE imh.item_id = ?
       ORDER BY imh.moved_at DESC
-    `).all(Number(id));
+    `).all(itemId);
 
     return NextResponse.json({
       data: {
@@ -75,7 +86,16 @@ export async function PUT(
   try {
     const { id } = await params;
     const db = getDb();
-    const itemId = Number(id);
+
+    // Validate ID is a positive integer
+    const idResult = IdParam.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid item ID. Must be a positive integer.' },
+        { status: 400 }
+      );
+    }
+    const itemId = idResult.data;
 
     // Check item exists
     const item = db.prepare('SELECT * FROM items WHERE id = ?').get(itemId) as Record<string, unknown> | undefined;
@@ -86,50 +106,20 @@ export async function PUT(
       );
     }
 
-    // Parse JSON body - handle empty or invalid JSON
-    let body: Record<string, unknown>;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json(
-        { error: 'Invalid or empty request body. JSON object is required.' },
-        { status: 400 }
-      );
-    }
+    // Parse JSON body safely
+    const parsed = await parseJsonBody(request);
+    if (parsed.response) return parsed.response;
 
-    // Handle non-object body (e.g. null, string, number)
-    if (!body || typeof body !== 'object' || Array.isArray(body)) {
-      return NextResponse.json(
-        { error: 'Request body must be a JSON object.' },
-        { status: 400 }
-      );
-    }
+    // Validate with Zod schema
+    const validated = validateBody(parsed.data, UpdateItemSchema);
+    if (validated.response) return validated.response;
 
-    const { name, description, quantity } = body as { name?: string; description?: string; quantity?: unknown };
-
-    // Validate name is required and non-empty
-    if (name !== undefined && (!name || typeof name !== 'string' || !name.trim())) {
-      return NextResponse.json(
-        { error: 'Item name is required and cannot be empty' },
-        { status: 400 }
-      );
-    }
-
-    // Validate quantity if provided
-    if (quantity !== undefined) {
-      const qty = Number(quantity);
-      if (isNaN(qty) || qty < 1 || !Number.isInteger(qty)) {
-        return NextResponse.json(
-          { error: 'Quantity must be a positive integer' },
-          { status: 400 }
-        );
-      }
-    }
+    const body = validated.data;
 
     // Build update fields
-    const updatedName = name !== undefined ? name.trim() : item.name;
-    const updatedDescription = description !== undefined ? (description ? description.trim() : null) : item.description;
-    const updatedQuantity = quantity !== undefined ? Number(quantity) : item.quantity;
+    const updatedName = body.name !== undefined ? body.name.trim() : item.name;
+    const updatedDescription = body.description !== undefined ? (body.description ? body.description.trim() : null) : item.description;
+    const updatedQuantity = body.quantity !== undefined ? body.quantity : item.quantity;
     const now = new Date().toISOString().replace('T', ' ').replace('Z', '');
 
     db.prepare(`
@@ -167,7 +157,16 @@ export async function DELETE(
   try {
     const { id } = await params;
     const db = getDb();
-    const itemId = Number(id);
+
+    // Validate ID is a positive integer
+    const idResult = IdParam.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid item ID. Must be a positive integer.' },
+        { status: 400 }
+      );
+    }
+    const itemId = idResult.data;
 
     // Check item exists
     const item = db.prepare('SELECT * FROM items WHERE id = ?').get(itemId) as Record<string, unknown> | undefined;

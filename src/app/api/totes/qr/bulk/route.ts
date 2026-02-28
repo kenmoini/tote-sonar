@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import QRCode from 'qrcode';
+import { parseJsonBody, validateBody, BulkQrSchema } from '@/lib/validation';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { tote_ids } = body;
+    // Parse JSON body safely
+    const parsed = await parseJsonBody(request);
+    if (parsed.response) return parsed.response;
 
-    if (!Array.isArray(tote_ids) || tote_ids.length === 0) {
-      return NextResponse.json(
-        { error: 'tote_ids must be a non-empty array' },
-        { status: 400 }
-      );
-    }
+    // Validate with Zod schema
+    const validated = validateBody(parsed.data, BulkQrSchema);
+    if (validated.response) return validated.response;
+
+    const { tote_ids } = validated.data;
 
     if (tote_ids.length > 50) {
       return NextResponse.json(

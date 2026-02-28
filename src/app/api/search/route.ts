@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
+import { validateBody, SearchParamsSchema } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,12 +8,21 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     const db = getDb();
-    const query = request.nextUrl.searchParams.get('q') || '';
-    const location = request.nextUrl.searchParams.get('location') || '';
-    const owner = request.nextUrl.searchParams.get('owner') || '';
-    const metadataKey = request.nextUrl.searchParams.get('metadata_key') || '';
 
-    if (!query.trim() && !location.trim() && !owner.trim() && !metadataKey.trim()) {
+    // Extract and validate query params with Zod
+    const rawParams = {
+      q: request.nextUrl.searchParams.get('q') || undefined,
+      location: request.nextUrl.searchParams.get('location') || undefined,
+      owner: request.nextUrl.searchParams.get('owner') || undefined,
+      metadata_key: request.nextUrl.searchParams.get('metadata_key') || undefined,
+    };
+
+    const validated = validateBody(rawParams, SearchParamsSchema);
+    if (validated.response) return validated.response;
+
+    const { q: query, location, owner, metadata_key: metadataKey } = validated.data;
+
+    if (!query?.trim() && !location?.trim() && !owner?.trim() && !metadataKey?.trim()) {
       return NextResponse.json({ data: { items: [], total: 0 } });
     }
 
@@ -21,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     // Word-level AND matching for text search
     // Each word must match in name, description, or metadata values
-    if (query.trim()) {
+    if (query?.trim()) {
       const words = query.trim().split(/\s+/);
       const wordConditions = words.map(() =>
         `(i.name LIKE ? COLLATE NOCASE OR i.description LIKE ? COLLATE NOCASE OR i.id IN (SELECT im.item_id FROM item_metadata im WHERE im.value LIKE ? COLLATE NOCASE))`
@@ -34,19 +44,19 @@ export async function GET(request: NextRequest) {
     }
 
     // Filter by tote location (partial match)
-    if (location.trim()) {
+    if (location?.trim()) {
       conditions.push('t.location LIKE ? COLLATE NOCASE');
       params.push(`%${location.trim()}%`);
     }
 
     // Filter by tote owner (exact match from dropdown)
-    if (owner.trim()) {
+    if (owner?.trim()) {
       conditions.push('t.owner = ?');
       params.push(owner.trim());
     }
 
     // Filter by metadata key (exact match from dropdown)
-    if (metadataKey.trim()) {
+    if (metadataKey?.trim()) {
       conditions.push('i.id IN (SELECT im.item_id FROM item_metadata im WHERE im.key = ?)');
       params.push(metadataKey.trim());
     }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb, generateToteId } from '@/lib/db';
-import { CreateToteInput, Tote } from '@/types';
+import { Tote } from '@/types';
+import { parseJsonBody, validateBody, CreateToteSchema } from '@/lib/validation';
 
 // GET /api/totes - List all totes with optional sorting
 export async function GET(request: NextRequest) {
@@ -38,70 +39,15 @@ export async function POST(request: NextRequest) {
   try {
     const db = getDb();
 
-    // Parse JSON body - handle empty or invalid JSON
-    let body: CreateToteInput;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json(
-        { error: 'Invalid or empty request body. JSON with at least "name" and "location" fields is required.' },
-        { status: 400 }
-      );
-    }
+    // Parse JSON body safely
+    const parsed = await parseJsonBody(request);
+    if (parsed.response) return parsed.response;
 
-    // Handle non-object body (e.g. null, string, number)
-    if (!body || typeof body !== 'object' || Array.isArray(body)) {
-      return NextResponse.json(
-        { error: 'Request body must be a JSON object with "name" and "location" fields.' },
-        { status: 400 }
-      );
-    }
+    // Validate with Zod schema
+    const validated = validateBody(parsed.data, CreateToteSchema);
+    if (validated.response) return validated.response;
 
-    // Validate required fields and types
-    if (!body.name || (typeof body.name !== 'string')) {
-      return NextResponse.json(
-        { error: 'Name is required and must be a string' },
-        { status: 400 }
-      );
-    }
-    if (!body.name.trim()) {
-      return NextResponse.json(
-        { error: 'Name is required' },
-        { status: 400 }
-      );
-    }
-    if (!body.location || (typeof body.location !== 'string')) {
-      return NextResponse.json(
-        { error: 'Location is required and must be a string' },
-        { status: 400 }
-      );
-    }
-    if (!body.location.trim()) {
-      return NextResponse.json(
-        { error: 'Location is required' },
-        { status: 400 }
-      );
-    }
-
-    // Validate optional fields are strings if provided
-    if (body.size !== undefined && body.size !== null && typeof body.size !== 'string') {
-      return NextResponse.json(
-        { error: 'Size must be a string' },
-        { status: 400 }
-      );
-    }
-    if (body.color !== undefined && body.color !== null && typeof body.color !== 'string') {
-      return NextResponse.json(
-        { error: 'Color must be a string' },
-        { status: 400 }
-      );
-    }
-    if (body.owner !== undefined && body.owner !== null && typeof body.owner !== 'string') {
-      return NextResponse.json(
-        { error: 'Owner must be a string' },
-        { status: 400 }
-      );
-    }
+    const body = validated.data;
 
     // Generate unique 6-character ID
     let id = generateToteId();

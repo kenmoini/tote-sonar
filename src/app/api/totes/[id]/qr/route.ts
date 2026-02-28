@@ -8,6 +8,15 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+
+    // Validate tote ID format
+    if (!id || !/^[a-zA-Z0-9]{6}$/.test(id)) {
+      return NextResponse.json(
+        { error: 'Invalid tote ID format. Tote IDs must be exactly 6 alphanumeric characters.' },
+        { status: 400 }
+      );
+    }
+
     const db = getDb();
 
     // Verify tote exists

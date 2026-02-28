@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb, getUploadDir, getThumbnailDir } from '@/lib/db';
+import { IdParam } from '@/lib/validation';
+import { validateImageBuffer } from '@/lib/magic-bytes';
 import path from 'path';
 import fs from 'fs';
 import sharp from 'sharp';
@@ -16,7 +18,17 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const itemId = Number(id);
+
+    // Validate ID is a positive integer
+    const idResult = IdParam.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid item ID. Must be a positive integer.' },
+        { status: 400 }
+      );
+    }
+    const itemId = idResult.data;
+
     const db = getDb();
 
     // Verify item exists
@@ -43,7 +55,7 @@ export async function POST(
       return NextResponse.json({ error: 'No photo file provided' }, { status: 400 });
     }
 
-    // Validate file type
+    // Fast pre-filter: reject obviously wrong MIME types before reading the full buffer
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
         { error: `Invalid file type: ${file.type}. Supported formats: JPEG, PNG, WebP` },
@@ -60,8 +72,22 @@ export async function POST(
       );
     }
 
-    // Generate unique filename
-    const ext = file.type === 'image/jpeg' ? '.jpg' : file.type === 'image/png' ? '.png' : '.webp';
+    // Read file bytes
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Magic bytes validation: verify actual file content matches an allowed image type
+    const { valid, detectedType } = validateImageBuffer(buffer);
+    if (!valid) {
+      return NextResponse.json(
+        { error: `File type ${file.type} is not allowed. File content does not match a supported image format. Accepted: JPEG, PNG, WebP` },
+        { status: 400 }
+      );
+    }
+
+    // Use detected type for file extension (authoritative over MIME header)
+    const mimeType = detectedType!;
+    const ext = mimeType === 'image/jpeg' ? '.jpg' : mimeType === 'image/png' ? '.png' : '.webp';
     const uniqueId = crypto.randomBytes(16).toString('hex');
     const filename = `${uniqueId}${ext}`;
 
@@ -71,10 +97,6 @@ export async function POST(
     const originalPath = path.join(uploadDir, filename);
     const thumbnailFilename = `thumb_${filename}`;
     const thumbnailPath = path.join(thumbnailDir, thumbnailFilename);
-
-    // Read file bytes
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
 
     // Write original file
     fs.writeFileSync(originalPath, buffer);
@@ -86,7 +108,7 @@ export async function POST(
       .resize(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, { fit: 'cover', position: 'center' })
       .toFile(thumbnailPath);
 
-    // Insert photo record into database
+    // Insert photo record into database (use detected MIME type, not client header)
     const stmt = db.prepare(`
       INSERT INTO item_photos (item_id, filename, original_path, thumbnail_path, file_size, mime_type)
       VALUES (?, ?, ?, ?, ?, ?)
@@ -97,7 +119,7 @@ export async function POST(
       `uploads/${filename}`,
       `thumbnails/${thumbnailFilename}`,
       file.size,
-      file.type
+      mimeType
     );
 
     // Get the created photo record
@@ -125,9 +147,18 @@ export async function GET(
     const { id } = await params;
     const db = getDb();
 
+    // Validate ID is a positive integer
+    const idResult = IdParam.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid item ID. Must be a positive integer.' },
+        { status: 400 }
+      );
+    }
+
     const photos = db.prepare(
       'SELECT * FROM item_photos WHERE item_id = ? ORDER BY created_at DESC'
-    ).all(Number(id));
+    ).all(idResult.data);
 
     return NextResponse.json({ data: photos });
   } catch (error) {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
+import { parseJsonBody, validateBody, IdParam, MoveItemSchema } from '@/lib/validation';
 
 // POST /api/items/:id/move - Move an item to a different tote
 export async function POST(
@@ -9,7 +10,16 @@ export async function POST(
   try {
     const { id } = await params;
     const db = getDb();
-    const itemId = Number(id);
+
+    // Validate ID is a positive integer
+    const idResult = IdParam.safeParse(id);
+    if (!idResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid item ID. Must be a positive integer.' },
+        { status: 400 }
+      );
+    }
+    const itemId = idResult.data;
 
     // Check item exists
     const item = db.prepare('SELECT * FROM items WHERE id = ?').get(itemId) as Record<string, unknown> | undefined;
@@ -20,17 +30,15 @@ export async function POST(
       );
     }
 
-    const body = await request.json();
-    const { target_tote_id } = body;
+    // Parse JSON body safely
+    const parsed = await parseJsonBody(request);
+    if (parsed.response) return parsed.response;
 
-    // Validate target tote ID
-    if (!target_tote_id || typeof target_tote_id !== 'string' || !target_tote_id.trim()) {
-      return NextResponse.json(
-        { error: 'target_tote_id is required' },
-        { status: 400 }
-      );
-    }
+    // Validate with Zod schema
+    const validated = validateBody(parsed.data, MoveItemSchema);
+    if (validated.response) return validated.response;
 
+    const { target_tote_id } = validated.data;
     const targetToteId = target_tote_id.trim();
 
     // Check target tote exists
