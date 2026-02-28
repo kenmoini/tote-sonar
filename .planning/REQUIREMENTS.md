@@ -25,10 +25,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Input Validation
 
-- [ ] **VALID-01**: All API routes validate input with Zod schemas before processing
-- [ ] **VALID-02**: Photo uploads verify file type via magic bytes, not just MIME header
-- [ ] **VALID-03**: Uploaded filenames are sanitized to prevent path traversal
-- [ ] **VALID-04**: JSON parse errors return consistent 400 responses across all routes
+- [x] **VALID-01**: All API routes validate input with Zod schemas before processing
+- [x] **VALID-02**: Photo uploads verify file type via magic bytes, not just MIME header
+- [x] **VALID-03**: Uploaded filenames are sanitized to prevent path traversal
+- [x] **VALID-04**: JSON parse errors return consistent 400 responses across all routes
 
 ### Performance
 
@@ -88,10 +88,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BUGS-01 | Phase 1 | Complete |
 | BUGS-02 | Phase 1 | Complete |
 | BUGS-03 | Phase 1 | Complete |
-| VALID-01 | Phase 1 | Pending |
-| VALID-02 | Phase 1 | Pending |
-| VALID-03 | Phase 1 | Pending |
-| VALID-04 | Phase 1 | Pending |
+| VALID-01 | Phase 1 | Complete |
+| VALID-02 | Phase 1 | Complete |
+| VALID-03 | Phase 1 | Complete |
+| VALID-04 | Phase 1 | Complete |
 | PHOTO-01 | Phase 2 | Pending |
 | PHOTO-02 | Phase 2 | Pending |
 | PHOTO-03 | Phase 2 | Pending |
