@@ -16,19 +16,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ data: { items: [], total: 0 } });
     }
 
-    const searchTerm = `%${query.trim()}%`;
     const conditions: string[] = [];
-    const params: string[] = [];
+    const params: (string | number)[] = [];
 
-    // Search by item name and description
+    // Word-level AND matching for text search
+    // Each word must match in name, description, or metadata values
     if (query.trim()) {
-      conditions.push('(i.name LIKE ? OR i.description LIKE ?)');
-      params.push(searchTerm, searchTerm);
+      const words = query.trim().split(/\s+/);
+      const wordConditions = words.map(() =>
+        `(i.name LIKE ? COLLATE NOCASE OR i.description LIKE ? COLLATE NOCASE OR i.id IN (SELECT im.item_id FROM item_metadata im WHERE im.value LIKE ? COLLATE NOCASE))`
+      );
+      conditions.push(`(${wordConditions.join(' AND ')})`);
+      for (const word of words) {
+        const term = `%${word}%`;
+        params.push(term, term, term); // name, description, metadata value
+      }
     }
 
-    // Filter by tote location
+    // Filter by tote location (partial match)
     if (location.trim()) {
-      conditions.push('t.location LIKE ?');
+      conditions.push('t.location LIKE ? COLLATE NOCASE');
       params.push(`%${location.trim()}%`);
     }
 
@@ -40,22 +47,8 @@ export async function GET(request: NextRequest) {
 
     // Filter by metadata key (exact match from dropdown)
     if (metadataKey.trim()) {
-      conditions.push(`i.id IN (SELECT im.item_id FROM item_metadata im WHERE im.key = ?)`);
+      conditions.push('i.id IN (SELECT im.item_id FROM item_metadata im WHERE im.key = ?)');
       params.push(metadataKey.trim());
-    }
-
-    // Also search metadata values if there's a query
-    let metadataSearchCondition = '';
-    if (query.trim()) {
-      metadataSearchCondition = ` OR i.id IN (SELECT im.item_id FROM item_metadata im WHERE im.value LIKE ?)`;
-      // We need to add this to the main search condition
-      // Replace the name/description condition with one that also includes metadata
-      const idx = conditions.findIndex(c => c.startsWith('(i.name LIKE'));
-      if (idx !== -1) {
-        conditions[idx] = `(i.name LIKE ? OR i.description LIKE ? OR i.id IN (SELECT im.item_id FROM item_metadata im WHERE im.value LIKE ?))`;
-        // Insert the metadata search param after the description param
-        params.splice(idx + 2, 0, searchTerm);
-      }
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
