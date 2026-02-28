@@ -117,12 +117,32 @@ export async function POST(request: NextRequest) {
     const db = getDb();
     const data = exportData.data;
 
-    // Use a transaction to ensure atomicity
-    const importTransaction = db.transaction(() => {
-      // Temporarily disable foreign keys for import ordering
-      db.pragma('foreign_keys = OFF');
+    // Validate individual records upfront before touching DB
+    for (let i = 0; i < data.totes.length; i++) {
+      const tote = data.totes[i];
+      if (!tote.id || !tote.name || !tote.location) {
+        return NextResponse.json(
+          { error: `Import validation failed: tote at index ${i} is missing required field '${!tote.id ? 'id' : !tote.name ? 'name' : 'location'}'. No data was imported.` },
+          { status: 400 }
+        );
+      }
+    }
+    for (let i = 0; i < data.items.length; i++) {
+      const item = data.items[i];
+      if (!item.id || !item.tote_id || !item.name) {
+        return NextResponse.json(
+          { error: `Import validation failed: item at index ${i} is missing required field '${!item.id ? 'id' : !item.tote_id ? 'tote_id' : 'name'}'. No data was imported.` },
+          { status: 400 }
+        );
+      }
+    }
 
-      try {
+    // Disable FK checks BEFORE starting transaction (PRAGMA is a no-op inside transactions)
+    db.pragma('foreign_keys = OFF');
+
+    try {
+      // Use a transaction to ensure atomicity
+      const importTransaction = db.transaction(() => {
         // Clear existing data in reverse dependency order
         db.prepare('DELETE FROM item_movement_history').run();
         db.prepare('DELETE FROM item_metadata').run();
@@ -249,49 +269,80 @@ export async function POST(request: NextRequest) {
             );
           }
         }
-      } finally {
-        // Re-enable foreign keys
-        db.pragma('foreign_keys = ON');
-      }
-    });
+      });
 
-    // Execute the import transaction
-    importTransaction();
+      // Execute the import transaction
+      importTransaction();
+    } finally {
+      // ALWAYS re-enable FK checks, regardless of success/failure
+      db.pragma('foreign_keys = ON');
+    }
 
-    // Extract photo files from ZIP to filesystem
+    // Transaction succeeded -- now handle filesystem operations
     const uploadsDir = getUploadDir();
     const thumbnailsDir = getThumbnailDir();
+    const writtenFiles: string[] = [];
 
-    // Clear existing photo files
-    if (fs.existsSync(uploadsDir)) {
-      const existingUploads = fs.readdirSync(uploadsDir);
-      for (const file of existingUploads) {
-        fs.unlinkSync(path.join(uploadsDir, file));
-      }
-    }
-    if (fs.existsSync(thumbnailsDir)) {
-      const existingThumbs = fs.readdirSync(thumbnailsDir);
-      for (const file of existingThumbs) {
-        fs.unlinkSync(path.join(thumbnailsDir, file));
-      }
-    }
-
-    // Extract uploads from ZIP
-    const zipEntries = zip.getEntries();
-    for (const entry of zipEntries) {
-      if (entry.isDirectory) continue;
-
-      if (entry.entryName.startsWith('uploads/')) {
-        const fileName = path.basename(entry.entryName);
-        if (fileName) {
-          fs.writeFileSync(path.join(uploadsDir, fileName), entry.getData());
-        }
-      } else if (entry.entryName.startsWith('thumbnails/')) {
-        const fileName = path.basename(entry.entryName);
-        if (fileName) {
-          fs.writeFileSync(path.join(thumbnailsDir, fileName), entry.getData());
+    try {
+      // Clear existing photo files AFTER successful transaction
+      if (fs.existsSync(uploadsDir)) {
+        const existingUploads = fs.readdirSync(uploadsDir);
+        for (const f of existingUploads) {
+          fs.unlinkSync(path.join(uploadsDir, f));
         }
       }
+      if (fs.existsSync(thumbnailsDir)) {
+        const existingThumbs = fs.readdirSync(thumbnailsDir);
+        for (const f of existingThumbs) {
+          fs.unlinkSync(path.join(thumbnailsDir, f));
+        }
+      }
+
+      // Extract photo files from ZIP with path traversal protection
+      const zipEntries = zip.getEntries();
+      for (const entry of zipEntries) {
+        if (entry.isDirectory) continue;
+
+        if (entry.entryName.startsWith('uploads/')) {
+          const entryFileName = path.basename(entry.entryName);
+          if (entryFileName) {
+            const targetPath = path.resolve(uploadsDir, entryFileName);
+            // Path traversal check: resolved path must stay within target directory
+            if (!targetPath.startsWith(uploadsDir + path.sep) && targetPath !== uploadsDir) {
+              console.warn('Skipping ZIP entry with path traversal attempt:', entry.entryName);
+              continue;
+            }
+            fs.writeFileSync(targetPath, entry.getData());
+            writtenFiles.push(targetPath);
+          }
+        } else if (entry.entryName.startsWith('thumbnails/')) {
+          const entryFileName = path.basename(entry.entryName);
+          if (entryFileName) {
+            const targetPath = path.resolve(thumbnailsDir, entryFileName);
+            // Path traversal check: resolved path must stay within target directory
+            if (!targetPath.startsWith(thumbnailsDir + path.sep) && targetPath !== thumbnailsDir) {
+              console.warn('Skipping ZIP entry with path traversal attempt:', entry.entryName);
+              continue;
+            }
+            fs.writeFileSync(targetPath, entry.getData());
+            writtenFiles.push(targetPath);
+          }
+        }
+      }
+    } catch (fileError) {
+      // Clean up any files written during failed extraction
+      for (const filePath of writtenFiles) {
+        try {
+          fs.unlinkSync(filePath);
+        } catch {
+          // Ignore individual cleanup errors
+        }
+      }
+      console.error('Import file extraction error:', fileError);
+      return NextResponse.json(
+        { error: 'Import data was saved but photo file extraction failed. Some photos may be missing.' },
+        { status: 500 }
+      );
     }
 
     // Calculate import summary

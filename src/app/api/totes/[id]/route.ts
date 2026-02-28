@@ -253,13 +253,19 @@ export async function DELETE(
     const thumbnailsDir = getThumbnailDir();
     for (const photo of photos) {
       try {
-        const originalFile = path.join(uploadsDir, path.basename(photo.original_path));
-        const thumbnailFile = path.join(thumbnailsDir, path.basename(photo.thumbnail_path));
+        const originalFile = path.resolve(uploadsDir, path.basename(photo.original_path));
+        // Defensive: verify resolved path stays within data directory
+        if (!originalFile.startsWith(uploadsDir + path.sep) && originalFile !== uploadsDir) continue;
         if (fs.existsSync(originalFile)) fs.unlinkSync(originalFile);
+      } catch (fileErr) {
+        console.error('Error deleting original photo file:', fileErr);
+      }
+      try {
+        const thumbnailFile = path.resolve(thumbnailsDir, path.basename(photo.thumbnail_path));
+        if (!thumbnailFile.startsWith(thumbnailsDir + path.sep) && thumbnailFile !== thumbnailsDir) continue;
         if (fs.existsSync(thumbnailFile)) fs.unlinkSync(thumbnailFile);
       } catch (fileErr) {
-        console.error('Error deleting photo file during tote cascade:', fileErr);
-        // Continue - DB records are already deleted via cascade
+        console.error('Error deleting thumbnail file:', fileErr);
       }
     }
 

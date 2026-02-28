@@ -52,15 +52,23 @@ export async function DELETE(
       return NextResponse.json({ error: 'Photo not found' }, { status: 404 });
     }
 
-    // Delete files from filesystem
     const originalFile = path.join(DATA_DIR, photo.original_path as string);
     const thumbnailFile = path.join(DATA_DIR, photo.thumbnail_path as string);
 
-    if (fs.existsSync(originalFile)) fs.unlinkSync(originalFile);
-    if (fs.existsSync(thumbnailFile)) fs.unlinkSync(thumbnailFile);
-
-    // Delete database record
+    // Delete DB record first (this is the authoritative action)
     db.prepare('DELETE FROM item_photos WHERE id = ?').run(Number(id));
+
+    // Clean up files (log and continue on failure)
+    try {
+      if (fs.existsSync(originalFile)) fs.unlinkSync(originalFile);
+    } catch (fileErr) {
+      console.error('Error deleting original photo file:', fileErr);
+    }
+    try {
+      if (fs.existsSync(thumbnailFile)) fs.unlinkSync(thumbnailFile);
+    } catch (fileErr) {
+      console.error('Error deleting thumbnail file:', fileErr);
+    }
 
     return NextResponse.json({ message: 'Photo deleted successfully' });
   } catch (error) {
