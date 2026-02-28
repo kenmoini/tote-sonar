@@ -29,11 +29,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Deleting an item or tote removes all associated photo files from disk (no orphaned files remain)
   4. Uploading a file with a fake MIME header but wrong magic bytes is rejected before processing
   5. Malformed JSON payloads to any API route return a consistent 400 error response
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md -- Fix bugs: search SQL, import FK pragma, photo cleanup on delete
+- [ ] 01-02-PLAN.md -- Systematic validation: Zod schemas, magic bytes, path safety, JSON error consistency
 
 ### Phase 2: Tote Photos
 **Goal**: Users can photograph their totes and see cover thumbnails everywhere totes appear, powered by shared photo components reused across items and totes
@@ -84,7 +84,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Correctness and Safety | 0/0 | Not started | - |
+| 1. Correctness and Safety | 0/2 | Planning complete | - |
 | 2. Tote Photos | 0/0 | Not started | - |
 | 3. Page Decomposition | 0/0 | Not started | - |
 | 4. Performance | 0/0 | Not started | - |
