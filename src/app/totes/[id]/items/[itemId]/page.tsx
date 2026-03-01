@@ -1,14 +1,19 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { useRouter } from 'next/navigation';
-import { Package, ArrowLeft, Hash, Calendar, FileText, Camera, X, Trash2, AlertTriangle, Check, Tag, Plus, Pencil, ArrowRightLeft, Clock, MapPin, Copy, ChevronDown, ChevronUp } from 'lucide-react';
-import { Item, ItemMetadata, MovementHistory, Tote } from '@/types';
+import { useParams, useRouter } from 'next/navigation';
+import { AlertTriangle, ArrowLeft, Check, X } from 'lucide-react';
+import { Item } from '@/types';
 import Breadcrumb from '@/components/Breadcrumb';
 import ErrorDisplay from '@/components/ErrorDisplay';
-import { PhotoGallery, PhotoUpload } from '@/components/photos';
+import ItemHeader from './_components/ItemHeader';
+import ItemPhotos from './_components/ItemPhotos';
+import EditItemForm from './_components/EditItemForm';
+import MetadataSection from './_components/MetadataSection';
+import MoveItemForm from './_components/MoveItemForm';
+import CopyItemForm from './_components/CopyItemForm';
+import MovementHistory from './_components/MovementHistory';
 
 interface ItemDetail extends Item {
   tote_name: string;
@@ -24,45 +29,12 @@ export default function ItemDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deletingItem, setDeletingItem] = useState(false);
+  const [maxUploadSize, setMaxUploadSize] = useState<number>(5242880);
   const [showEditItem, setShowEditItem] = useState(false);
-  const [editName, setEditName] = useState('');
-  const [editDescription, setEditDescription] = useState('');
-  const [editQuantity, setEditQuantity] = useState(1);
-  const [editingItem, setEditingItem] = useState(false);
-  const [editError, setEditError] = useState<string | null>(null);
-  const [showAddMetadata, setShowAddMetadata] = useState(false);
-  const [metadataKey, setMetadataKey] = useState('');
-  const [metadataValue, setMetadataValue] = useState('');
-  const [addingMetadata, setAddingMetadata] = useState(false);
-  const [metadataError, setMetadataError] = useState<string | null>(null);
-  const [suggestedKeys, setSuggestedKeys] = useState<string[]>([]);
-  const [showKeySuggestions, setShowKeySuggestions] = useState(false);
-  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
-  const keyInputRef = useRef<HTMLInputElement>(null);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
-  const [showMoveModal, setShowMoveModal] = useState(false);
-  const [allTotes, setAllTotes] = useState<Tote[]>([]);
-  const [selectedToteId, setSelectedToteId] = useState<string>('');
-  const [movingItem, setMovingItem] = useState(false);
-  const [moveError, setMoveError] = useState<string | null>(null);
-  const [loadingTotes, setLoadingTotes] = useState(false);
-  const [duplicatingItem, setDuplicatingItem] = useState(false);
-  const [showCopyModal, setShowCopyModal] = useState(false);
-  const [copyTargetToteId, setCopyTargetToteId] = useState<string>('');
-  const [copyError, setCopyError] = useState<string | null>(null);
-  const [copyTotes, setCopyTotes] = useState<Tote[]>([]);
-  const [loadingCopyTotes, setLoadingCopyTotes] = useState(false);
-  const [maxUploadSize, setMaxUploadSize] = useState<number>(5242880); // Default 5MB
-  const [actionsOpen, setActionsOpen] = useState(false);
-  const actionsRef = useRef<HTMLDivElement>(null);
-  const [showMoreDetails, setShowMoreDetails] = useState(false);
-  const [editingMetadataId, setEditingMetadataId] = useState<number | null>(null);
-  const [editMetaKey, setEditMetaKey] = useState('');
-  const [editMetaValue, setEditMetaValue] = useState('');
-  const [savingMetadata, setSavingMetadata] = useState(false);
-  const [editMetaError, setEditMetaError] = useState<string | null>(null);
+  const [showMoveItem, setShowMoveItem] = useState(false);
+  const [showCopyItem, setShowCopyItem] = useState(false);
+
+  const showToast = (message: string, type: 'success' | 'error') => setToast({ message, type });
 
   const fetchItem = useCallback(async () => {
     try {
@@ -82,11 +54,8 @@ export default function ItemDetailPage() {
     }
   }, [itemId]);
 
-  useEffect(() => {
-    if (itemId) fetchItem();
-  }, [itemId, fetchItem]);
+  useEffect(() => { if (itemId) fetchItem(); }, [itemId, fetchItem]);
 
-  // Fetch max upload size from settings
   useEffect(() => {
     const fetchMaxUploadSize = async () => {
       try {
@@ -96,425 +65,21 @@ export default function ItemDetailPage() {
           const sizeStr = json.settings?.max_upload_size;
           if (sizeStr) {
             const size = parseInt(sizeStr, 10);
-            if (!isNaN(size) && size > 0) {
-              setMaxUploadSize(size);
-            }
+            if (!isNaN(size) && size > 0) setMaxUploadSize(size);
           }
         }
-      } catch {
-        // Fall back to default 5MB
-      }
+      } catch { /* Fall back to default 5MB */ }
     };
     fetchMaxUploadSize();
   }, []);
 
-  // Auto-dismiss toast
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => setToast(null), 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [toast]);
+  useEffect(() => { if (toast) { const t = setTimeout(() => setToast(null), 4000); return () => clearTimeout(t); } }, [toast]);
 
-  // Close actions dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (actionsRef.current && !actionsRef.current.contains(e.target as Node)) {
-        setActionsOpen(false);
-      }
-    };
-    if (actionsOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [actionsOpen]);
-
-  // Close modals on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (showDeleteConfirm && !deletingItem) setShowDeleteConfirm(false);
-        if (showEditItem && !editingItem) setShowEditItem(false);
-        if (showMoveModal && !movingItem) setShowMoveModal(false);
-        if (showCopyModal && !duplicatingItem) setShowCopyModal(false);
-        if (showAddMetadata) setShowAddMetadata(false);
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [showDeleteConfirm, deletingItem, showEditItem, editingItem, showMoveModal, movingItem, showCopyModal, duplicatingItem, showAddMetadata]);
-
-  // Fetch metadata keys for autocomplete when add form opens
-  const fetchMetadataKeys = useCallback(async () => {
-    try {
-      const res = await fetch('/api/metadata-keys');
-      if (res.ok) {
-        const json = await res.json();
-        const keys = (json.data || []).map((k: { key_name: string }) => k.key_name);
-        setSuggestedKeys(keys);
-      }
-    } catch {
-      // Silently fail - autocomplete is optional
-    }
-  }, []);
-
-  useEffect(() => {
-    if (showAddMetadata) {
-      fetchMetadataKeys();
-    }
-  }, [showAddMetadata, fetchMetadataKeys]);
-
-  // Close suggestions dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node) &&
-        keyInputRef.current && !keyInputRef.current.contains(e.target as Node)
-      ) {
-        setShowKeySuggestions(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Filter suggested keys based on current input (show all when empty for default key discovery)
-  const filteredSuggestions = metadataKey.trim().length > 0
-    ? suggestedKeys.filter((key) => key.toLowerCase().includes(metadataKey.toLowerCase().trim()))
-    : suggestedKeys;
-
-  const handleKeyInputChange = (value: string) => {
-    setMetadataKey(value);
-    setShowKeySuggestions(true);
-    setSelectedSuggestionIndex(-1);
-  };
-
-  const handleSelectSuggestion = (key: string) => {
-    setMetadataKey(key);
-    setShowKeySuggestions(false);
-    setSelectedSuggestionIndex(-1);
-  };
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr + 'Z');
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-  };
-
-  const handleAddMetadata = async () => {
-    if (!metadataKey.trim() || !metadataValue.trim()) {
-      setMetadataError('Both key and value are required');
-      return;
-    }
-
-    setAddingMetadata(true);
-    setMetadataError(null);
-
-    try {
-      const res = await fetch(`/api/items/${itemId}/metadata`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: metadataKey.trim(), value: metadataValue.trim() }),
-      });
-
-      if (!res.ok) {
-        const json = await res.json();
-        setMetadataError(json.error || 'Failed to add metadata');
-        return;
-      }
-
-      setToast({ message: `Metadata "${metadataKey.trim()}" added successfully!`, type: 'success' });
-      setMetadataKey('');
-      setMetadataValue('');
-      setShowAddMetadata(false);
-      await fetchItem();
-    } catch {
-      setMetadataError('Failed to add metadata. Please try again.');
-    } finally {
-      setAddingMetadata(false);
-    }
-  };
-
-  const handleDeleteMetadata = async (metaId: number, metaKey: string) => {
-    try {
-      const res = await fetch(`/api/items/${itemId}/metadata/${metaId}`, {
-        method: 'DELETE',
-      });
-
-      if (!res.ok) {
-        const json = await res.json();
-        setToast({ message: json.error || 'Failed to delete metadata', type: 'error' });
-        return;
-      }
-
-      setToast({ message: `Metadata "${metaKey}" removed`, type: 'success' });
-      await fetchItem();
-    } catch {
-      setToast({ message: 'Failed to delete metadata', type: 'error' });
-    }
-  };
-
-  const startEditMetadata = (meta: ItemMetadata) => {
-    setEditingMetadataId(meta.id);
-    setEditMetaKey(meta.key);
-    setEditMetaValue(meta.value);
-    setEditMetaError(null);
-  };
-
-  const cancelEditMetadata = () => {
-    setEditingMetadataId(null);
-    setEditMetaKey('');
-    setEditMetaValue('');
-    setEditMetaError(null);
-  };
-
-  const handleSaveMetadata = async () => {
-    if (!editMetaKey.trim() || !editMetaValue.trim()) {
-      setEditMetaError('Both key and value are required');
-      return;
-    }
-
-    setSavingMetadata(true);
-    setEditMetaError(null);
-
-    try {
-      const res = await fetch(`/api/items/${itemId}/metadata/${editingMetadataId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: editMetaKey.trim(), value: editMetaValue.trim() }),
-      });
-
-      if (!res.ok) {
-        const json = await res.json();
-        setEditMetaError(json.error || 'Failed to update metadata');
-        return;
-      }
-
-      setToast({ message: `Metadata "${editMetaKey.trim()}" updated successfully!`, type: 'success' });
-      setEditingMetadataId(null);
-      setEditMetaKey('');
-      setEditMetaValue('');
-      await fetchItem();
-    } catch {
-      setEditMetaError('Failed to update metadata. Please try again.');
-    } finally {
-      setSavingMetadata(false);
-    }
-  };
-
-  const openEditModal = () => {
-    if (!item) return;
-    setEditName(item.name);
-    setEditDescription(item.description || '');
-    setEditQuantity(item.quantity);
-    setEditError(null);
-    setShowEditItem(true);
-  };
-
-  const handleEditItem = async () => {
-    if (!editName.trim()) {
-      setEditError('Item name is required');
-      return;
-    }
-
-    const qty = Number(editQuantity);
-    if (isNaN(qty) || qty < 1 || !Number.isInteger(qty)) {
-      setEditError('Quantity must be a positive whole number');
-      return;
-    }
-
-    setEditingItem(true);
-    setEditError(null);
-
-    try {
-      const res = await fetch(`/api/items/${itemId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: editName.trim(),
-          description: editDescription.trim() || null,
-          quantity: qty,
-        }),
-      });
-
-      if (!res.ok) {
-        const json = await res.json();
-        setEditError(json.error || 'Failed to update item');
-        return;
-      }
-
-      setToast({ message: 'Item updated successfully!', type: 'success' });
-      setShowEditItem(false);
-      await fetchItem();
-    } catch {
-      setEditError('Failed to update item. Please try again.');
-    } finally {
-      setEditingItem(false);
-    }
-  };
-
-  const handleDeleteItem = async () => {
-    setDeletingItem(true);
-    try {
-      const res = await fetch(`/api/items/${itemId}`, {
-        method: 'DELETE',
-      });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || 'Failed to delete item');
-      }
-
-      const json = await res.json();
-      setToast({ message: json.message || 'Item deleted successfully', type: 'success' });
-      setShowDeleteConfirm(false);
-
-      // Navigate back to tote detail page after a brief delay so toast is visible
-      setTimeout(() => {
-        router.push(`/totes/${toteId}`);
-      }, 500);
-    } catch (err) {
-      setToast({ message: err instanceof Error ? err.message : 'Failed to delete item', type: 'error' });
-      setDeletingItem(false);
-    }
-  };
-
-  const openMoveModal = async () => {
-    setMoveError(null);
-    setSelectedToteId('');
-    setLoadingTotes(true);
-    setShowMoveModal(true);
-
-    try {
-      const res = await fetch('/api/totes');
-      if (!res.ok) throw new Error('Failed to load totes');
-      const json = await res.json();
-      // Filter out the current tote so user can only pick a different one
-      const otherTotes = (json.data || []).filter((t: Tote) => t.id !== toteId);
-      setAllTotes(otherTotes);
-    } catch {
-      setMoveError('Failed to load totes. Please try again.');
-    } finally {
-      setLoadingTotes(false);
-    }
-  };
-
-  const handleMoveItem = async () => {
-    if (!selectedToteId) {
-      setMoveError('Please select a destination tote');
-      return;
-    }
-
-    setMovingItem(true);
-    setMoveError(null);
-
-    try {
-      const res = await fetch(`/api/items/${itemId}/move`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ target_tote_id: selectedToteId }),
-      });
-
-      if (!res.ok) {
-        const json = await res.json();
-        setMoveError(json.error || 'Failed to move item');
-        return;
-      }
-
-      const json = await res.json();
-      setToast({ message: json.message || 'Item moved successfully!', type: 'success' });
-      setShowMoveModal(false);
-
-      // Redirect to the item in its new tote after a brief delay
-      setTimeout(() => {
-        router.push(`/totes/${selectedToteId}/items/${itemId}`);
-      }, 500);
-    } catch {
-      setMoveError('Failed to move item. Please try again.');
-    } finally {
-      setMovingItem(false);
-    }
-  };
-
-  const openCopyModal = async () => {
-    setCopyError(null);
-    setCopyTargetToteId('');
-    setLoadingCopyTotes(true);
-    setShowCopyModal(true);
-
-    try {
-      const res = await fetch('/api/totes');
-      if (!res.ok) throw new Error('Failed to load totes');
-      const json = await res.json();
-      // Show all totes including current one (copy can be to same or different tote)
-      const totes = (json.data || []);
-      setCopyTotes(totes);
-    } catch {
-      setCopyError('Failed to load totes. Please try again.');
-    } finally {
-      setLoadingCopyTotes(false);
-    }
-  };
-
-  const handleCopyItem = async () => {
-    if (!copyTargetToteId) {
-      setCopyError('Please select a destination tote');
-      return;
-    }
-
-    setDuplicatingItem(true);
-    setCopyError(null);
-
-    try {
-      const body: Record<string, string> = {};
-      // Only send target_tote_id if copying to a different tote
-      if (copyTargetToteId !== toteId) {
-        body.target_tote_id = copyTargetToteId;
-      }
-
-      const res = await fetch(`/api/items/${itemId}/duplicate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) {
-        const json = await res.json();
-        setCopyError(json.error || 'Failed to copy item');
-        return;
-      }
-
-      const json = await res.json();
-      const newItem = json.data;
-      setToast({ message: json.message || 'Item copied successfully!', type: 'success' });
-      setShowCopyModal(false);
-
-      // Navigate to the copied item after a brief delay
-      setTimeout(() => {
-        router.push(`/totes/${newItem.tote_id}/items/${newItem.id}`);
-      }, 500);
-    } catch {
-      setCopyError('Failed to copy item. Please try again.');
-    } finally {
-      setDuplicatingItem(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <main className="page-container">
-        <div className="loading-state">
-          <div className="spinner" />
-          <p>Loading item...</p>
-        </div>
-      </main>
-    );
-  }
+  if (loading) return (
+    <main className="page-container">
+      <div className="loading-state"><div className="spinner" /><p>Loading item...</p></div>
+    </main>
+  );
 
   if (error || !item) {
     const isNotFound = error === 'Item not found' || (!item && !error);
@@ -538,17 +103,15 @@ export default function ItemDetailPage() {
   }
 
   const photos = item.photos || [];
-
+  const metadata = item.metadata || [];
+  const movementHistory = item.movement_history || [];
   const breadcrumbItems = [
-    { label: 'Dashboard', href: '/' },
-    { label: 'Totes', href: '/totes' },
-    { label: item.tote_name, href: `/totes/${toteId}` },
-    { label: item.name },
+    { label: 'Dashboard', href: '/' }, { label: 'Totes', href: '/totes' },
+    { label: item.tote_name, href: `/totes/${toteId}` }, { label: item.name },
   ];
 
   return (
     <main className="page-container">
-      {/* Toast */}
       {toast && (
         <div className={`toast toast-${toast.type}`} role="alert">
           <span className="toast-icon">
@@ -561,720 +124,71 @@ export default function ItemDetailPage() {
         </div>
       )}
 
-      {/* Delete Item Confirmation Dialog */}
-      {showDeleteConfirm && item && (
-        <div className="modal-overlay" onClick={() => { if (!deletingItem) setShowDeleteConfirm(false); }}>
-          <div className="modal modal-confirm" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header modal-header-danger">
-              <div className="modal-header-icon-title">
-                <div className="confirm-icon-danger">
-                  <AlertTriangle size={24} />
-                </div>
-                <h2>Delete Item</h2>
-              </div>
-              <button
-                className="modal-close"
-                onClick={() => { if (!deletingItem) setShowDeleteConfirm(false); }}
-                aria-label="Close"
-                disabled={deletingItem}
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div className="confirm-body modal-body">
-              <p>
-                Are you sure you want to delete <strong>&ldquo;{item.name}&rdquo;</strong>?
-              </p>
-              <p className="confirm-text-muted">This will also remove all photos and metadata associated with this item. This action cannot be undone.</p>
-            </div>
-            <div className="modal-footer">
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowDeleteConfirm(false)}
-                  disabled={deletingItem}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-danger"
-                  onClick={handleDeleteItem}
-                  disabled={deletingItem}
-                >
-                  {deletingItem ? 'Deleting...' : 'Delete Item'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Item Modal */}
-      {showEditItem && item && (
-        <div className="modal-overlay" onClick={() => { if (!editingItem) setShowEditItem(false); }}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Edit Item</h2>
-              <button
-                className="modal-close"
-                onClick={() => { if (!editingItem) setShowEditItem(false); }}
-                aria-label="Close"
-                disabled={editingItem}
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label htmlFor="edit-item-name" className="form-label">Name <span className="form-required">*</span></label>
-                <input
-                  id="edit-item-name"
-                  type="text"
-                  className={`form-input ${editError && !editName.trim() ? 'form-input-error' : ''}`}
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  placeholder="Item name"
-                  disabled={editingItem}
-                  autoFocus
-                  data-1p-ignore
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="edit-item-description" className="form-label">Description</label>
-                <textarea
-                  id="edit-item-description"
-                  className="form-input form-textarea"
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
-                  placeholder="Item description (optional)"
-                  disabled={editingItem}
-                  rows={3}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="edit-item-quantity" className="form-label">Quantity</label>
-                <input
-                  id="edit-item-quantity"
-                  type="number"
-                  className="form-input"
-                  value={editQuantity}
-                  onChange={(e) => setEditQuantity(Number(e.target.value))}
-                  min={1}
-                  step={1}
-                  disabled={editingItem}
-                />
-              </div>
-              {editError && (
-                <div className="form-error-text">{editError}</div>
-              )}
-            </div>
-            <div className='modal-footer'>
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowEditItem(false)}
-                  disabled={editingItem}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handleEditItem}
-                  disabled={editingItem}
-                >
-                  {editingItem ? 'Saving...' : 'Save Changes'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Move Item Modal */}
-      {showMoveModal && item && (
-        <div className="modal-overlay" onClick={() => { if (!movingItem) setShowMoveModal(false); }}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="modal-header-icon-title">
-                <div className="meta-card-icon">
-                  <ArrowRightLeft size={22} />
-                </div>
-                <h2>Move Item</h2>
-              </div>
-              <button
-                className="modal-close"
-                onClick={() => { if (!movingItem) setShowMoveModal(false); }}
-                aria-label="Close"
-                disabled={movingItem}
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div className="modal-body">
-              <p>
-                Move <strong>&ldquo;{item.name}&rdquo;</strong> from <strong>{item.tote_name}</strong> to:
-              </p>
-              {loadingTotes ? (
-                <div className="loading-state" style={{ padding: '1rem 0' }}>
-                  <div className="spinner" />
-                  <p>Loading totes...</p>
-                </div>
-              ) : allTotes.length === 0 ? (
-                <div className="metadata-empty-state" style={{ padding: '1rem 0' }}>
-                  <Package size={32} />
-                  <p>No other totes available</p>
-                  <span className="metadata-empty-hint">Create another tote first to move this item</span>
-                </div>
-              ) : (
-                <div className="form-group" style={{ marginTop: '0.75rem' }}>
-                  <label htmlFor="move-destination-tote" className="form-label">Destination Tote <span className="form-required">*</span></label>
-                  <select
-                    id="move-destination-tote"
-                    className="form-input form-select"
-                    value={selectedToteId}
-                    onChange={(e) => {
-                      setSelectedToteId(e.target.value);
-                      setMoveError(null);
-                    }}
-                    disabled={movingItem}
-                  >
-                    <option value="">Select a tote...</option>
-                    {allTotes.map((t: Tote) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name} ({t.location})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              {moveError && (
-                <div className="form-error-text" style={{ marginTop: '0.5rem' }}>{moveError}</div>
-              )}
-            </div>
-            <div className="modal-footer">
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowMoveModal(false)}
-                  disabled={movingItem}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handleMoveItem}
-                  disabled={movingItem || !selectedToteId || loadingTotes}
-                >
-                  {movingItem ? 'Moving...' : 'Move Item'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Copy/Duplicate modal */}
-      {showCopyModal && item && (
-        <div className="modal-overlay" onClick={() => { if (!duplicatingItem) setShowCopyModal(false); }}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="modal-header-icon-title">
-                <div className="meta-card-icon">
-                  <Copy size={22} />
-                </div>
-                <h2>Copy Item</h2>
-              </div>
-              <button
-                className="modal-close"
-                onClick={() => { if (!duplicatingItem) setShowCopyModal(false); }}
-                aria-label="Close"
-                disabled={duplicatingItem}
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div className="modal-body">
-              <p>
-                Copy <strong>&ldquo;{item.name}&rdquo;</strong> to:
-              </p>
-              {loadingCopyTotes ? (
-                <div className="loading-state" style={{ padding: '1rem 0' }}>
-                  <div className="spinner" />
-                  <p>Loading totes...</p>
-                </div>
-              ) : copyTotes.length === 0 ? (
-                <div className="metadata-empty-state" style={{ padding: '1rem 0' }}>
-                  <Package size={32} />
-                  <p>No totes available</p>
-                  <span className="metadata-empty-hint">Create a tote first</span>
-                </div>
-              ) : (
-                <div className="form-group" style={{ marginTop: '0.75rem' }}>
-                  <label htmlFor="copy-destination-tote" className="form-label">Destination Tote <span className="form-required">*</span></label>
-                  <select
-                    id="copy-destination-tote"
-                    className="form-input form-select"
-                    value={copyTargetToteId}
-                    onChange={(e) => {
-                      setCopyTargetToteId(e.target.value);
-                      setCopyError(null);
-                    }}
-                    disabled={duplicatingItem}
-                  >
-                    <option value="">Select a tote...</option>
-                    {copyTotes.map((t: Tote) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name} ({t.location}){t.id === toteId ? ' - Current' : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              {copyError && (
-                <div className="form-error-text" style={{ marginTop: '0.5rem' }}>{copyError}</div>
-              )}
-            </div>
-            <div className='modal-footer'>
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowCopyModal(false)}
-                  disabled={duplicatingItem}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handleCopyItem}
-                  disabled={duplicatingItem || !copyTargetToteId || loadingCopyTotes}
-                >
-                  {duplicatingItem ? 'Copying...' : 'Copy Item'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Breadcrumb */}
       <Breadcrumb items={breadcrumbItems} />
-
-      {/* Item header */}
-      <div className="item-detail-header">
-        <div className="item-detail-title-row">
-          <div className="item-detail-icon">
-            <Package size={28} />
-          </div>
-          <div>
-            <h1>{item.name}</h1>
-            <span className="item-detail-tote">
-              in <Link href={`/totes/${toteId}`} className="item-detail-tote-link">{item.tote_name}</Link>
-            </span>
-          </div>
-        </div>
-        <div className="actions-dropdown" ref={actionsRef}>
-          <button
-            className="btn btn-secondary"
-            onClick={() => setActionsOpen(!actionsOpen)}
-            aria-expanded={actionsOpen}
-            aria-haspopup="true"
-          >
-            <ChevronDown size={18} />
-            <span>Actions</span>
-          </button>
-          {actionsOpen && (
-            <div className="actions-dropdown-menu">
-              <button
-                className="actions-dropdown-item"
-                onClick={() => { setActionsOpen(false); openEditModal(); }}
-              >
-                <Pencil size={16} />
-                Edit Item
-              </button>
-              <button
-                className="actions-dropdown-item"
-                onClick={() => { setActionsOpen(false); openMoveModal(); }}
-              >
-                <ArrowRightLeft size={16} />
-                Move
-              </button>
-              <button
-                className="actions-dropdown-item"
-                onClick={() => { setActionsOpen(false); openCopyModal(); }}
-                disabled={duplicatingItem}
-              >
-                <Copy size={16} />
-                {duplicatingItem ? 'Copying...' : 'Copy'}
-              </button>
-              <button
-                className="actions-dropdown-item actions-dropdown-item-danger"
-                onClick={() => { setActionsOpen(false); setShowDeleteConfirm(true); }}
-              >
-                <Trash2 size={16} />
-                Delete Item
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Item metadata */}
-      <div className="item-detail-meta-grid">
-        <div className="tote-detail-meta-card">
-          <div className="meta-card-icon"><Hash size={18} /></div>
-          <div>
-            <span className="meta-card-label">Quantity</span>
-            <span className="meta-card-value">{item.quantity}</span>
-          </div>
-        </div>
-        <div className={`item-detail-extra ${showMoreDetails ? 'item-detail-extra-open' : ''}`}>
-          <div className="tote-detail-meta-card">
-            <div className="meta-card-icon"><Calendar size={18} /></div>
-            <div>
-              <span className="meta-card-label">Added</span>
-              <span className="meta-card-value">{formatDate(item.created_at)}</span>
-            </div>
-          </div>
-          <div className="tote-detail-meta-card">
-            <div className="meta-card-icon"><Calendar size={18} /></div>
-            <div>
-              <span className="meta-card-label">Updated</span>
-              <span className="meta-card-value">{formatDate(item.updated_at)}</span>
-            </div>
-          </div>
-          {item.description && (
-            <div className="tote-detail-meta-card item-desc-card">
-              <div className="meta-card-icon"><FileText size={18} /></div>
-              <div>
-                <span className="meta-card-label">Description</span>
-                <span className="meta-card-value">{item.description}</span>
-              </div>
-            </div>
-          )}
-        </div>
-        <button
-          className="item-detail-more-toggle"
-          onClick={() => setShowMoreDetails(!showMoreDetails)}
-        >
-          {showMoreDetails ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          {showMoreDetails ? 'Show less' : 'Show more details'}
-        </button>
-      </div>
-
-      {/* Photos section */}
-      <div className="tote-detail-section">
-        <div className="section-header">
-          <h2>
-            <Camera style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} size={20} />
-            Photos ({photos.length}/3)
-          </h2>
-        </div>
-
-        <PhotoGallery
-          photos={photos}
-          entityName={item.name}
-          source="item"
-          onPhotoDeleted={fetchItem}
+      <ItemHeader
+        item={item}
+        toteId={toteId}
+        itemId={itemId}
+        onEdit={() => setShowEditItem(true)}
+        onMove={() => setShowMoveItem(true)}
+        onCopy={() => setShowCopyItem(true)}
+        onDeleted={() => setTimeout(() => router.push(`/totes/${toteId}`), 500)}
+        showToast={showToast}
+      />
+      <ItemPhotos
+        photos={photos}
+        itemId={String(item.id)}
+        itemName={item.name}
+        onPhotosChanged={fetchItem}
+        maxUploadSize={maxUploadSize}
+      />
+      <MetadataSection
+        metadata={metadata}
+        toteId={toteId}
+        itemId={itemId}
+        onMetadataChanged={fetchItem}
+        showToast={showToast}
+      />
+      <MovementHistory
+        history={movementHistory}
+        toteId={toteId}
+      />
+      {showEditItem && (
+        <EditItemForm
+          item={item}
+          toteId={toteId}
+          itemId={itemId}
+          onClose={() => setShowEditItem(false)}
+          onSaved={() => { setShowEditItem(false); fetchItem(); }}
+          showToast={showToast}
         />
-
-        <PhotoUpload
-          entityType="item"
-          entityId={item.id}
-          currentPhotoCount={photos.length}
-          maxPhotos={3}
-          onUploadComplete={fetchItem}
-          maxUploadSize={maxUploadSize}
+      )}
+      {showMoveItem && (
+        <MoveItemForm
+          item={item}
+          toteId={toteId}
+          itemId={itemId}
+          onClose={() => setShowMoveItem(false)}
+          onMoved={(targetToteId) => {
+            setShowMoveItem(false);
+            setTimeout(() => router.push(`/totes/${targetToteId}/items/${itemId}`), 500);
+          }}
+          showToast={showToast}
         />
-      </div>
-
-      {/* Metadata Tags Section */}
-      <div className="tote-detail-section">
-        <div className="section-header">
-          <h2>
-            <Tag style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} size={20} />
-            Metadata Tags
-          </h2>
-          {!showAddMetadata && (
-            <button
-              className="btn btn-primary btn-sm"
-              onClick={() => {
-                setShowAddMetadata(true);
-                setMetadataError(null);
-                setMetadataKey('');
-                setMetadataValue('');
-              }}
-            >
-              <Plus size={16} />
-              Add Metadata
-            </button>
-          )}
-        </div>
-
-        {/* Add Metadata Form */}
-        {showAddMetadata && (
-          <div className="metadata-add-form">
-            <div className="metadata-add-fields">
-              <div className="form-group" style={{ position: 'relative' }}>
-                <label htmlFor="add-metadata-key" className="form-label">Key <span className="form-required">*</span></label>
-                <input
-                  id="add-metadata-key"
-                  ref={keyInputRef}
-                  type="text"
-                  className={`form-input ${metadataError ? 'form-input-error' : ''}`}
-                  placeholder="e.g., Brand, Color, Size"
-                  value={metadataKey}
-                  onChange={(e) => handleKeyInputChange(e.target.value)}
-                  onFocus={() => {
-                    setShowKeySuggestions(true);
-                  }}
-                  onKeyDown={(e) => {
-                    if (showKeySuggestions && filteredSuggestions.length > 0) {
-                      if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        setSelectedSuggestionIndex((prev) =>
-                          prev < filteredSuggestions.length - 1 ? prev + 1 : 0
-                        );
-                      } else if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        setSelectedSuggestionIndex((prev) =>
-                          prev > 0 ? prev - 1 : filteredSuggestions.length - 1
-                        );
-                      } else if (e.key === 'Enter' && selectedSuggestionIndex >= 0) {
-                        e.preventDefault();
-                        handleSelectSuggestion(filteredSuggestions[selectedSuggestionIndex]);
-                      } else if (e.key === 'Escape') {
-                        setShowKeySuggestions(false);
-                      } else if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddMetadata();
-                      }
-                    } else if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddMetadata();
-                    }
-                  }}
-                  disabled={addingMetadata}
-                  autoFocus
-                  autoComplete="off"
-                />
-                {showKeySuggestions && filteredSuggestions.length > 0 && (
-                  <div className="autocomplete-dropdown" ref={suggestionsRef}>
-                    {filteredSuggestions.map((key, index) => (
-                      <div
-                        key={key}
-                        className={`autocomplete-item ${index === selectedSuggestionIndex ? 'autocomplete-item-active' : ''}`}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          handleSelectSuggestion(key);
-                        }}
-                        onMouseEnter={() => setSelectedSuggestionIndex(index)}
-                      >
-                        {key}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="form-group">
-                <label htmlFor="add-metadata-value" className="form-label">Value <span className="form-required">*</span></label>
-                <input
-                  id="add-metadata-value"
-                  type="text"
-                  className={`form-input ${metadataError ? 'form-input-error' : ''}`}
-                  placeholder="e.g., Acme, Red, Large"
-                  value={metadataValue}
-                  onChange={(e) => setMetadataValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddMetadata();
-                    }
-                  }}
-                  disabled={addingMetadata}
-                />
-              </div>
-            </div>
-            {metadataError && (
-              <div className="form-error-text" style={{ marginTop: '0.25rem' }}>{metadataError}</div>
-            )}
-            <div className="metadata-add-actions">
-              <button
-                className="btn btn-secondary btn-sm"
-                onClick={() => {
-                  setShowAddMetadata(false);
-                  setMetadataError(null);
-                }}
-                disabled={addingMetadata}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={handleAddMetadata}
-                disabled={addingMetadata}
-              >
-                {addingMetadata ? 'Adding...' : 'Save'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Metadata Tags Display */}
-        {item.metadata && item.metadata.length > 0 ? (
-          <div className="metadata-tags-list">
-            {item.metadata.map((meta: ItemMetadata) => (
-              editingMetadataId === meta.id ? (
-                <div key={meta.id} className="metadata-edit-form">
-                  <div className="metadata-edit-fields">
-                    <div className="form-group">
-                      <label htmlFor={`edit-meta-key-${meta.id}`} className="form-label">Key <span className="form-required">*</span></label>
-                      <input
-                        id={`edit-meta-key-${meta.id}`}
-                        type="text"
-                        className={`form-input form-input-sm ${editMetaError ? 'form-input-error' : ''}`}
-                        value={editMetaKey}
-                        onChange={(e) => setEditMetaKey(e.target.value)}
-                        disabled={savingMetadata}
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleSaveMetadata();
-                          }
-                          if (e.key === 'Escape') {
-                            cancelEditMetadata();
-                          }
-                        }}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor={`edit-meta-value-${meta.id}`} className="form-label">Value <span className="form-required">*</span></label>
-                      <input
-                        id={`edit-meta-value-${meta.id}`}
-                        type="text"
-                        className={`form-input form-input-sm ${editMetaError ? 'form-input-error' : ''}`}
-                        value={editMetaValue}
-                        onChange={(e) => setEditMetaValue(e.target.value)}
-                        disabled={savingMetadata}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleSaveMetadata();
-                          }
-                          if (e.key === 'Escape') {
-                            cancelEditMetadata();
-                          }
-                        }}
-                      />
-                    </div>
-                  </div>
-                  {editMetaError && (
-                    <div className="form-error-text" style={{ marginTop: '0.25rem' }}>{editMetaError}</div>
-                  )}
-                  <div className="metadata-edit-actions">
-                    <button
-                      className="btn btn-secondary btn-sm"
-                      onClick={cancelEditMetadata}
-                      disabled={savingMetadata}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      className="btn btn-primary btn-sm"
-                      onClick={handleSaveMetadata}
-                      disabled={savingMetadata}
-                    >
-                      {savingMetadata ? 'Saving...' : 'Save'}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div key={meta.id} className="metadata-tag">
-                  <span className="metadata-tag-key">{meta.key}</span>
-                  <span className="metadata-tag-separator">:</span>
-                  <span className="metadata-tag-value">{meta.value}</span>
-                  <button
-                    className="metadata-tag-edit"
-                    onClick={() => startEditMetadata(meta)}
-                    title={`Edit ${meta.key}`}
-                    aria-label={`Edit ${meta.key}`}
-                  >
-                    <Pencil size={14} />
-                  </button>
-                  <button
-                    className="metadata-tag-remove"
-                    onClick={() => handleDeleteMetadata(meta.id, meta.key)}
-                    title={`Remove ${meta.key}`}
-                    aria-label={`Remove ${meta.key}`}
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              )
-            ))}
-          </div>
-        ) : !showAddMetadata ? (
-          <div className="metadata-empty-state">
-            <Tag size={32} />
-            <p>No metadata tags</p>
-            <span className="metadata-empty-hint">Add key-value metadata to organize and describe this item</span>
-          </div>
-        ) : null}
-      </div>
-
-      {/* Movement History Section */}
-      <div className="tote-detail-section">
-        <div className="section-header">
-          <h2>
-            <Clock style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} size={20} />
-            Movement History
-          </h2>
-        </div>
-        {item.movement_history && item.movement_history.length > 0 ? (
-          <div className="movement-history-list">
-            {item.movement_history.map((move: MovementHistory) => (
-              <div key={move.id} className="movement-history-item">
-                <div className="movement-history-icon">
-                  <ArrowRightLeft size={16} />
-                </div>
-                <div className="movement-history-content">
-                  <div className="movement-history-description">
-                    Moved from{' '}
-                    {move.from_tote_name ? (
-                      <Link href={`/totes/${move.from_tote_id}`} className="movement-history-link">
-                        {move.from_tote_name}
-                      </Link>
-                    ) : (
-                      <span className="movement-history-unknown">Unknown</span>
-                    )}
-                    {' '}to{' '}
-                    <Link href={`/totes/${move.to_tote_id}`} className="movement-history-link">
-                      {move.to_tote_name}
-                    </Link>
-                  </div>
-                  <div className="movement-history-time">
-                    {formatDate(move.moved_at)}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="metadata-empty-state">
-            <Clock size={32} />
-            <p>No movement history</p>
-            <span className="metadata-empty-hint">Movement history will appear here when this item is moved between totes</span>
-          </div>
-        )}
-      </div>
+      )}
+      {showCopyItem && (
+        <CopyItemForm
+          item={item}
+          toteId={toteId}
+          itemId={itemId}
+          onClose={() => setShowCopyItem(false)}
+          onCopied={(newToteId, newItemId) => {
+            setShowCopyItem(false);
+            setTimeout(() => router.push(`/totes/${newToteId}/items/${newItemId}`), 500);
+          }}
+          showToast={showToast}
+        />
+      )}
     </main>
   );
 }
