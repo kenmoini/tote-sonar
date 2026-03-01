@@ -40,8 +40,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **QUAL-01**: Item detail page decomposed from monolithic component into focused sub-components
 - [ ] **QUAL-02**: Tote detail page decomposed into focused sub-components
-- [ ] **QUAL-03**: Shared PhotoUpload component extracted and reused for both items and totes
-- [ ] **QUAL-04**: Shared PhotoGallery component extracted and reused for both items and totes
+- [x] **QUAL-03**: Shared PhotoUpload component extracted and reused for both items and totes
+- [x] **QUAL-04**: Shared PhotoGallery component extracted and reused for both items and totes
 - [ ] **QUAL-05**: Error boundaries (error.tsx) added at app root and critical route segments
 
 ## v2 Requirements
@@ -99,8 +99,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PHOTO-05 | Phase 2 | Complete |
 | PHOTO-06 | Phase 2 | Complete |
 | PHOTO-07 | Phase 2 | Complete |
-| QUAL-03 | Phase 2 | Pending |
-| QUAL-04 | Phase 2 | Pending |
+| QUAL-03 | Phase 2 | Complete |
+| QUAL-04 | Phase 2 | Complete |
 | QUAL-01 | Phase 3 | Pending |
 | QUAL-02 | Phase 3 | Pending |
 | QUAL-05 | Phase 3 | Pending |

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_plan: 2 of 3
-status: in_progress
-last_updated: "2026-03-01T01:55:45Z"
-last_activity: 2026-02-28
+current_plan: 3
+status: executing
+last_updated: "2026-03-01T02:04:06.808Z"
+last_activity: 2026-03-01
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 5
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 ## Current Position
 
 **Phase:** 2 of 4 (Tote Photos)
-**Current Plan:** 2 of 3
+**Current Plan:** 3
 **Total Plans in Phase:** 3
-**Status:** In progress
-**Last activity:** 2026-02-28
+**Status:** Ready to execute
+**Last activity:** 2026-03-01
 
 Progress: [######....] 60%
 
@@ -53,6 +53,7 @@ Progress: [######....] 60%
 | Phase 01 P01 | 3min | 2 tasks | 5 files |
 | Phase 01 P02 | 6min | 2 tasks | 18 files |
 | Phase 02 P01 | 4min | 3 tasks | 12 files |
+| Phase 02 P02 | 4min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,8 @@ Recent decisions affecting current work:
 - [Phase 02]: Used ?source=tote query param to reuse existing photo serving routes for tote photos
 - [Phase 02]: tote_photos optional in import for backward compatibility with pre-Phase-2 exports
 - [Phase 02]: Cover photo is the earliest tote_photo by created_at (ORDER BY ASC LIMIT 1)
+- [Phase 02]: Source query param omitted for item photos (API defaults to item_photos), included for tote via ?source=tote
+- [Phase 02]: PhotoUpload manages own drag-and-drop zone internally rather than page-level drag overlay
 
 ### Pending Todos
 
