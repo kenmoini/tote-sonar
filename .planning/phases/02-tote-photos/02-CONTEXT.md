@@ -29,7 +29,7 @@ Add photo upload capability to totes (max 3 per tote), display cover thumbnails 
 ### Upload experience
 - Same as items: drag-and-drop + click-to-browse button
 - Same file type validation (JPEG, PNG, WebP) and max size from settings
-- Upload only available on tote detail page (not during tote creation)
+- Upload available on tote creation and on detail page
 - Spinner overlay during upload, success/error toast after — same as current item upload pattern
 
 ### Shared backend utility
