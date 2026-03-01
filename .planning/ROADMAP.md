@@ -75,10 +75,11 @@ Plans:
   1. Search results are paginated with offset/limit controls and the UI shows total result count (no hard cap at 100)
   2. Database queries on foreign key columns and location/owner filters use indexes (verified via EXPLAIN QUERY PLAN)
   3. Dashboard loads efficiently by querying only what it displays (limited scope, first photo per item/tote)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: TBD
+- [ ] 04-01-PLAN.md -- Database indexes on all FK/filter/ordering columns and SearchResult type update
+- [ ] 04-02-PLAN.md -- Search pagination API (COUNT + OFFSET/LIMIT) and Pagination UI component with URL state
 
 ## Progress
 
@@ -90,4 +91,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | 1. Correctness and Safety | 2/2 | Complete | 2026-02-28 |
 | 2. Tote Photos | 3/3 | Complete | 2026-02-28 |
 | 3. Page Decomposition | 1/3 | In Progress | - |
-| 4. Performance | 0/0 | Not started | - |
+| 4. Performance | 0/2 | Not started | - |
