@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, Box, MapPin, User, ArrowUp, ArrowDown, X, Check, Printer, CheckSquare, Square, Loader2, Trash2 } from 'lucide-react';
 import { Tote } from '@/types';
@@ -24,6 +24,7 @@ type SortOrder = 'asc' | 'desc';
 
 function TotesPageContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [totes, setTotes] = useState<ToteWithCount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -191,10 +192,10 @@ function TotesPageContent() {
       const json = await res.json();
       const newTote = json.data;
 
-      showToast(`Tote "${newTote.name}" created successfully! (ID: ${newTote.id})`, 'success');
+      showToast(`Tote "${newTote.name}" created! Redirecting to add photos...`, 'success');
       resetForm();
       setShowCreateForm(false);
-      await fetchTotes();
+      router.push(`/totes/${newTote.id}`);
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to create tote', 'error');
     } finally {

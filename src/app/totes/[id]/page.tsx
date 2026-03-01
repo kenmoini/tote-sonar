@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import { Box, MapPin, User, ArrowLeft, Package, Calendar, Plus, X, Check, Trash2, AlertTriangle, Pencil, QrCode, ArrowUp, ArrowDown, ImageIcon, Printer, Loader2, Camera, Upload, ChevronDown, ChevronUp } from 'lucide-react';
-import { Tote, Item, ItemPhoto } from '@/types';
+import { Tote, Item, ItemPhoto, TotePhoto } from '@/types';
+import { PhotoGallery, PhotoUpload } from '@/components/photos';
 import Breadcrumb from '@/components/Breadcrumb';
 import ErrorDisplay from '@/components/ErrorDisplay';
 
@@ -31,6 +32,9 @@ export default function ToteDetailPage() {
   const [tote, setTote] = useState<ToteDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Tote photos state
+  const [totePhotos, setTotePhotos] = useState<TotePhoto[]>([]);
 
   // Delete confirmation state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -195,9 +199,24 @@ export default function ToteDetailPage() {
     }
   }, [toteId]);
 
+  const fetchTotePhotos = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/totes/${toteId}/photos`);
+      if (res.ok) {
+        const json = await res.json();
+        setTotePhotos(json.data || []);
+      }
+    } catch {
+      // Silently fail - photos are supplemental
+    }
+  }, [toteId]);
+
   useEffect(() => {
-    if (toteId) fetchTote();
-  }, [toteId, fetchTote]);
+    if (toteId) {
+      fetchTote();
+      fetchTotePhotos();
+    }
+  }, [toteId, fetchTote, fetchTotePhotos]);
 
   // Fetch max upload size from settings
   useEffect(() => {
@@ -968,6 +987,34 @@ export default function ToteDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Tote Photos section */}
+      <div className="tote-detail-section">
+        <div className="section-header">
+          <h2>Photos</h2>
+        </div>
+        {totePhotos.length === 0 ? (
+          <div className="empty-state-small">
+            <Camera size={32} className="empty-icon" />
+            <p>No photos yet</p>
+          </div>
+        ) : (
+          <PhotoGallery
+            photos={totePhotos}
+            entityName={tote.name}
+            source="tote"
+            onPhotoDeleted={fetchTotePhotos}
+          />
+        )}
+        <PhotoUpload
+          entityType="tote"
+          entityId={toteId}
+          currentPhotoCount={totePhotos.length}
+          maxPhotos={3}
+          onUploadComplete={fetchTotePhotos}
+          maxUploadSize={maxUploadSize}
+        />
+      </div>
 
       {/* Items section */}
       <div className="tote-detail-section">
