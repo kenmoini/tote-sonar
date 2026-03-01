@@ -4,10 +4,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
-import { Package, ArrowLeft, Hash, Calendar, FileText, Camera, Upload, X, Trash2, ImageIcon, AlertTriangle, Check, Tag, Plus, Pencil, ArrowRightLeft, Clock, MapPin, Copy, ChevronDown, ChevronUp } from 'lucide-react';
-import { Item, ItemPhoto, ItemMetadata, MovementHistory, Tote } from '@/types';
+import { Package, ArrowLeft, Hash, Calendar, FileText, Camera, X, Trash2, AlertTriangle, Check, Tag, Plus, Pencil, ArrowRightLeft, Clock, MapPin, Copy, ChevronDown, ChevronUp } from 'lucide-react';
+import { Item, ItemMetadata, MovementHistory, Tote } from '@/types';
 import Breadcrumb from '@/components/Breadcrumb';
 import ErrorDisplay from '@/components/ErrorDisplay';
+import { PhotoGallery, PhotoUpload } from '@/components/photos';
 
 interface ItemDetail extends Item {
   tote_name: string;
@@ -22,14 +23,9 @@ export default function ItemDetailPage() {
   const [item, setItem] = useState<ItemDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  const [viewingPhoto, setViewingPhoto] = useState<ItemPhoto | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingItem, setDeletingItem] = useState(false);
-  const [photoToDelete, setPhotoToDelete] = useState<ItemPhoto | null>(null);
-  const [deletingPhoto, setDeletingPhoto] = useState(false);
   const [showEditItem, setShowEditItem] = useState(false);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
@@ -59,8 +55,6 @@ export default function ItemDetailPage() {
   const [copyTotes, setCopyTotes] = useState<Tote[]>([]);
   const [loadingCopyTotes, setLoadingCopyTotes] = useState(false);
   const [maxUploadSize, setMaxUploadSize] = useState<number>(5242880); // Default 5MB
-  const [isDragging, setIsDragging] = useState(false);
-  const dragCounter = useRef(0);
   const [actionsOpen, setActionsOpen] = useState(false);
   const actionsRef = useRef<HTMLDivElement>(null);
   const [showMoreDetails, setShowMoreDetails] = useState(false);
@@ -69,7 +63,6 @@ export default function ItemDetailPage() {
   const [editMetaValue, setEditMetaValue] = useState('');
   const [savingMetadata, setSavingMetadata] = useState(false);
   const [editMetaError, setEditMetaError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchItem = useCallback(async () => {
     try {
@@ -140,18 +133,16 @@ export default function ItemDetailPage() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (photoToDelete && !deletingPhoto) setPhotoToDelete(null);
         if (showDeleteConfirm && !deletingItem) setShowDeleteConfirm(false);
         if (showEditItem && !editingItem) setShowEditItem(false);
         if (showMoveModal && !movingItem) setShowMoveModal(false);
         if (showCopyModal && !duplicatingItem) setShowCopyModal(false);
         if (showAddMetadata) setShowAddMetadata(false);
-        if (viewingPhoto) setViewingPhoto(null);
       }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [photoToDelete, deletingPhoto, showDeleteConfirm, deletingItem, showEditItem, editingItem, showMoveModal, movingItem, showCopyModal, duplicatingItem, showAddMetadata, viewingPhoto]);
+  }, [showDeleteConfirm, deletingItem, showEditItem, editingItem, showMoveModal, movingItem, showCopyModal, duplicatingItem, showAddMetadata]);
 
   // Fetch metadata keys for autocomplete when add form opens
   const fetchMetadataKeys = useCallback(async () => {
@@ -213,122 +204,6 @@ export default function ItemDetailPage() {
       hour: 'numeric',
       minute: '2-digit',
     });
-  };
-
-  const handleUploadClick = () => {
-    setUploadError(null);
-    fileInputRef.current?.click();
-  };
-
-  const uploadFile = useCallback(async (file: File) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      setUploadError('Invalid file type. Supported formats: JPEG, PNG, WebP');
-      return;
-    }
-
-    if (file.size > maxUploadSize) {
-      const maxSizeMB = (maxUploadSize / (1024 * 1024)).toFixed(1);
-      setUploadError(`File size (${(file.size / (1024 * 1024)).toFixed(1)}MB) exceeds maximum of ${maxSizeMB}MB. You can adjust this limit in Settings.`);
-      return;
-    }
-
-    setUploading(true);
-    setUploadError(null);
-
-    try {
-      const formData = new FormData();
-      formData.append('photo', file);
-
-      const res = await fetch(`/api/items/${itemId}/photos`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      const json = await res.json();
-
-      if (!res.ok) {
-        setUploadError(json.error || 'Upload failed');
-        return;
-      }
-
-      setToast({ message: 'Photo uploaded successfully!', type: 'success' });
-      await fetchItem();
-    } catch {
-      setUploadError('Failed to upload photo. Please try again.');
-    } finally {
-      setUploading(false);
-    }
-  }, [itemId, maxUploadSize, fetchItem]);
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = '';
-    await uploadFile(file);
-  };
-
-  // Drag-and-drop handlers for photo upload
-  const handleDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragCounter.current++;
-    if (e.dataTransfer.types.includes('Files')) {
-      setIsDragging(true);
-    }
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragCounter.current--;
-    if (dragCounter.current === 0) {
-      setIsDragging(false);
-    }
-  }, []);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragCounter.current = 0;
-    setIsDragging(false);
-
-    const photos = item?.photos || [];
-    if (photos.length >= 3) {
-      setUploadError('Photo limit reached (3 max). Delete a photo first.');
-      return;
-    }
-
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      uploadFile(file);
-    }
-  }, [uploadFile, item]);
-
-  const confirmDeletePhoto = async () => {
-    if (!photoToDelete) return;
-    setDeletingPhoto(true);
-    try {
-      const res = await fetch(`/api/photos/${photoToDelete.id}`, { method: 'DELETE' });
-      if (!res.ok) {
-        const json = await res.json();
-        setToast({ message: json.error || 'Failed to delete photo', type: 'error' });
-        return;
-      }
-      setToast({ message: 'Photo deleted', type: 'success' });
-      setViewingPhoto(null);
-      setPhotoToDelete(null);
-      await fetchItem();
-    } catch {
-      setToast({ message: 'Failed to delete photo', type: 'error' });
-    } finally {
-      setDeletingPhoto(false);
-    }
   };
 
   const handleAddMetadata = async () => {
@@ -663,7 +538,6 @@ export default function ItemDetailPage() {
   }
 
   const photos = item.photos || [];
-  const canUpload = photos.length < 3;
 
   const breadcrumbItems = [
     { label: 'Dashboard', href: '/' },
@@ -673,33 +547,7 @@ export default function ItemDetailPage() {
   ];
 
   return (
-    <main
-      className="page-container"
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-    >
-      {/* Drag-and-drop overlay */}
-      {isDragging && (
-        <div className="drag-overlay">
-          <div className="drag-overlay-content">
-            <Upload size={48} />
-            {canUpload ? (
-              <>
-                <p>Drop photo to upload</p>
-                <span>JPEG, PNG, or WebP</span>
-              </>
-            ) : (
-              <>
-                <p>Photo limit reached</p>
-                <span>Maximum 3 photos per item</span>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
+    <main className="page-container">
       {/* Toast */}
       {toast && (
         <div className={`toast toast-${toast.type}`} role="alert">
@@ -756,54 +604,6 @@ export default function ItemDetailPage() {
                   disabled={deletingItem}
                 >
                   {deletingItem ? 'Deleting...' : 'Delete Item'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Photo Confirmation Dialog */}
-      {photoToDelete && (
-        <div className="modal-overlay" onClick={() => { if (!deletingPhoto) setPhotoToDelete(null); }}>
-          <div className="modal modal-confirm" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header modal-header-danger">
-              <div className="modal-header-icon-title">
-                <div className="confirm-icon-danger">
-                  <AlertTriangle size={24} />
-                </div>
-                <h2>Delete Photo</h2>
-              </div>
-              <button
-                className="modal-close"
-                onClick={() => { if (!deletingPhoto) setPhotoToDelete(null); }}
-                aria-label="Close"
-                disabled={deletingPhoto}
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div className="confirm-body modal-body">
-              <p>Are you sure you want to delete this photo?</p>
-              <p className="confirm-text-muted">This action cannot be undone.</p>
-            </div>
-            <div className="modal-footer">
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setPhotoToDelete(null)}
-                  disabled={deletingPhoto}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-danger"
-                  onClick={confirmDeletePhoto}
-                  disabled={deletingPhoto}
-                >
-                  {deletingPhoto ? 'Deleting...' : 'Delete Photo'}
                 </button>
               </div>
             </div>
@@ -1064,42 +864,6 @@ export default function ItemDetailPage() {
         </div>
       )}
 
-      {/* Full-size photo lightbox */}
-      {viewingPhoto && (
-        <div className="photo-lightbox" onClick={() => setViewingPhoto(null)}>
-          <div className="photo-lightbox-content" onClick={(e) => e.stopPropagation()}>
-            <div className="photo-lightbox-header">
-              <span className="photo-lightbox-title">{viewingPhoto.filename}</span>
-              <div className="photo-lightbox-actions">
-                <button
-                  className="btn btn-danger btn-sm"
-                  onClick={() => setPhotoToDelete(viewingPhoto)}
-                  title="Delete photo"
-                  aria-label="Delete photo"
-                >
-                  <Trash2 size={16} />
-                </button>
-                <button
-                  className="photo-lightbox-close"
-                  onClick={() => setViewingPhoto(null)}
-                  title="Close"
-                  aria-label="Close lightbox"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-            </div>
-            <div className="photo-lightbox-image-wrapper">
-              <img
-                src={`/api/photos/${viewingPhoto.id}`}
-                alt="Full size"
-                className="photo-lightbox-image"
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Breadcrumb */}
       <Breadcrumb items={breadcrumbItems} />
 
@@ -1212,88 +976,23 @@ export default function ItemDetailPage() {
             <Camera style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} size={20} />
             Photos ({photos.length}/3)
           </h2>
-          {canUpload && (
-            <button
-              className="btn btn-primary btn-sm"
-              onClick={handleUploadClick}
-              disabled={uploading}
-            >
-              <Upload size={16} />
-              {uploading ? 'Uploading...' : 'Upload Photo'}
-            </button>
-          )}
         </div>
 
-        {/* Hidden file input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          onChange={handleFileChange}
-          style={{ display: 'none' }}
+        <PhotoGallery
+          photos={photos}
+          entityName={item.name}
+          source="item"
+          onPhotoDeleted={fetchItem}
         />
 
-        {/* Upload error */}
-        {uploadError && (
-          <div className="photo-upload-error">
-            {uploadError}
-          </div>
-        )}
-
-        {/* Photo gallery */}
-        {photos.length > 0 ? (
-          <div className="photo-gallery">
-            {photos.map((photo: ItemPhoto) => (
-              <div key={photo.id} className="photo-thumbnail-card">
-                <div
-                  className="photo-thumbnail-wrapper"
-                  onClick={() => setViewingPhoto(photo)}
-                  title="Click to view full size"
-                >
-                  <img
-                    src={`/api/photos/${photo.id}/thumbnail`}
-                    alt={`Photo of ${item.name}`}
-                    className="photo-thumbnail-img"
-                  />
-                </div>
-                <div className="photo-thumbnail-actions">
-                  <button
-                    className="photo-delete-btn"
-                    onClick={() => setPhotoToDelete(photo)}
-                    title="Delete photo"
-                    aria-label="Delete photo"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            {/* Upload placeholder if under limit */}
-            {canUpload && (
-              <div
-                className="photo-thumbnail-card photo-upload-placeholder"
-                onClick={handleUploadClick}
-                title="Upload a photo"
-              >
-                <div className="photo-placeholder-content">
-                  <ImageIcon size={32} />
-                  <span>Add Photo</span>
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div
-            className="photo-empty-state"
-            onClick={handleUploadClick}
-            title="Upload a photo"
-          >
-            <ImageIcon size={48} />
-            <p>No photos yet</p>
-            <span className="photo-empty-hint">Click or drag &amp; drop to upload a photo</span>
-          </div>
-        )}
+        <PhotoUpload
+          entityType="item"
+          entityId={item.id}
+          currentPhotoCount={photos.length}
+          maxPhotos={3}
+          onUploadComplete={fetchItem}
+          maxUploadSize={maxUploadSize}
+        />
       </div>
 
       {/* Metadata Tags Section */}
