@@ -45,11 +45,12 @@ Plans:
   3. User can delete individual tote photos and deleting a tote removes all its photos from database and filesystem
   4. Export ZIP includes tote photos and importing that ZIP restores them correctly
   5. Both item and tote photo upload/gallery use the same shared components (no duplicated photo UI code)
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md -- Backend: shared photo utility, tote_photos table, tote photo API, update serving/export/import/cascade delete
+- [ ] 02-02-PLAN.md -- Shared components: extract PhotoGallery/PhotoUpload from item detail page, refactor item page to use them
+- [ ] 02-03-PLAN.md -- Tote photo UI: wire gallery/upload to tote detail page, cover thumbnails on tote list and dashboard
 
 ### Phase 3: Page Decomposition
 **Goal**: Monolithic page components are broken into focused, maintainable sub-components and errors are handled gracefully at route boundaries
@@ -85,6 +86,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Correctness and Safety | 2/2 | Complete | 2026-02-28 |
-| 2. Tote Photos | 0/0 | Not started | - |
+| 2. Tote Photos | 0/3 | Not started | - |
 | 3. Page Decomposition | 0/0 | Not started | - |
 | 4. Performance | 0/0 | Not started | - |
