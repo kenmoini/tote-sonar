@@ -60,10 +60,12 @@ Plans:
   1. Item detail page is composed of focused sub-components (no single file over 400 lines)
   2. Tote detail page is composed of focused sub-components (no single file over 400 lines)
   3. A runtime error in any route segment shows a user-friendly error boundary instead of a blank page or unhandled crash
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: TBD
+- [ ] 03-01-PLAN.md -- Error boundaries at all route segments + shared formatDate utility
+- [ ] 03-02-PLAN.md -- Tote detail page decomposition into 6 focused sub-components
+- [ ] 03-03-PLAN.md -- Item detail page decomposition into 7 focused sub-components
 
 ### Phase 4: Performance
 **Goal**: App handles large inventories without degradation in search, browsing, or dashboard loading
@@ -87,5 +89,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 |-------|----------------|--------|-----------|
 | 1. Correctness and Safety | 2/2 | Complete | 2026-02-28 |
 | 2. Tote Photos | 3/3 | Complete | 2026-02-28 |
-| 3. Page Decomposition | 0/0 | Not started | - |
+| 3. Page Decomposition | 0/3 | Planned | - |
 | 4. Performance | 0/0 | Not started | - |
