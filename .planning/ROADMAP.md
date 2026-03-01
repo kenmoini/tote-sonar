@@ -63,7 +63,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 03-01-PLAN.md -- Error boundaries at all route segments + shared formatDate utility
+- [x] 03-01-PLAN.md -- Error boundaries at all route segments + shared formatDate utility
 - [ ] 03-02-PLAN.md -- Tote detail page decomposition into 6 focused sub-components
 - [ ] 03-03-PLAN.md -- Item detail page decomposition into 7 focused sub-components
 
@@ -89,5 +89,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 |-------|----------------|--------|-----------|
 | 1. Correctness and Safety | 2/2 | Complete | 2026-02-28 |
 | 2. Tote Photos | 3/3 | Complete | 2026-02-28 |
-| 3. Page Decomposition | 0/3 | Planned | - |
+| 3. Page Decomposition | 1/3 | In Progress | - |
 | 4. Performance | 0/0 | Not started | - |
