@@ -6,7 +6,7 @@ import fs from 'fs';
 
 const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
 
-// GET /api/photos/:id/thumbnail - Serve thumbnail photo
+// GET /api/photos/:id/thumbnail - Serve thumbnail photo (item or tote via ?source=tote)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -25,7 +25,11 @@ export async function GET(
     }
     const photoId = idResult.data;
 
-    const photo = db.prepare('SELECT * FROM item_photos WHERE id = ?').get(photoId) as Record<string, unknown> | undefined;
+    // Determine table based on source query param
+    const source = request.nextUrl.searchParams.get('source');
+    const table = source === 'tote' ? 'tote_photos' : 'item_photos';
+
+    const photo = db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(photoId) as Record<string, unknown> | undefined;
     if (!photo) {
       return NextResponse.json({ error: 'Photo not found' }, { status: 404 });
     }

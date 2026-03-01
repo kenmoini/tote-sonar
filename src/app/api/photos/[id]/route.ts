@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { IdParam } from '@/lib/validation';
+import { deletePhotoFiles } from '@/lib/photos';
 import path from 'path';
 import fs from 'fs';
 
 const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
 
-// GET /api/photos/:id - Serve full-size photo
+/**
+ * Determine which table to query based on the `source` query param.
+ * `?source=tote` targets tote_photos; default is item_photos.
+ */
+function getPhotoTable(request: NextRequest): string {
+  const source = request.nextUrl.searchParams.get('source');
+  return source === 'tote' ? 'tote_photos' : 'item_photos';
+}
+
+// GET /api/photos/:id - Serve full-size photo (item or tote via ?source=tote)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -25,7 +35,8 @@ export async function GET(
     }
     const photoId = idResult.data;
 
-    const photo = db.prepare('SELECT * FROM item_photos WHERE id = ?').get(photoId) as Record<string, unknown> | undefined;
+    const table = getPhotoTable(request);
+    const photo = db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(photoId) as Record<string, unknown> | undefined;
     if (!photo) {
       return NextResponse.json({ error: 'Photo not found' }, { status: 404 });
     }
@@ -49,7 +60,7 @@ export async function GET(
   }
 }
 
-// DELETE /api/photos/:id - Delete a photo
+// DELETE /api/photos/:id - Delete a photo (item or tote via ?source=tote)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -68,28 +79,17 @@ export async function DELETE(
     }
     const photoId = idResult.data;
 
-    const photo = db.prepare('SELECT * FROM item_photos WHERE id = ?').get(photoId) as Record<string, unknown> | undefined;
+    const table = getPhotoTable(request);
+    const photo = db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(photoId) as Record<string, unknown> | undefined;
     if (!photo) {
       return NextResponse.json({ error: 'Photo not found' }, { status: 404 });
     }
 
-    const originalFile = path.join(DATA_DIR, photo.original_path as string);
-    const thumbnailFile = path.join(DATA_DIR, photo.thumbnail_path as string);
-
     // Delete DB record first (this is the authoritative action)
-    db.prepare('DELETE FROM item_photos WHERE id = ?').run(photoId);
+    db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(photoId);
 
-    // Clean up files (log and continue on failure)
-    try {
-      if (fs.existsSync(originalFile)) fs.unlinkSync(originalFile);
-    } catch (fileErr) {
-      console.error('Error deleting original photo file:', fileErr);
-    }
-    try {
-      if (fs.existsSync(thumbnailFile)) fs.unlinkSync(thumbnailFile);
-    } catch (fileErr) {
-      console.error('Error deleting thumbnail file:', fileErr);
-    }
+    // Clean up files using shared utility (log and continue on failure)
+    deletePhotoFiles(photo.original_path as string, photo.thumbnail_path as string);
 
     return NextResponse.json({ message: 'Photo deleted successfully' });
   } catch (error) {

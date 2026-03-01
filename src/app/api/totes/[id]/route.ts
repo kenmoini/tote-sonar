@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb, getUploadDir, getThumbnailDir } from '@/lib/db';
+import { getDb } from '@/lib/db';
 import { Tote, Item, ItemPhoto } from '@/types';
 import { parseJsonBody, validateBody, UpdateToteSchema } from '@/lib/validation';
-import fs from 'fs';
-import path from 'path';
+import { deletePhotoFiles } from '@/lib/photos';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -207,35 +206,27 @@ export async function DELETE(
     ).get(id) as { count: number };
 
     // Get all photo files for items in this tote BEFORE deleting (CASCADE will remove DB records)
-    const photos = db.prepare(`
+    const itemPhotos = db.prepare(`
       SELECT ip.original_path, ip.thumbnail_path
       FROM item_photos ip
       JOIN items i ON ip.item_id = i.id
       WHERE i.tote_id = ?
     `).all(id) as Array<{ original_path: string; thumbnail_path: string }>;
 
+    // Also get tote's own photos before cascade delete
+    const totePhotos = db.prepare(
+      'SELECT original_path, thumbnail_path FROM tote_photos WHERE tote_id = ?'
+    ).all(id) as Array<{ original_path: string; thumbnail_path: string }>;
+
+    // Combine all photos for file cleanup
+    const allPhotos = [...itemPhotos, ...totePhotos];
+
     // Delete the tote (cascade will handle items, photos, metadata, movement history in DB)
     db.prepare('DELETE FROM totes WHERE id = ?').run(id);
 
-    // Clean up photo files from disk
-    const uploadsDir = getUploadDir();
-    const thumbnailsDir = getThumbnailDir();
-    for (const photo of photos) {
-      try {
-        const originalFile = path.resolve(uploadsDir, path.basename(photo.original_path));
-        // Defensive: verify resolved path stays within data directory
-        if (!originalFile.startsWith(uploadsDir + path.sep) && originalFile !== uploadsDir) continue;
-        if (fs.existsSync(originalFile)) fs.unlinkSync(originalFile);
-      } catch (fileErr) {
-        console.error('Error deleting original photo file:', fileErr);
-      }
-      try {
-        const thumbnailFile = path.resolve(thumbnailsDir, path.basename(photo.thumbnail_path));
-        if (!thumbnailFile.startsWith(thumbnailsDir + path.sep) && thumbnailFile !== thumbnailsDir) continue;
-        if (fs.existsSync(thumbnailFile)) fs.unlinkSync(thumbnailFile);
-      } catch (fileErr) {
-        console.error('Error deleting thumbnail file:', fileErr);
-      }
+    // Clean up photo files from disk using shared utility
+    for (const photo of allPhotos) {
+      deletePhotoFiles(photo.original_path, photo.thumbnail_path);
     }
 
     return NextResponse.json({
