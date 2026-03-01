@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_plan: Not started
-status: completed
-last_updated: "2026-02-28T22:39:12.480Z"
+current_plan: 2 of 3
+status: in_progress
+last_updated: "2026-03-01T01:55:45Z"
 last_activity: 2026-02-28
 progress:
-  total_phases: 1
+  total_phases: 2
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 5
+  completed_plans: 3
 ---
 
 # Project State
@@ -20,17 +20,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Users can quickly find what's in any tote without opening it -- search, browse, or scan a QR code to see contents and photos.
-**Current focus:** Phase 1: Correctness and Safety
+**Current focus:** Phase 2: Tote Photos
 
 ## Current Position
 
-**Phase:** 1 of 4 (Correctness and Safety)
-**Current Plan:** Not started
-**Total Plans in Phase:** 2
-**Status:** Milestone complete
+**Phase:** 2 of 4 (Tote Photos)
+**Current Plan:** 2 of 3
+**Total Plans in Phase:** 3
+**Status:** In progress
 **Last activity:** 2026-02-28
 
-Progress: [#####.....] 50%
+Progress: [######....] 60%
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Progress: [#####.....] 50%
 *Updated after each plan completion*
 | Phase 01 P01 | 3min | 2 tasks | 5 files |
 | Phase 01 P02 | 6min | 2 tasks | 18 files |
+| Phase 02 P01 | 4min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,10 @@ Recent decisions affecting current work:
 - [Phase 01]: Used magic bytes (not MIME headers) as authoritative file type for photo extensions
 - [Phase 01]: Zod parseJsonBody+validateBody two-step pattern established for all JSON routes
 - [Phase 01]: Search params validated with Zod but empty params return empty results (not 400)
+- [Phase 02]: Extracted photo processing into shared utility to DRY item and tote photo uploads
+- [Phase 02]: Used ?source=tote query param to reuse existing photo serving routes for tote photos
+- [Phase 02]: tote_photos optional in import for backward compatibility with pre-Phase-2 exports
+- [Phase 02]: Cover photo is the earliest tote_photo by created_at (ORDER BY ASC LIMIT 1)
 
 ### Pending Todos
 
@@ -82,5 +87,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 01-02-PLAN.md (Phase 1 complete)
+Stopped at: Completed 02-01-PLAN.md
 Resume file: None

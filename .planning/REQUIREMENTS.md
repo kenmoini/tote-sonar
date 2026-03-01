@@ -9,13 +9,13 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Tote Photos
 
-- [ ] **PHOTO-01**: User can upload multiple photos per tote (same pattern as item photos, max 3)
+- [x] **PHOTO-01**: User can upload multiple photos per tote (same pattern as item photos, max 3)
 - [ ] **PHOTO-02**: Tote list views display the first uploaded photo as a cover thumbnail
 - [ ] **PHOTO-03**: Dashboard displays tote cover thumbnails alongside recent items
-- [ ] **PHOTO-04**: User can delete individual tote photos
-- [ ] **PHOTO-05**: Deleting a tote cascades to remove tote photos from database and filesystem
-- [ ] **PHOTO-06**: Export includes tote photos in ZIP archive
-- [ ] **PHOTO-07**: Import restores tote photos from ZIP archive
+- [x] **PHOTO-04**: User can delete individual tote photos
+- [x] **PHOTO-05**: Deleting a tote cascades to remove tote photos from database and filesystem
+- [x] **PHOTO-06**: Export includes tote photos in ZIP archive
+- [x] **PHOTO-07**: Import restores tote photos from ZIP archive
 
 ### Bug Fixes
 
@@ -92,13 +92,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VALID-02 | Phase 1 | Complete |
 | VALID-03 | Phase 1 | Complete |
 | VALID-04 | Phase 1 | Complete |
-| PHOTO-01 | Phase 2 | Pending |
+| PHOTO-01 | Phase 2 | Complete |
 | PHOTO-02 | Phase 2 | Pending |
 | PHOTO-03 | Phase 2 | Pending |
-| PHOTO-04 | Phase 2 | Pending |
-| PHOTO-05 | Phase 2 | Pending |
-| PHOTO-06 | Phase 2 | Pending |
-| PHOTO-07 | Phase 2 | Pending |
+| PHOTO-04 | Phase 2 | Complete |
+| PHOTO-05 | Phase 2 | Complete |
+| PHOTO-06 | Phase 2 | Complete |
+| PHOTO-07 | Phase 2 | Complete |
 | QUAL-03 | Phase 2 | Pending |
 | QUAL-04 | Phase 2 | Pending |
 | QUAL-01 | Phase 3 | Pending |
