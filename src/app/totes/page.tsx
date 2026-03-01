@@ -3,12 +3,13 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, Box, MapPin, User, ArrowUp, ArrowDown, X, Check, Printer, CheckSquare, Square, Loader2, Trash2 } from 'lucide-react';
+import { Plus, Box, MapPin, User, ArrowUp, ArrowDown, X, Check, Printer, CheckSquare, Square, Loader2, Trash2, Camera } from 'lucide-react';
 import { Tote } from '@/types';
 import ErrorDisplay from '@/components/ErrorDisplay';
 
 interface ToteWithCount extends Tote {
   item_count: number;
+  cover_photo_id: number | null;
 }
 
 interface BulkQrLabel {
@@ -650,7 +651,15 @@ function TotesPageContent() {
               <Link key={tote.id} href={`/totes/${tote.id}`} className="tote-card">
                 <div className="tote-card-header">
                   <div className="tote-card-icon">
-                    <Box size={20} />
+                    {tote.cover_photo_id ? (
+                      <img
+                        src={`/api/photos/${tote.cover_photo_id}/thumbnail?source=tote`}
+                        alt={`${tote.name} cover`}
+                        className="tote-cover-thumbnail"
+                      />
+                    ) : (
+                      <Camera size={20} className="tote-cover-placeholder" />
+                    )}
                   </div>
                   <span className="tote-id">{tote.id}</span>
                 </div>

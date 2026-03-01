@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Box, Package, Plus, ArrowRight, Clock, ImageIcon } from 'lucide-react';
+import { Box, Package, Plus, ArrowRight, Clock, ImageIcon, Camera, MapPin } from 'lucide-react';
 import ErrorDisplay from '@/components/ErrorDisplay';
 
 interface DashboardData {
@@ -17,6 +17,14 @@ interface DashboardData {
     created_at: string;
     tote_name: string;
     first_photo_id: number | null;
+  }>;
+  recent_totes: Array<{
+    id: string;
+    name: string;
+    location: string;
+    item_count: number;
+    cover_photo_id: number | null;
+    created_at: string;
   }>;
 }
 
@@ -122,6 +130,55 @@ export default function DashboardPage() {
           </div>
         </Link>
       </div>
+
+      {/* Recent Totes */}
+      {data && data.recent_totes && data.recent_totes.length > 0 && (
+        <div className="dashboard-recent">
+          <div className="section-header">
+            <h2>Recent Totes</h2>
+            <Link href="/totes" className="section-header-link">
+              View all <ArrowRight size={14} />
+            </Link>
+          </div>
+          <div className="tote-grid">
+            {data.recent_totes.slice(0, 5).map((tote) => (
+              <Link
+                key={tote.id}
+                href={`/totes/${tote.id}`}
+                className="tote-card"
+                style={{ textDecoration: 'none', color: 'inherit' }}
+              >
+                <div className="tote-card-header">
+                  <div className="tote-card-icon">
+                    {tote.cover_photo_id ? (
+                      <img
+                        src={`/api/photos/${tote.cover_photo_id}/thumbnail?source=tote`}
+                        alt={`${tote.name} cover`}
+                        className="tote-cover-thumbnail"
+                      />
+                    ) : (
+                      <Camera size={20} className="tote-cover-placeholder" />
+                    )}
+                  </div>
+                  <span className="tote-id">{tote.id}</span>
+                </div>
+                <h3 className="tote-card-name">{tote.name}</h3>
+                <div className="tote-card-meta">
+                  <span className="tote-meta-item">
+                    <MapPin size={14} />
+                    {tote.location}
+                  </span>
+                </div>
+                <div className="tote-card-footer">
+                  <span className="tote-item-count">
+                    {tote.item_count} {tote.item_count === 1 ? 'item' : 'items'}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Recent Items */}
       {data && data.recent_items.length > 0 && (
