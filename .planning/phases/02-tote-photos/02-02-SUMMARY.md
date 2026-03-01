@@ -71,7 +71,7 @@ Each task was committed atomically:
 1. **Task 1: Create shared photo components** - `869b66c` (feat)
 2. **Task 2: Refactor item detail page** - `708e9ed` (refactor)
 
-**Plan metadata:** [pending] (docs: complete plan)
+**Plan metadata:** `fa9ebe6` (docs: complete plan)
 
 ## Files Created/Modified
 - `src/components/photos/PhotoGallery.tsx` - Shared gallery with lightbox, keyboard nav, navigation arrows, delete (187 lines)

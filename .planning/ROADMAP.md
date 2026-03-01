@@ -48,9 +48,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md -- Backend: shared photo utility, tote_photos table, tote photo API, update serving/export/import/cascade delete
-- [ ] 02-02-PLAN.md -- Shared components: extract PhotoGallery/PhotoUpload from item detail page, refactor item page to use them
-- [ ] 02-03-PLAN.md -- Tote photo UI: wire gallery/upload to tote detail page, cover thumbnails on tote list and dashboard
+- [x] 02-01-PLAN.md -- Backend: shared photo utility, tote_photos table, tote photo API, update serving/export/import/cascade delete
+- [x] 02-02-PLAN.md -- Shared components: extract PhotoGallery/PhotoUpload from item detail page, refactor item page to use them
+- [x] 02-03-PLAN.md -- Tote photo UI: wire gallery/upload to tote detail page, cover thumbnails on tote list and dashboard
 
 ### Phase 3: Page Decomposition
 **Goal**: Monolithic page components are broken into focused, maintainable sub-components and errors are handled gracefully at route boundaries
@@ -86,6 +86,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Correctness and Safety | 2/2 | Complete | 2026-02-28 |
-| 2. Tote Photos | 0/3 | Not started | - |
+| 2. Tote Photos | 3/3 | Complete | 2026-02-28 |
 | 3. Page Decomposition | 0/0 | Not started | - |
 | 4. Performance | 0/0 | Not started | - |
