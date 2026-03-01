@@ -76,6 +76,18 @@ function initializeSchema(database: Database.Database): void {
       FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
     );
 
+    CREATE TABLE IF NOT EXISTS tote_photos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      tote_id TEXT NOT NULL,
+      filename TEXT NOT NULL,
+      original_path TEXT NOT NULL,
+      thumbnail_path TEXT NOT NULL,
+      file_size INTEGER NOT NULL,
+      mime_type TEXT NOT NULL,
+      created_at DATETIME DEFAULT (datetime('now')),
+      FOREIGN KEY (tote_id) REFERENCES totes(id) ON DELETE CASCADE
+    );
+
     CREATE TABLE IF NOT EXISTS item_metadata (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       item_id INTEGER NOT NULL,

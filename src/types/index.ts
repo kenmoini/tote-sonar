@@ -93,6 +93,29 @@ export interface ItemPhoto {
   created_at: string;
 }
 
+// Tote Photo types
+export interface TotePhoto {
+  id: number;
+  tote_id: string;
+  filename: string;
+  original_path: string;
+  thumbnail_path: string;
+  file_size: number;
+  mime_type: string;
+  created_at: string;
+}
+
+// Shared photo record (no entity-specific FK field)
+export interface PhotoRecord {
+  id: number;
+  filename: string;
+  original_path: string;
+  thumbnail_path: string;
+  file_size: number;
+  mime_type: string;
+  created_at: string;
+}
+
 // Movement History types
 export interface MovementHistory {
   id: number;
@@ -125,6 +148,7 @@ export interface DashboardData {
   total_totes: number;
   total_items: number;
   recent_items: (Item & { tote_name: string })[];
+  recent_totes: (Tote & { item_count: number; cover_photo_id: number | null })[];
 }
 
 // Search types

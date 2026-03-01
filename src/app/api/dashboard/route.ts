@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
-import { DashboardData, Item } from '@/types';
+import { DashboardData, Item, Tote } from '@/types';
 
-// GET /api/dashboard - Returns tote count, item count, recent items
+// GET /api/dashboard - Returns tote count, item count, recent items, recent totes
 export async function GET() {
   try {
     const db = getDb();
@@ -23,10 +23,22 @@ export async function GET() {
       LIMIT 10
     `).all() as (Item & { tote_name: string; first_photo_id: number | null })[];
 
+    // Get recently updated totes (last 10) with item count and cover photo
+    const recentTotes = db.prepare(`
+      SELECT t.*, COUNT(i.id) as item_count,
+        (SELECT tp.id FROM tote_photos tp WHERE tp.tote_id = t.id ORDER BY tp.created_at ASC LIMIT 1) as cover_photo_id
+      FROM totes t
+      LEFT JOIN items i ON i.tote_id = t.id
+      GROUP BY t.id
+      ORDER BY t.updated_at DESC
+      LIMIT 10
+    `).all() as (Tote & { item_count: number; cover_photo_id: number | null })[];
+
     const data: DashboardData = {
       total_totes: toteCountRow.count,
       total_items: itemCountRow.count,
       recent_items: recentItems,
+      recent_totes: recentTotes,
     };
 
     return NextResponse.json({ data });

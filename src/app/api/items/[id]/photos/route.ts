@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb, getUploadDir, getThumbnailDir } from '@/lib/db';
+import { getDb } from '@/lib/db';
 import { IdParam } from '@/lib/validation';
-import { validateImageBuffer } from '@/lib/magic-bytes';
-import path from 'path';
-import fs from 'fs';
-import sharp from 'sharp';
-import crypto from 'crypto';
-
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const THUMBNAIL_WIDTH = 200;
-const THUMBNAIL_HEIGHT = 200;
+import { processPhotoUpload, getMaxUploadSize } from '@/lib/photos';
 
 // POST /api/items/:id/photos - Upload a photo for an item
 export async function POST(
@@ -43,10 +35,6 @@ export async function POST(
       return NextResponse.json({ error: 'Maximum 3 photos per item reached' }, { status: 400 });
     }
 
-    // Get max upload size from settings
-    const maxSizeSetting = db.prepare("SELECT value FROM settings WHERE key = 'max_upload_size'").get() as { value: string } | undefined;
-    const maxSize = maxSizeSetting ? parseInt(maxSizeSetting.value, 10) : 5242880; // Default 5MB
-
     // Parse multipart form data
     const formData = await request.formData();
     const file = formData.get('photo') as File | null;
@@ -55,75 +43,27 @@ export async function POST(
       return NextResponse.json({ error: 'No photo file provided' }, { status: 400 });
     }
 
-    // Fast pre-filter: reject obviously wrong MIME types before reading the full buffer
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    // Use shared photo processing utility
+    const result = await processPhotoUpload(file, getMaxUploadSize());
+
+    if (result.error) {
       return NextResponse.json(
-        { error: `Invalid file type: ${file.type}. Supported formats: JPEG, PNG, WebP` },
-        { status: 400 }
+        { error: result.error.message },
+        { status: result.error.status }
       );
     }
 
-    // Validate file size
-    if (file.size > maxSize) {
-      const maxSizeMB = (maxSize / (1024 * 1024)).toFixed(1);
-      return NextResponse.json(
-        { error: `File size exceeds maximum of ${maxSizeMB}MB` },
-        { status: 400 }
-      );
-    }
+    const { filename, originalPath, thumbnailPath, fileSize, mimeType } = result.data;
 
-    // Read file bytes
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    // Magic bytes validation: verify actual file content matches an allowed image type
-    const { valid, detectedType } = validateImageBuffer(buffer);
-    if (!valid) {
-      return NextResponse.json(
-        { error: `File type ${file.type} is not allowed. File content does not match a supported image format. Accepted: JPEG, PNG, WebP` },
-        { status: 400 }
-      );
-    }
-
-    // Use detected type for file extension (authoritative over MIME header)
-    const mimeType = detectedType!;
-    const ext = mimeType === 'image/jpeg' ? '.jpg' : mimeType === 'image/png' ? '.png' : '.webp';
-    const uniqueId = crypto.randomBytes(16).toString('hex');
-    const filename = `${uniqueId}${ext}`;
-
-    // Get upload paths
-    const uploadDir = getUploadDir();
-    const thumbnailDir = getThumbnailDir();
-    const originalPath = path.join(uploadDir, filename);
-    const thumbnailFilename = `thumb_${filename}`;
-    const thumbnailPath = path.join(thumbnailDir, thumbnailFilename);
-
-    // Write original file
-    fs.writeFileSync(originalPath, buffer);
-
-    // Generate thumbnail with sharp
-    // .rotate() with no args auto-orients based on EXIF data (fixes mobile photo rotation)
-    await sharp(buffer)
-      .rotate()
-      .resize(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, { fit: 'cover', position: 'center' })
-      .toFile(thumbnailPath);
-
-    // Insert photo record into database (use detected MIME type, not client header)
+    // Insert photo record into database
     const stmt = db.prepare(`
       INSERT INTO item_photos (item_id, filename, original_path, thumbnail_path, file_size, mime_type)
       VALUES (?, ?, ?, ?, ?, ?)
     `);
-    const result = stmt.run(
-      itemId,
-      filename,
-      `uploads/${filename}`,
-      `thumbnails/${thumbnailFilename}`,
-      file.size,
-      mimeType
-    );
+    const dbResult = stmt.run(itemId, filename, originalPath, thumbnailPath, fileSize, mimeType);
 
     // Get the created photo record
-    const photo = db.prepare('SELECT * FROM item_photos WHERE id = ?').get(result.lastInsertRowid);
+    const photo = db.prepare('SELECT * FROM item_photos WHERE id = ?').get(dbResult.lastInsertRowid);
 
     return NextResponse.json({
       data: photo,
