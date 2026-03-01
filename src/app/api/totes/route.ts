@@ -17,12 +17,13 @@ export async function GET(request: NextRequest) {
     const safeSortOrder = sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
 
     const totes = db.prepare(`
-      SELECT t.*, COUNT(i.id) as item_count
+      SELECT t.*, COUNT(i.id) as item_count,
+        (SELECT tp.id FROM tote_photos tp WHERE tp.tote_id = t.id ORDER BY tp.created_at ASC LIMIT 1) as cover_photo_id
       FROM totes t
       LEFT JOIN items i ON i.tote_id = t.id
       GROUP BY t.id
       ORDER BY t.${safeSortBy} ${safeSortOrder}
-    `).all() as (Tote & { item_count: number })[];
+    `).all() as (Tote & { item_count: number; cover_photo_id: number | null })[];
 
     return NextResponse.json({ data: totes });
   } catch (error) {

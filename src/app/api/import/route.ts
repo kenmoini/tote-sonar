@@ -13,6 +13,7 @@ interface ExportData {
     totes: Array<Record<string, unknown>>;
     items: Array<Record<string, unknown>>;
     item_photos: Array<Record<string, unknown>>;
+    tote_photos?: Array<Record<string, unknown>>;
     item_metadata: Array<Record<string, unknown>>;
     metadata_keys: Array<Record<string, unknown>>;
     item_movement_history: Array<Record<string, unknown>>;
@@ -148,6 +149,7 @@ export async function POST(request: NextRequest) {
         db.prepare('DELETE FROM item_movement_history').run();
         db.prepare('DELETE FROM item_metadata').run();
         db.prepare('DELETE FROM item_photos').run();
+        db.prepare('DELETE FROM tote_photos').run();
         db.prepare('DELETE FROM items').run();
         db.prepare('DELETE FROM totes').run();
         db.prepare('DELETE FROM metadata_keys').run();
@@ -199,6 +201,25 @@ export async function POST(request: NextRequest) {
             insertPhoto.run(
               photo.id,
               photo.item_id,
+              photo.filename,
+              photo.original_path,
+              photo.thumbnail_path,
+              photo.file_size,
+              photo.mime_type,
+              photo.created_at || new Date().toISOString()
+            );
+          }
+        }
+
+        // Import tote_photos (optional for backward compatibility)
+        if (data.tote_photos && data.tote_photos.length > 0) {
+          const insertTotePhoto = db.prepare(
+            'INSERT INTO tote_photos (id, tote_id, filename, original_path, thumbnail_path, file_size, mime_type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+          );
+          for (const photo of data.tote_photos) {
+            insertTotePhoto.run(
+              photo.id,
+              photo.tote_id,
               photo.filename,
               photo.original_path,
               photo.thumbnail_path,
@@ -349,6 +370,7 @@ export async function POST(request: NextRequest) {
       totes: data.totes.length,
       items: data.items.length,
       photos: data.item_photos.length,
+      tote_photos: (data.tote_photos || []).length,
       metadata: data.item_metadata.length,
       settings: data.settings.length,
     };

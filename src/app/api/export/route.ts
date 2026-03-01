@@ -13,6 +13,7 @@ export async function GET() {
     const totes = db.prepare('SELECT * FROM totes ORDER BY created_at').all();
     const items = db.prepare('SELECT * FROM items ORDER BY created_at').all();
     const itemPhotos = db.prepare('SELECT * FROM item_photos ORDER BY created_at').all();
+    const totePhotos = db.prepare('SELECT * FROM tote_photos ORDER BY created_at').all();
     const itemMetadata = db.prepare('SELECT * FROM item_metadata ORDER BY created_at').all();
     const metadataKeys = db.prepare('SELECT * FROM metadata_keys ORDER BY created_at').all();
     const movementHistory = db.prepare('SELECT * FROM item_movement_history ORDER BY moved_at').all();
@@ -27,6 +28,7 @@ export async function GET() {
         totes,
         items,
         item_photos: itemPhotos,
+        tote_photos: totePhotos,
         item_metadata: itemMetadata,
         metadata_keys: metadataKeys,
         item_movement_history: movementHistory,
