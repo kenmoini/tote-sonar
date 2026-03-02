@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Tote Photos** - Add photo upload to totes with shared photo components extracted for reuse
 - [x] **Phase 3: Page Decomposition** - Break monolithic page components into focused sub-components with error boundaries
 - [x] **Phase 4: Performance** - Add search pagination, database indexes, and dashboard query optimization
-- [ ] **Phase 5: Tech Debt Cleanup** - Close audit-identified tech debt: use shared utilities, fix import UI display gap
+- [x] **Phase 5: Tech Debt Cleanup** - Close audit-identified tech debt: use shared utilities, fix import UI display gap
 
 ## Phase Details
 
@@ -94,7 +94,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 05-01-PLAN.md -- Fix all 3 tech debt items: shared deletePhotoFiles, import tote_photos display, formatDate dedup
+- [x] 05-01-PLAN.md -- Fix all 3 tech debt items: shared deletePhotoFiles, import tote_photos display, formatDate dedup
 
 ## Progress
 
@@ -107,4 +107,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Tote Photos | 3/3 | Complete | 2026-02-28 |
 | 3. Page Decomposition | 3/3 | Complete | 2026-03-01 |
 | 4. Performance | 2/2 | Complete | 2026-03-01 |
-| 5. Tech Debt Cleanup | 0/1 | Not started | - |
+| 5. Tech Debt Cleanup | 1/1 | Complete | 2026-03-02 |
