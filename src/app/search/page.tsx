@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Search, Package, Box, MapPin, ArrowRight, Filter, X, User, Tag } from 'lucide-react';
+import Pagination from '@/components/Pagination';
 
 interface SearchResultItem {
   id: number;
@@ -24,6 +25,7 @@ function SearchContent() {
   const initialLocation = searchParams.get('location') || '';
   const initialOwner = searchParams.get('owner') || '';
   const initialMetadataKey = searchParams.get('metadata_key') || '';
+  const initialPage = parseInt(searchParams.get('page') || '1', 10) || 1;
 
   const [query, setQuery] = useState(initialQuery);
   const [locationFilter, setLocationFilter] = useState(initialLocation);
@@ -34,6 +36,9 @@ function SearchContent() {
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [showFilters, setShowFilters] = useState(!!initialLocation || !!initialOwner || !!initialMetadataKey);
+  const [currentPage, setCurrentPage] = useState(initialPage);
+  const [totalPages, setTotalPages] = useState(0);
+  const [limit] = useState(20);
 
   // Available filter options
   const [availableLocations, setAvailableLocations] = useState<string[]>([]);
@@ -58,10 +63,12 @@ function SearchContent() {
     fetchFilters();
   }, []);
 
-  const performSearch = useCallback(async (searchQuery: string, location: string, owner: string, metadataKey: string) => {
+  const performSearch = useCallback(async (searchQuery: string, location: string, owner: string, metadataKey: string, page: number = 1) => {
     if (!searchQuery.trim() && !location.trim() && !owner.trim() && !metadataKey.trim()) {
       setResults([]);
       setTotal(0);
+      setTotalPages(0);
+      setCurrentPage(1);
       setHasSearched(false);
       return;
     }
@@ -75,16 +82,21 @@ function SearchContent() {
       if (location.trim()) params.set('location', location.trim());
       if (owner.trim()) params.set('owner', owner.trim());
       if (metadataKey.trim()) params.set('metadata_key', metadataKey.trim());
+      if (page > 1) params.set('page', String(page));
 
       const res = await fetch(`/api/search?${params.toString()}`);
       if (!res.ok) throw new Error('Search failed');
       const json = await res.json();
       setResults(json.data.items || []);
       setTotal(json.data.total || 0);
+      setTotalPages(json.data.total_pages || 0);
+      setCurrentPage(json.data.page || 1);
     } catch (err) {
       console.error('Search error:', err);
       setResults([]);
       setTotal(0);
+      setTotalPages(0);
+      setCurrentPage(1);
     } finally {
       setLoading(false);
     }
@@ -97,16 +109,17 @@ function SearchContent() {
       setLocationFilter(initialLocation);
       setOwnerFilter(initialOwner);
       setMetadataKeyFilter(initialMetadataKey);
-      performSearch(initialQuery, initialLocation, initialOwner, initialMetadataKey);
+      performSearch(initialQuery, initialLocation, initialOwner, initialMetadataKey, initialPage);
     }
-  }, [initialQuery, initialLocation, initialOwner, initialMetadataKey, performSearch]);
+  }, [initialQuery, initialLocation, initialOwner, initialMetadataKey, initialPage, performSearch]);
 
-  const updateUrl = (q: string, loc: string, own: string, metaKey: string) => {
+  const updateUrl = (q: string, loc: string, own: string, metaKey: string, page: number = 1) => {
     const params = new URLSearchParams();
     if (q.trim()) params.set('q', q.trim());
     if (loc.trim()) params.set('location', loc.trim());
     if (own.trim()) params.set('owner', own.trim());
     if (metaKey.trim()) params.set('metadata_key', metaKey.trim());
+    if (page > 1) params.set('page', String(page));
     const qs = params.toString();
     const url = `/search${qs ? '?' + qs : ''}`;
     window.history.pushState({}, '', url);
@@ -115,71 +128,81 @@ function SearchContent() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim() || locationFilter.trim() || ownerFilter.trim() || metadataKeyFilter.trim()) {
-      updateUrl(query, locationFilter, ownerFilter, metadataKeyFilter);
-      performSearch(query.trim(), locationFilter.trim(), ownerFilter.trim(), metadataKeyFilter.trim());
+      setCurrentPage(1);
+      updateUrl(query, locationFilter, ownerFilter, metadataKeyFilter, 1);
+      performSearch(query.trim(), locationFilter.trim(), ownerFilter.trim(), metadataKeyFilter.trim(), 1);
     }
   };
 
   const handleLocationChange = (value: string) => {
     setLocationFilter(value);
+    setCurrentPage(1);
     if (query.trim() || ownerFilter.trim() || metadataKeyFilter.trim() || value.trim()) {
-      updateUrl(query, value, ownerFilter, metadataKeyFilter);
-      performSearch(query.trim(), value.trim(), ownerFilter.trim(), metadataKeyFilter.trim());
+      updateUrl(query, value, ownerFilter, metadataKeyFilter, 1);
+      performSearch(query.trim(), value.trim(), ownerFilter.trim(), metadataKeyFilter.trim(), 1);
     }
   };
 
   const handleOwnerChange = (value: string) => {
     setOwnerFilter(value);
+    setCurrentPage(1);
     if (query.trim() || locationFilter.trim() || metadataKeyFilter.trim() || value.trim()) {
-      updateUrl(query, locationFilter, value, metadataKeyFilter);
-      performSearch(query.trim(), locationFilter.trim(), value.trim(), metadataKeyFilter.trim());
+      updateUrl(query, locationFilter, value, metadataKeyFilter, 1);
+      performSearch(query.trim(), locationFilter.trim(), value.trim(), metadataKeyFilter.trim(), 1);
     }
   };
 
   const handleMetadataKeyChange = (value: string) => {
     setMetadataKeyFilter(value);
+    setCurrentPage(1);
     if (query.trim() || locationFilter.trim() || ownerFilter.trim() || value.trim()) {
-      updateUrl(query, locationFilter, ownerFilter, value);
-      performSearch(query.trim(), locationFilter.trim(), ownerFilter.trim(), value.trim());
+      updateUrl(query, locationFilter, ownerFilter, value, 1);
+      performSearch(query.trim(), locationFilter.trim(), ownerFilter.trim(), value.trim(), 1);
     }
   };
 
   const clearLocationFilter = () => {
     setLocationFilter('');
+    setCurrentPage(1);
     if (query.trim() || ownerFilter.trim() || metadataKeyFilter.trim()) {
-      updateUrl(query, '', ownerFilter, metadataKeyFilter);
-      performSearch(query.trim(), '', ownerFilter.trim(), metadataKeyFilter.trim());
+      updateUrl(query, '', ownerFilter, metadataKeyFilter, 1);
+      performSearch(query.trim(), '', ownerFilter.trim(), metadataKeyFilter.trim(), 1);
     } else {
       setResults([]);
       setTotal(0);
+      setTotalPages(0);
       setHasSearched(false);
-      updateUrl('', '', ownerFilter, metadataKeyFilter);
+      updateUrl('', '', ownerFilter, metadataKeyFilter, 1);
     }
   };
 
   const clearOwnerFilter = () => {
     setOwnerFilter('');
+    setCurrentPage(1);
     if (query.trim() || locationFilter.trim() || metadataKeyFilter.trim()) {
-      updateUrl(query, locationFilter, '', metadataKeyFilter);
-      performSearch(query.trim(), locationFilter.trim(), '', metadataKeyFilter.trim());
+      updateUrl(query, locationFilter, '', metadataKeyFilter, 1);
+      performSearch(query.trim(), locationFilter.trim(), '', metadataKeyFilter.trim(), 1);
     } else {
       setResults([]);
       setTotal(0);
+      setTotalPages(0);
       setHasSearched(false);
-      updateUrl('', locationFilter, '', metadataKeyFilter);
+      updateUrl('', locationFilter, '', metadataKeyFilter, 1);
     }
   };
 
   const clearMetadataKeyFilter = () => {
     setMetadataKeyFilter('');
+    setCurrentPage(1);
     if (query.trim() || locationFilter.trim() || ownerFilter.trim()) {
-      updateUrl(query, locationFilter, ownerFilter, '');
-      performSearch(query.trim(), locationFilter.trim(), ownerFilter.trim(), '');
+      updateUrl(query, locationFilter, ownerFilter, '', 1);
+      performSearch(query.trim(), locationFilter.trim(), ownerFilter.trim(), '', 1);
     } else {
       setResults([]);
       setTotal(0);
+      setTotalPages(0);
       setHasSearched(false);
-      updateUrl('', locationFilter, ownerFilter, '');
+      updateUrl('', locationFilter, ownerFilter, '', 1);
     }
   };
 
@@ -187,18 +210,27 @@ function SearchContent() {
     setLocationFilter('');
     setOwnerFilter('');
     setMetadataKeyFilter('');
+    setCurrentPage(1);
     if (query.trim()) {
-      updateUrl(query, '', '', '');
-      performSearch(query.trim(), '', '', '');
+      updateUrl(query, '', '', '', 1);
+      performSearch(query.trim(), '', '', '', 1);
     } else {
       setResults([]);
       setTotal(0);
+      setTotalPages(0);
       setHasSearched(false);
-      updateUrl('', '', '', '');
+      updateUrl('', '', '', '', 1);
     }
   };
 
   const activeFilterCount = (locationFilter.trim() ? 1 : 0) + (ownerFilter.trim() ? 1 : 0) + (metadataKeyFilter.trim() ? 1 : 0);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    updateUrl(query, locationFilter, ownerFilter, metadataKeyFilter, page);
+    performSearch(query.trim(), locationFilter.trim(), ownerFilter.trim(), metadataKeyFilter.trim(), page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const highlightMatch = (text: string, searchTerm: string) => {
     if (!searchTerm.trim() || !text) return <>{text}</>;
@@ -417,7 +449,7 @@ function SearchContent() {
         <div className="search-results-section">
           <div className="search-results-header">
             <span className="search-results-count">
-              {total === 0 ? 'No results found' : `${total} result${total !== 1 ? 's' : ''} found`}
+              {total === 0 ? 'No results found' : `Showing ${(currentPage - 1) * limit + 1}-${Math.min(currentPage * limit, total)} of ${total} result${total !== 1 ? 's' : ''}`}
               {query.trim() && <span className="search-results-query"> for &ldquo;{query.trim()}&rdquo;</span>}
               {activeFilterCount > 0 && (
                 <span className="search-results-filters-note"> (filtered)</span>
@@ -431,46 +463,55 @@ function SearchContent() {
               <p>No items match your search{activeFilterCount > 0 ? ' and filters' : ''}. Try different keywords{activeFilterCount > 0 ? ' or adjust your filters' : ''}.</p>
             </div>
           ) : (
-            <div className="search-results-list">
-              {results.map((item) => (
-                <Link
-                  key={item.id}
-                  href={`/totes/${item.tote_id}`}
-                  className="search-result-card"
-                >
-                  <div className="search-result-main">
-                    <div className="search-result-icon">
-                      <Package size={20} />
-                    </div>
-                    <div className="search-result-info">
-                      <span className="search-result-name">
-                        {highlightMatch(item.name, query)}
-                      </span>
-                      {item.description && (
-                        <span className="search-result-desc">
-                          {highlightMatch(item.description, query)}
+            <>
+              <div className="search-results-list">
+                {results.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={`/totes/${item.tote_id}`}
+                    className="search-result-card"
+                  >
+                    <div className="search-result-main">
+                      <div className="search-result-icon">
+                        <Package size={20} />
+                      </div>
+                      <div className="search-result-info">
+                        <span className="search-result-name">
+                          {highlightMatch(item.name, query)}
                         </span>
-                      )}
-                      <div className="search-result-meta">
-                        <span className="search-result-tote">
-                          <Box size={14} />
-                          <span className="search-result-tote-name">{item.tote_name}</span>
-                          <span className="search-result-tote-id">({item.tote_id})</span>
-                        </span>
-                        <span className="search-result-location">
-                          <MapPin size={14} />
-                          {item.tote_location}
-                        </span>
-                        {item.quantity > 1 && (
-                          <span className="search-result-qty">Qty: {item.quantity}</span>
+                        {item.description && (
+                          <span className="search-result-desc">
+                            {highlightMatch(item.description, query)}
+                          </span>
                         )}
+                        <div className="search-result-meta">
+                          <span className="search-result-tote">
+                            <Box size={14} />
+                            <span className="search-result-tote-name">{item.tote_name}</span>
+                            <span className="search-result-tote-id">({item.tote_id})</span>
+                          </span>
+                          <span className="search-result-location">
+                            <MapPin size={14} />
+                            {item.tote_location}
+                          </span>
+                          {item.quantity > 1 && (
+                            <span className="search-result-qty">Qty: {item.quantity}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <ArrowRight size={18} className="search-result-arrow" />
-                </Link>
-              ))}
-            </div>
+                    <ArrowRight size={18} className="search-result-arrow" />
+                  </Link>
+                ))}
+              </div>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={total}
+                limit={limit}
+                onPageChange={handlePageChange}
+              />
+            </>
           )}
         </div>
       )}
