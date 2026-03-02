@@ -22,12 +22,14 @@ export default function ItemPhotos({ photos, itemId, itemName, onPhotosChanged, 
         </h2>
       </div>
 
-      <PhotoGallery
-        photos={photos}
-        entityName={itemName}
-        source="item"
-        onPhotoDeleted={onPhotosChanged}
-      />
+      {photos.length !== 0 && (
+        <PhotoGallery
+          photos={photos}
+          entityName={itemName}
+          source="item"
+          onPhotoDeleted={onPhotosChanged}
+        />
+      )}
 
       <PhotoUpload
         entityType="item"

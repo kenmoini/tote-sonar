@@ -18,12 +18,7 @@ export default function TotePhotos({ photos, toteId, toteName, onPhotosChanged, 
       <div className="section-header">
         <h2>Photos</h2>
       </div>
-      {photos.length === 0 ? (
-        <div className="empty-state-small">
-          <Camera size={32} className="empty-icon" />
-          <p>No photos yet</p>
-        </div>
-      ) : (
+      {photos.length !== 0 && (
         <PhotoGallery
           photos={photos}
           entityName={toteName}
