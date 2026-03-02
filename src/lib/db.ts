@@ -123,6 +123,27 @@ function initializeSchema(database: Database.Database): void {
     );
   `);
 
+  // Performance indexes (PERF-02)
+  database.exec(`
+    -- Foreign key indexes (critical for JOIN performance)
+    CREATE INDEX IF NOT EXISTS idx_items_tote_id ON items(tote_id);
+    CREATE INDEX IF NOT EXISTS idx_item_photos_item_id ON item_photos(item_id);
+    CREATE INDEX IF NOT EXISTS idx_tote_photos_tote_id ON tote_photos(tote_id);
+    CREATE INDEX IF NOT EXISTS idx_item_metadata_item_id ON item_metadata(item_id);
+    CREATE INDEX IF NOT EXISTS idx_item_movement_history_item_id ON item_movement_history(item_id);
+    CREATE INDEX IF NOT EXISTS idx_item_movement_history_from_tote_id ON item_movement_history(from_tote_id);
+    CREATE INDEX IF NOT EXISTS idx_item_movement_history_to_tote_id ON item_movement_history(to_tote_id);
+
+    -- Filter column indexes (used in search WHERE clauses)
+    CREATE INDEX IF NOT EXISTS idx_totes_location ON totes(location);
+    CREATE INDEX IF NOT EXISTS idx_totes_owner ON totes(owner);
+
+    -- Ordering indexes (used in ORDER BY for dashboard and search)
+    CREATE INDEX IF NOT EXISTS idx_items_created_at ON items(created_at);
+    CREATE INDEX IF NOT EXISTS idx_totes_updated_at ON totes(updated_at);
+    CREATE INDEX IF NOT EXISTS idx_items_updated_at ON items(updated_at);
+  `);
+
   // Insert default settings if they don't exist
   const insertSetting = database.prepare(
     'INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)'
