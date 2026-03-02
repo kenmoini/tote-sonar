@@ -155,6 +155,9 @@ export interface DashboardData {
 export interface SearchResult {
   items: (Item & { tote_name: string; tote_id: string })[];
   total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
 }
 
 export interface SearchFilters {
