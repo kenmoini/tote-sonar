@@ -12,10 +12,11 @@ Tote Sonar is a working MVP that needs hardening to become a release-quality v1.
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Correctness and Safety** - Fix bugs in search/import/photos and add systematic input validation across all API routes
-- [ ] **Phase 2: Tote Photos** - Add photo upload to totes with shared photo components extracted for reuse
-- [ ] **Phase 3: Page Decomposition** - Break monolithic page components into focused sub-components with error boundaries
-- [ ] **Phase 4: Performance** - Add search pagination, database indexes, and dashboard query optimization
+- [x] **Phase 1: Correctness and Safety** - Fix bugs in search/import/photos and add systematic input validation across all API routes
+- [x] **Phase 2: Tote Photos** - Add photo upload to totes with shared photo components extracted for reuse
+- [x] **Phase 3: Page Decomposition** - Break monolithic page components into focused sub-components with error boundaries
+- [x] **Phase 4: Performance** - Add search pagination, database indexes, and dashboard query optimization
+- [ ] **Phase 5: Tech Debt Cleanup** - Close audit-identified tech debt: use shared utilities, fix import UI display gap
 
 ## Phase Details
 
@@ -81,14 +82,29 @@ Plans:
 - [ ] 04-01-PLAN.md -- Database indexes on all FK/filter/ordering columns and SearchResult type update
 - [ ] 04-02-PLAN.md -- Search pagination API (COUNT + OFFSET/LIMIT) and Pagination UI component with URL state
 
+### Phase 5: Tech Debt Cleanup
+**Goal**: Close all tech debt items identified by the v1.0 milestone audit — use shared utilities consistently and fix display gaps
+**Depends on**: Phase 4 (all prior phases complete)
+**Requirements**: None (no unsatisfied requirements — all items are code quality improvements)
+**Gap Closure**: Closes tech debt from v1.0-MILESTONE-AUDIT.md
+**Success Criteria** (what must be TRUE):
+  1. Item DELETE handler uses shared `deletePhotoFiles` from `src/lib/photos.ts` instead of inline re-implementation
+  2. Import success screen displays tote photos count alongside other import stats
+  3. Totes list page uses shared `formatDate` utility (or intentional variant) instead of local re-implementation
+**Plans**: 1 plan
+
+Plans:
+- [ ] 05-01-PLAN.md -- Fix all 3 tech debt items: shared deletePhotoFiles, import tote_photos display, formatDate dedup
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Correctness and Safety | 2/2 | Complete | 2026-02-28 |
 | 2. Tote Photos | 3/3 | Complete | 2026-02-28 |
-| 3. Page Decomposition | 1/3 | In Progress | - |
-| 4. Performance | 0/2 | Not started | - |
+| 3. Page Decomposition | 3/3 | Complete | 2026-03-01 |
+| 4. Performance | 2/2 | Complete | 2026-03-01 |
+| 5. Tech Debt Cleanup | 0/1 | Not started | - |
