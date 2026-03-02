@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb, getUploadDir, getThumbnailDir } from '@/lib/db';
+import { getDb } from '@/lib/db';
 import { parseJsonBody, validateBody, IdParam, UpdateItemSchema } from '@/lib/validation';
-import fs from 'fs';
-import path from 'path';
+import { deletePhotoFiles } from '@/lib/photos';
 
 // GET /api/items/:id - Get item details with metadata, photos, movement history, and tote info
 export async function GET(
@@ -184,24 +183,8 @@ export async function DELETE(
     db.prepare('DELETE FROM items WHERE id = ?').run(itemId);
 
     // Clean up photo files from disk
-    const uploadsDir = getUploadDir();
-    const thumbnailsDir = getThumbnailDir();
     for (const photo of photos) {
-      try {
-        const originalFile = path.resolve(uploadsDir, path.basename(photo.original_path));
-        // Defensive: verify resolved path stays within data directory
-        if (!originalFile.startsWith(uploadsDir + path.sep) && originalFile !== uploadsDir) continue;
-        if (fs.existsSync(originalFile)) fs.unlinkSync(originalFile);
-      } catch (fileErr) {
-        console.error('Error deleting original photo file:', fileErr);
-      }
-      try {
-        const thumbnailFile = path.resolve(thumbnailsDir, path.basename(photo.thumbnail_path));
-        if (!thumbnailFile.startsWith(thumbnailsDir + path.sep) && thumbnailFile !== thumbnailsDir) continue;
-        if (fs.existsSync(thumbnailFile)) fs.unlinkSync(thumbnailFile);
-      } catch (fileErr) {
-        console.error('Error deleting thumbnail file:', fileErr);
-      }
+      deletePhotoFiles(photo.original_path, photo.thumbnail_path);
     }
 
     return NextResponse.json({
