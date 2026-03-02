@@ -33,8 +33,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Performance
 
 - [ ] **PERF-01**: Search supports pagination with offset/limit parameters (no 100-result hard cap)
-- [ ] **PERF-02**: Database has indexes on foreign key columns and frequently filtered columns (location, owner)
-- [ ] **PERF-03**: Dashboard queries are optimized (limited scope, first photo only per item)
+- [x] **PERF-02**: Database has indexes on foreign key columns and frequently filtered columns (location, owner)
+- [x] **PERF-03**: Dashboard queries are optimized (limited scope, first photo only per item)
 
 ### Code Quality
 
@@ -105,8 +105,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QUAL-02 | Phase 3 | Complete |
 | QUAL-05 | Phase 3 | Complete |
 | PERF-01 | Phase 4 | Pending |
-| PERF-02 | Phase 4 | Pending |
-| PERF-03 | Phase 4 | Pending |
+| PERF-02 | Phase 4 | Complete |
+| PERF-03 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 22 total
