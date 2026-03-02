@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Plus, Box, MapPin, User, ArrowUp, ArrowDown, X, Check, Printer, CheckSquare, Square, Loader2, Trash2, Camera } from 'lucide-react';
 import { Tote } from '@/types';
 import ErrorDisplay from '@/components/ErrorDisplay';
+import { formatDateShort } from '@/lib/formatDate';
 
 interface ToteWithCount extends Tote {
   item_count: number;
@@ -212,15 +213,6 @@ function TotesPageContent() {
       setSortBy(field);
       setSortOrder('asc');
     }
-  };
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr + 'Z');
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
   };
 
   // Bulk selection handlers
@@ -635,7 +627,7 @@ function TotesPageContent() {
                     <span className="tote-item-count">
                       {tote.item_count} {tote.item_count === 1 ? 'item' : 'items'}
                     </span>
-                    <span className="tote-date">{formatDate(tote.created_at)}</span>
+                    <span className="tote-date">{formatDateShort(tote.created_at)}</span>
                   </div>
                   {(tote.size || tote.color) && (
                     <div className="tote-card-tags">
@@ -680,7 +672,7 @@ function TotesPageContent() {
                   <span className="tote-item-count">
                     {tote.item_count} {tote.item_count === 1 ? 'item' : 'items'}
                   </span>
-                  <span className="tote-date">{formatDate(tote.created_at)}</span>
+                  <span className="tote-date">{formatDateShort(tote.created_at)}</span>
                 </div>
                 {(tote.size || tote.color) && (
                   <div className="tote-card-tags">

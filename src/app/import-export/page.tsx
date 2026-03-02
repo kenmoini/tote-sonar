@@ -20,7 +20,7 @@ export default function ImportExportPage() {
   const [importResult, setImportResult] = useState<{
     success: boolean;
     message: string;
-    summary?: { totes: number; items: number; photos: number; metadata: number; settings: number };
+    summary?: { totes: number; items: number; photos: number; tote_photos: number; metadata: number; settings: number };
   } | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -364,7 +364,11 @@ export default function ImportExportPage() {
                         </div>
                         <div className="import-result-stat">
                           <span className="import-result-stat-value">{importResult.summary.photos}</span>
-                          <span className="import-result-stat-label">Photos</span>
+                          <span className="import-result-stat-label">Item Photos</span>
+                        </div>
+                        <div className="import-result-stat">
+                          <span className="import-result-stat-value">{importResult.summary.tote_photos}</span>
+                          <span className="import-result-stat-label">Tote Photos</span>
                         </div>
                         <div className="import-result-stat">
                           <span className="import-result-stat-value">{importResult.summary.metadata}</span>
