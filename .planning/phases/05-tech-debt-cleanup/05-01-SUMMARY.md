@@ -68,7 +68,7 @@ Each task was committed atomically:
 1. **Task 1: Add formatDateShort utility and replace inline deletePhotoFiles** - `a6427d0` (refactor)
 2. **Task 2: Wire tote_photos into import UI and use shared formatDateShort on totes list** - `5946f60` (feat)
 
-**Plan metadata:** TBD (docs: complete plan)
+**Plan metadata:** `ad994f2`, `9d7037b` (docs: complete plan)
 
 ## Files Created/Modified
 - `src/lib/formatDate.ts` - Added formatDateShort export for date-only formatting
