@@ -189,4 +189,6 @@ export const SearchParamsSchema = z.object({
   location: z.string().max(255).optional(),
   owner: z.string().max(255).optional(),
   metadata_key: z.string().max(255).optional(),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(20),
 });

@@ -15,15 +15,18 @@ export async function GET(request: NextRequest) {
       location: request.nextUrl.searchParams.get('location') || undefined,
       owner: request.nextUrl.searchParams.get('owner') || undefined,
       metadata_key: request.nextUrl.searchParams.get('metadata_key') || undefined,
+      page: request.nextUrl.searchParams.get('page') || undefined,
+      limit: request.nextUrl.searchParams.get('limit') || undefined,
     };
 
     const validated = validateBody(rawParams, SearchParamsSchema);
     if (validated.response) return validated.response;
 
-    const { q: query, location, owner, metadata_key: metadataKey } = validated.data;
+    const { q: query, location, owner, metadata_key: metadataKey, page, limit } = validated.data;
+    const offset = (page - 1) * limit;
 
     if (!query?.trim() && !location?.trim() && !owner?.trim() && !metadataKey?.trim()) {
-      return NextResponse.json({ data: { items: [], total: 0 } });
+      return NextResponse.json({ data: { items: [], total: 0, page: 1, limit, total_pages: 0 } });
     }
 
     const conditions: string[] = [];
@@ -63,16 +66,25 @@ export async function GET(request: NextRequest) {
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
+    // COUNT query uses the same WHERE clause as data query (prevents count drift)
+    const countSql = `
+      SELECT COUNT(*) as total
+      FROM items i
+      JOIN totes t ON i.tote_id = t.id
+      ${whereClause}
+    `;
+    const { total } = db.prepare(countSql).get(...params) as { total: number };
+
     const sql = `
       SELECT i.*, t.name as tote_name, t.id as tote_id, t.location as tote_location
       FROM items i
       JOIN totes t ON i.tote_id = t.id
       ${whereClause}
       ORDER BY i.updated_at DESC
-      LIMIT 100
+      LIMIT ? OFFSET ?
     `;
 
-    const items = db.prepare(sql).all(...params) as Array<{
+    const items = db.prepare(sql).all(...params, limit, offset) as Array<{
       id: number;
       tote_id: string;
       name: string;
@@ -87,7 +99,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       data: {
         items,
-        total: items.length,
+        total,
+        page,
+        limit,
+        total_pages: Math.ceil(total / limit),
       },
     });
   } catch (error) {
